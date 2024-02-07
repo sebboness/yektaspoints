@@ -1,0 +1,9 @@
+inpackage: False
+with-expecter: True
+packages:
+  github.com/sebboness/yektaspoints/storage:
+    interfaces:
+      # interfaces to be mocked
+      DynamoDbClient:
+        config:
+          dir: "mocks/storage"
