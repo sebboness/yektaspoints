@@ -15,6 +15,11 @@ import (
 
 var logger = log.NewLogger("storage_points")
 
+type IPointsStorage interface {
+	GetPointByID(ctx context.Context, userId, id string) (models.Point, error)
+	SavePoint(ctx context.Context, point models.Point) error
+}
+
 func (s *DynamoDbStorage) SavePoint(ctx context.Context, point models.Point) error {
 
 	item, err := attributevalue.MarshalMap(point)

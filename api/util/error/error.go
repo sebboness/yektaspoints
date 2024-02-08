@@ -23,8 +23,8 @@ type ApiError struct {
 
 func New(err error, msg string) *ApiError {
 	return &ApiError{
-		Err:    err,
-		Errors: []string{msg},
+		Err:    fmt.Errorf("%w: %s", err, msg),
+		Errors: []string{},
 	}
 }
 
