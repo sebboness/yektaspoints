@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
+	apierr "github.com/sebboness/yektaspoints/util/error"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -18,7 +19,8 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 		errSavePoint error
 	}
 	type want struct {
-		err string
+		err  string
+		code int
 	}
 	type test struct {
 		name string
@@ -27,8 +29,10 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 	}
 
 	cases := []test{
-		{"happy path", state{}, want{}},
-		// {"fail - handle error", state{errSavePoint: fail}, want{"failed to save points: fail"}},
+		{"happy path", state{}, want{"", 200}},
+		{"fail - validation error", state{errSavePoint: apierr.New(apierr.InvalidInput)}, want{"invalid input", 400}},
+		{"fail - unauthorized", state{errSavePoint: apierr.New(apierr.Unauthorized)}, want{"unauthorized", 401}},
+		{"fail - internal server error", state{errSavePoint: errors.New("fail")}, want{"fail", 500}},
 	}
 
 	for _, c := range cases {
@@ -55,10 +59,12 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		_, err := ctrl.RequestPointsHandler(ctx, req)
+		resp, err := ctrl.RequestPointsHandler(ctx, req)
 		if err != nil {
 			assert.Contains(t, err.Error(), c.want.err)
 		}
+
+		assert.Equal(t, c.want.code, resp.StatusCode)
 	}
 }
 

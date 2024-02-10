@@ -68,7 +68,7 @@ func (s *DynamoDbStorage) GetPointByID(ctx context.Context, userId, id string) (
 
 	if resp.Item == nil {
 		logger.WithContext(ctx).WithFields(map[string]any{"userId": userId, "id": id}).Warnf("item (id:%s) not found", id)
-		return point, apierr.New(apierr.NotFound, fmt.Sprintf("point (id=%s)", id))
+		return point, apierr.New(apierr.NotFound).WithError(fmt.Sprintf("point (id=%s)", id))
 	}
 
 	err = attributevalue.UnmarshalMap(resp.Item, &point)

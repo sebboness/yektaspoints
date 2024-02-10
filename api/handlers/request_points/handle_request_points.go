@@ -2,9 +2,7 @@ package request_points
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -40,24 +38,14 @@ func (c *RequestPointsController) RequestPointsHandler(ctx context.Context, even
 
 	resp, err := c.handleRequestPoints(ctx, event)
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			// Body: nil,
-		}, err
+		if apierr := apierr.IsApiError(err); apierr != nil {
+			return handlers.ApiErrorResponse(apierr), apierr
+		}
+
+		return handlers.ApiResponseInternalServerError(err), err
 	}
 
-	body, err := json.Marshal(resp)
-	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
-			// Body: nil,
-		}, err
-	}
-
-	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusOK,
-		Body:       string(body),
-	}, nil
+	return handlers.ApiResponseOK(resp), nil
 }
 
 func (c *RequestPointsController) handleRequestPoints(ctx context.Context, req *pointsHandlerRequest) (pointsHandlerResponse, error) {
@@ -87,10 +75,10 @@ func (c *RequestPointsController) handleRequestPoints(ctx context.Context, req *
 
 func validateRequestPoints(req *pointsHandlerRequest) error {
 	if req.UserID == "" {
-		return apierr.New(apierr.Unauthorized, "missing user ID")
+		return apierr.New(fmt.Errorf("%w: missing user ID", apierr.Unauthorized))
 	}
 
-	apierr := apierr.New(apierr.InvalidInput, "failed to validate request")
+	apierr := apierr.New(fmt.Errorf("%w: failed to validate request", apierr.InvalidInput))
 
 	if req.Points <= 0 {
 		apierr.AppendError("points must be a positive integer")
@@ -102,7 +90,7 @@ func validateRequestPoints(req *pointsHandlerRequest) error {
 		apierr.AppendError("reason for requesting points must not be empty")
 	}
 
-	if len(apierr.Errors) > 0 {
+	if len(apierr.Errors()) > 0 {
 		return apierr
 	}
 

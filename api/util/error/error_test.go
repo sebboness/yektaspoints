@@ -2,6 +2,7 @@ package error
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,11 +42,13 @@ func Test_Error_Error(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		err := NewApiError(c.state.err)
-		err.AppendError(c.state.msg)
+		t.Run(c.name, func(t *testing.T) {
+			err := NewApiError(c.state.err)
+			err.AppendError(c.state.msg)
 
-		result := err.Error()
-		assert.Equal(t, result, c.want.result)
+			result := err.Error()
+			assert.Equal(t, result, c.want.result)
+		})
 	}
 }
 
@@ -81,19 +84,104 @@ func Test_Error_AppendError(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		err := NewApiError("invalid input")
+		t.Run(c.name, func(t *testing.T) {
+			err := NewApiError("invalid input")
 
-		for _, e := range c.state.errors {
-			err.AppendError(e)
-		}
+			for _, e := range c.state.errors {
+				err.AppendError(e)
+			}
 
-		result := err.Error()
-		assert.Equal(t, result, c.want.result)
+			result := err.Error()
+			assert.Equal(t, result, c.want.result)
+		})
 	}
 }
 
-func Test_Error_IsError(t *testing.T) {
-	err := New(NotFound, "item (123) not found")
+func Test_Error_determineStatusCode(t *testing.T) {
+	type state struct {
+		err    error
+		errors []string
+	}
+	type want struct {
+		code int
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"no error", state{}, want{http.StatusInternalServerError}},
+		{"bad request", state{err: BadRequest}, want{http.StatusBadRequest}},
+		{"invalid input", state{err: InvalidInput}, want{http.StatusBadRequest}},
+		{"unauthorized", state{err: Unauthorized}, want{http.StatusUnauthorized}},
+		{"not found", state{err: NotFound}, want{http.StatusNotFound}},
+		{"internal server error", state{err: InternalServerError}, want{http.StatusInternalServerError}},
+		{"non-nil error", state{err: errors.New("fail")}, want{http.StatusBadRequest}},
+		{"non-empty errors", state{errors: []string{"fail!"}}, want{http.StatusBadRequest}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := New(c.state.err)
+
+			if len(c.state.errors) > 0 {
+				err.errors = c.state.errors
+			}
+
+			result := err.determineStatusCode()
+			assert.Equal(t, c.want.code, result)
+		})
+	}
+}
+
+func Test_Error_StatusCode(t *testing.T) {
+	type state struct {
+		hasErr      bool
+		hasNoErrors bool
+		statusCode  int
+	}
+	type want struct {
+		code int
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"no error - some errors", state{}, want{http.StatusBadRequest}},
+		{"has error - some errors", state{hasErr: true}, want{http.StatusBadRequest}},
+		{"has error - no errors", state{hasNoErrors: true}, want{http.StatusBadRequest}},
+		{"custom status code", state{statusCode: http.StatusForbidden}, want{http.StatusForbidden}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := NewApiError("wah").WithStatus(c.state.statusCode)
+
+			if c.state.hasErr {
+				err.Err = errors.New("fail")
+			}
+			if c.state.hasNoErrors {
+				err.errors = []string{}
+			}
+
+			result := err.StatusCode()
+			assert.Equal(t, c.want.code, result)
+		})
+	}
+}
+
+func Test_Error_WithError(t *testing.T) {
+	err := New(NotFound).WithError("test")
+	assert.Equal(t, "resource not found: test", err.Error())
+}
+
+func Test_Error_AsError(t *testing.T) {
+	err := New(NotFound)
 	var apiErr *ApiError
 	assert.ErrorAs(t, err, &apiErr)
 }
@@ -113,16 +201,18 @@ func Test_Error_IsApiError(t *testing.T) {
 
 	cases := []test{
 		{"is api error #1", state{NewApiError("something went wrong")}, want{true}},
-		{"is api error #2", state{New(InvalidInput, "failed to validate the request")}, want{true}},
+		{"is api error #2", state{New(InvalidInput)}, want{true}},
 		{"is not api error", state{errors.New("something else went wrong")}, want{}},
 	}
 
 	for _, c := range cases {
-		apiErr := IsApiError(c.state.err)
-		if c.want.shouldBeApiErr {
-			assert.NotNil(t, apiErr)
-		} else {
-			assert.Nil(t, apiErr)
-		}
+		t.Run(c.name, func(t *testing.T) {
+			apiErr := IsApiError(c.state.err)
+			if c.want.shouldBeApiErr {
+				assert.NotNil(t, apiErr)
+			} else {
+				assert.Nil(t, apiErr)
+			}
+		})
 	}
 }

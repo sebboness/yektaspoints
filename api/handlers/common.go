@@ -1,6 +1,14 @@
 package handlers
 
-import "github.com/aws/aws-lambda-go/events"
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"github.com/aws/aws-lambda-go/events"
+	apierr "github.com/sebboness/yektaspoints/util/error"
+	"github.com/sebboness/yektaspoints/util/result"
+)
 
 type Result struct {
 	Status  string   `json:"status"`
@@ -18,4 +26,56 @@ func GetUserIDFromLambdaRequest(req *events.APIGatewayProxyRequest) string {
 		userID = claimsMap["cognito:username"].(string)
 	}
 	return userID
+}
+
+func ApiResponseOK(data any) events.APIGatewayProxyResponse {
+	r := result.SuccessResult(data)
+	rjson, err := json.Marshal(r)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       fmt.Sprintf("failed to marshal json response: %v", err),
+		}
+	}
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusOK,
+		Body:       string(rjson),
+	}
+}
+
+func ApiResponseWithError(statusCode int, err error) events.APIGatewayProxyResponse {
+	r := result.ErrorResult(err)
+	rjson, jerr := json.Marshal(r)
+	if jerr != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       fmt.Sprintf("failed to marshal json response: %v. original error: %v", jerr, err),
+		}
+	}
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: statusCode,
+		Body:       string(rjson),
+	}
+}
+
+func ApiResponseBadRequest(err error) events.APIGatewayProxyResponse {
+	return ApiResponseWithError(http.StatusBadRequest, err)
+}
+
+func ApiResponseNotFound(err error) events.APIGatewayProxyResponse {
+	return ApiResponseWithError(http.StatusNotFound, err)
+}
+
+func ApiResponseUnauthorized(err error) events.APIGatewayProxyResponse {
+	return ApiResponseWithError(http.StatusUnauthorized, err)
+}
+
+func ApiResponseInternalServerError(err error) events.APIGatewayProxyResponse {
+	return ApiResponseWithError(http.StatusInternalServerError, err)
+}
+
+func ApiErrorResponse(err *apierr.ApiError) events.APIGatewayProxyResponse {
+	return ApiResponseWithError(err.StatusCode(), err.Err)
 }

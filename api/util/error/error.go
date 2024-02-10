@@ -3,6 +3,7 @@ package error
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 )
 
@@ -17,22 +18,27 @@ var (
 
 type ApiError struct {
 	Err        error
-	Errors     []string
+	errors     []string
 	statusCode int
 }
 
-func New(err error, msg string) *ApiError {
+func New(err error) *ApiError {
 	return &ApiError{
-		Err:    fmt.Errorf("%w: %s", err, msg),
-		Errors: []string{},
+		Err:    err,
+		errors: []string{},
 	}
 }
 
 func NewApiError(err string) *ApiError {
 	return &ApiError{
 		Err:    errors.New(err),
-		Errors: []string{},
+		errors: []string{},
 	}
+}
+
+func (e *ApiError) WithError(err string) *ApiError {
+	e.AppendError(err)
+	return e
 }
 
 func (e *ApiError) WithStatus(statusCode int) *ApiError {
@@ -41,7 +47,7 @@ func (e *ApiError) WithStatus(statusCode int) *ApiError {
 }
 
 func (e *ApiError) Error() string {
-	joinedErrors := strings.Join(e.Errors, "; ")
+	joinedErrors := strings.Join(e.errors, "; ")
 	if len(joinedErrors) > 0 {
 		joinedErrors = ": " + joinedErrors
 	}
@@ -53,20 +59,42 @@ func (e *ApiError) Error() string {
 	return joinedErrors
 }
 
+func (e *ApiError) Errors() []string {
+	return e.errors
+}
+
 func (e *ApiError) StatusCode() int {
+	if e.statusCode == 0 {
+		e.statusCode = e.determineStatusCode()
+	}
 	return e.statusCode
 }
 
 func (e *ApiError) AppendError(errors ...string) {
-	e.Errors = append(e.Errors, errors...)
+	e.errors = append(e.errors, errors...)
+}
+
+func (e *ApiError) Unwrap() error {
+	return e.Err
 }
 
 func (e *ApiError) Is(err error) bool {
 	return errors.Is(e.Err, err)
 }
 
-func (e *ApiError) Unwrap() error {
-	return e.Err
+func (e *ApiError) determineStatusCode() int {
+	if e.Is(BadRequest) || e.Is(InvalidInput) {
+		return http.StatusBadRequest
+	} else if e.Is(Unauthorized) {
+		return http.StatusUnauthorized
+	} else if e.Is(NotFound) {
+		return http.StatusNotFound
+	} else if e.Is(InternalServerError) {
+		return http.StatusInternalServerError
+	} else if e.Err != nil || len(e.errors) > 0 {
+		return http.StatusBadRequest
+	}
+	return http.StatusInternalServerError
 }
 
 func IsApiError(err error) *ApiError {
