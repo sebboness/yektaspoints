@@ -1,4 +1,4 @@
-package request_points
+package handlers
 
 import (
 	"context"
@@ -6,11 +6,10 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/sebboness/yektaspoints/handlers"
 	"github.com/sebboness/yektaspoints/models"
-	"github.com/sebboness/yektaspoints/storage"
 	"github.com/sebboness/yektaspoints/util"
 	apierr "github.com/sebboness/yektaspoints/util/error"
+	"github.com/sebboness/yektaspoints/util/log"
 	"github.com/segmentio/ksuid"
 )
 
@@ -27,28 +26,26 @@ type pointsHandlerResponse struct {
 	Reason string `json:"reason"`
 }
 
-type RequestPointsController struct {
-	pointsDB storage.IPointsStorage
-}
+var logger = log.NewLogger("request_points_lambda")
 
-func (c *RequestPointsController) RequestPointsHandler(ctx context.Context, event *pointsHandlerRequest) (events.APIGatewayProxyResponse, error) {
+func (c *PointsController) RequestPointsHandler(ctx context.Context, event *pointsHandlerRequest) (events.APIGatewayProxyResponse, error) {
 
 	logger.WithContext(ctx).Infof("authorizer: %+v", event.RequestContext.Authorizer)
-	event.UserID = handlers.GetUserIDFromLambdaRequest(&event.APIGatewayProxyRequest)
+	event.UserID = GetUserIDFromLambdaRequest(&event.APIGatewayProxyRequest)
 
 	resp, err := c.handleRequestPoints(ctx, event)
 	if err != nil {
 		if apierr := apierr.IsApiError(err); apierr != nil {
-			return handlers.ApiErrorResponse(apierr), apierr
+			return ApiErrorResponse(apierr), apierr
 		}
 
-		return handlers.ApiResponseInternalServerError(err), err
+		return ApiResponseInternalServerError(err), err
 	}
 
-	return handlers.ApiResponseOK(resp), nil
+	return ApiResponseOK(resp), nil
 }
 
-func (c *RequestPointsController) handleRequestPoints(ctx context.Context, req *pointsHandlerRequest) (pointsHandlerResponse, error) {
+func (c *PointsController) handleRequestPoints(ctx context.Context, req *pointsHandlerRequest) (pointsHandlerResponse, error) {
 	resp := pointsHandlerResponse{}
 
 	if err := validateRequestPoints(req); err != nil {

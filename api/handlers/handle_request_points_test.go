@@ -1,4 +1,4 @@
-package request_points
+package handlers
 
 import (
 	"context"
@@ -54,7 +54,7 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 		mockPointsDB := mocks.NewMockIPointsStorage(t)
 		mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Once()
 
-		ctrl := RequestPointsController{
+		ctrl := PointsController{
 			pointsDB: mockPointsDB,
 		}
 
@@ -107,7 +107,7 @@ func Test_Controller_handleRequestPoints(t *testing.T) {
 			mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Times(saveCalled)
 		}
 
-		ctrl := RequestPointsController{
+		ctrl := PointsController{
 			pointsDB: mockPointsDB,
 		}
 
