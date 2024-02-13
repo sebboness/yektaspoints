@@ -80,6 +80,65 @@ func (_c *MockIPointsStorage_GetPointByID_Call) RunAndReturn(run func(context.Co
 	return _c
 }
 
+// GetPointsByUserID provides a mock function with given fields: ctx, userId
+func (_m *MockIPointsStorage) GetPointsByUserID(ctx context.Context, userId string) ([]models.Point, error) {
+	ret := _m.Called(ctx, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPointsByUserID")
+	}
+
+	var r0 []models.Point
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]models.Point, error)); ok {
+		return rf(ctx, userId)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []models.Point); ok {
+		r0 = rf(ctx, userId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Point)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockIPointsStorage_GetPointsByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPointsByUserID'
+type MockIPointsStorage_GetPointsByUserID_Call struct {
+	*mock.Call
+}
+
+// GetPointsByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userId string
+func (_e *MockIPointsStorage_Expecter) GetPointsByUserID(ctx interface{}, userId interface{}) *MockIPointsStorage_GetPointsByUserID_Call {
+	return &MockIPointsStorage_GetPointsByUserID_Call{Call: _e.mock.On("GetPointsByUserID", ctx, userId)}
+}
+
+func (_c *MockIPointsStorage_GetPointsByUserID_Call) Run(run func(ctx context.Context, userId string)) *MockIPointsStorage_GetPointsByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockIPointsStorage_GetPointsByUserID_Call) Return(_a0 []models.Point, _a1 error) *MockIPointsStorage_GetPointsByUserID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockIPointsStorage_GetPointsByUserID_Call) RunAndReturn(run func(context.Context, string) ([]models.Point, error)) *MockIPointsStorage_GetPointsByUserID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SavePoint provides a mock function with given fields: ctx, point
 func (_m *MockIPointsStorage) SavePoint(ctx context.Context, point models.Point) error {
 	ret := _m.Called(ctx, point)

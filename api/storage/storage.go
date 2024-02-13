@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/sebboness/yektaspoints/util/log"
 )
 
 type DynamoDbClient interface {
@@ -24,6 +25,8 @@ type DynamoDbStorage struct {
 type Config struct {
 	Env string
 }
+
+var logger = log.Get()
 
 func NewDynamoDbStorage(cfg Config) (*DynamoDbStorage, error) {
 	sdkConfig, err := config.LoadDefaultConfig(context.TODO())

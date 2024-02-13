@@ -8,8 +8,11 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/sebboness/yektaspoints/storage"
 	apierr "github.com/sebboness/yektaspoints/util/error"
+	"github.com/sebboness/yektaspoints/util/log"
 	"github.com/sebboness/yektaspoints/util/result"
 )
+
+var logger = log.Get()
 
 type Result struct {
 	Status  string   `json:"status"`

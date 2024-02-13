@@ -12,7 +12,7 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
-type pointsHandlerRequest struct {
+type getUserPointsHandlerRequest struct {
 	events.APIGatewayProxyRequest
 
 	Points int    `json:"points"`
@@ -20,17 +20,16 @@ type pointsHandlerRequest struct {
 	UserID string `json:"-"`
 }
 
-type pointsHandlerResponse struct {
-	Points int    `json:"points"`
-	Reason string `json:"reason"`
+type getUserPointsHandlerResponse struct {
+	Points []models.Point `json:"points"`
 }
 
-func (c *PointsController) RequestPointsHandler(ctx context.Context, event *pointsHandlerRequest) (events.APIGatewayProxyResponse, error) {
+func (c *PointsController) GetUserPointsHandler(ctx context.Context, event *getUserPointsHandlerRequest) (events.APIGatewayProxyResponse, error) {
 
 	logger.WithContext(ctx).Infof("authorizer: %+v", event.RequestContext.Authorizer)
 	event.UserID = GetUserIDFromLambdaRequest(&event.APIGatewayProxyRequest)
 
-	resp, err := c.handleRequestPoints(ctx, event)
+	resp, err := c.handleGetUserPoints(ctx, event)
 	if err != nil {
 		if apierr := apierr.IsApiError(err); apierr != nil {
 			return ApiErrorResponse(apierr), apierr
@@ -42,10 +41,10 @@ func (c *PointsController) RequestPointsHandler(ctx context.Context, event *poin
 	return ApiResponseOK(resp), nil
 }
 
-func (c *PointsController) handleRequestPoints(ctx context.Context, req *pointsHandlerRequest) (pointsHandlerResponse, error) {
-	resp := pointsHandlerResponse{}
+func (c *PointsController) handleGetUserPoints(ctx context.Context, req *getUserPointsHandlerRequest) (getUserPointsHandlerResponse, error) {
+	resp := getUserPointsHandlerResponse{}
 
-	if err := validateRequestPoints(req); err != nil {
+	if err := validateGetUserPoints(req); err != nil {
 		return resp, err
 	}
 
@@ -67,7 +66,7 @@ func (c *PointsController) handleRequestPoints(ctx context.Context, req *pointsH
 	return resp, nil
 }
 
-func validateRequestPoints(req *pointsHandlerRequest) error {
+func validateGetUserPoints(req *getUserPointsHandlerRequest) error {
 	if req.UserID == "" {
 		return apierr.New(fmt.Errorf("%w: missing user ID", apierr.Unauthorized))
 	}

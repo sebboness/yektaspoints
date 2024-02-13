@@ -7,69 +7,88 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var ctxFieldsKey = "loggerFields"
+var (
+	ctxFieldsKey = "loggerFields"
+	logger       *logrus.Logger
+	instance     *Logger
 
-type LogrusLogger struct {
+	fieldName      = "name"
+	fieldRequestId = "request_id"
+)
+
+type Logger struct {
 	logger *logrus.Logger
 	ctx    context.Context
 }
 
-func NewLogger(loggerType string) *LogrusLogger {
-	return NewLoggerWithContext(loggerType, nil)
+func NewLogger(name string) *Logger {
+	return NewLoggerWithContext(name, context.Background())
 }
 
-func NewLoggerWithContext(loggerType string, ctx context.Context) *LogrusLogger {
-	logger := logrus.New()
+func NewLoggerWithContext(name string, ctx context.Context) *Logger {
+	logger = logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{})
 	logger.SetLevel(logrus.InfoLevel)
 	logger.Out = os.Stdout
 
-	return &LogrusLogger{logger: logger, ctx: ctx}
+	instance = &Logger{logger: logger, ctx: ctx}
+	return instance.WithName(name)
 }
 
-func (l *LogrusLogger) WithContext(ctx context.Context) *LogrusLogger {
+func Get() *Logger {
+	return instance
+}
+
+// WithContext sets the context of this logger.
+// All logger fields will be copied
+func (l *Logger) WithContext(ctx context.Context) *Logger {
 	loggerFields := l.getLoggerFields()
 	l.ctx = ctx
 	l.addLoggerFields(loggerFields)
 	return l
 }
 
-func (l *LogrusLogger) WithLevel(level logrus.Level) *LogrusLogger {
+// WithName sets the name for this logger
+func (l *Logger) WithName(value string) *Logger {
+	return l.WithField(fieldName, value)
+}
+
+func (l *Logger) WithLevel(level logrus.Level) *Logger {
 	l.logger.SetLevel(level)
 	return l
 }
 
-func (l *LogrusLogger) WithField(key string, value any) *LogrusLogger {
+func (l *Logger) WithField(key string, value any) *Logger {
 	l.addLoggerFields(map[string]any{key: value})
 	return l
 }
 
-func (l *LogrusLogger) WithFields(fields map[string]any) *LogrusLogger {
+func (l *Logger) WithFields(fields map[string]any) *Logger {
 	l.addLoggerFields(fields)
 	return l
 }
 
-func (l *LogrusLogger) Debugf(format string, args ...any) {
+func (l *Logger) Debugf(format string, args ...any) {
 	l.logger.WithFields(l.getLoggerFields()).Debugf(format, args...)
 }
 
-func (l *LogrusLogger) Infof(format string, args ...any) {
+func (l *Logger) Infof(format string, args ...any) {
 	l.logger.WithFields(l.getLoggerFields()).Infof(format, args...)
 }
 
-func (l *LogrusLogger) Warnf(format string, args ...any) {
+func (l *Logger) Warnf(format string, args ...any) {
 	l.logger.WithFields(l.getLoggerFields()).Warnf(format, args...)
 }
 
-func (l *LogrusLogger) Errorf(format string, args ...any) {
+func (l *Logger) Errorf(format string, args ...any) {
 	l.logger.WithFields(l.getLoggerFields()).Errorf(format, args...)
 }
 
-func (l *LogrusLogger) Fatalf(format string, args ...any) {
+func (l *Logger) Fatalf(format string, args ...any) {
 	l.logger.WithFields(l.getLoggerFields()).Fatalf(format, args...)
 }
 
-func (l *LogrusLogger) addLoggerFields(fields map[string]any) {
+func (l *Logger) addLoggerFields(fields map[string]any) {
 	if l.ctx != nil {
 		if l.ctx.Value(ctxFieldsKey) == nil {
 			l.ctx = context.WithValue(l.ctx, ctxFieldsKey, map[string]any{})
@@ -85,7 +104,7 @@ func (l *LogrusLogger) addLoggerFields(fields map[string]any) {
 	}
 }
 
-func (l *LogrusLogger) getLoggerFields() map[string]any {
+func (l *Logger) getLoggerFields() map[string]any {
 	if l.ctx != nil && l.ctx.Value(ctxFieldsKey) != nil {
 		return l.ctx.Value(ctxFieldsKey).(map[string]any)
 	}

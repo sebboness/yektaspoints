@@ -6,17 +6,16 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/sebboness/yektaspoints/models"
 	apierr "github.com/sebboness/yektaspoints/util/error"
-	"github.com/sebboness/yektaspoints/util/log"
 )
-
-var logger = log.NewLogger("storage_points")
 
 type IPointsStorage interface {
 	GetPointByID(ctx context.Context, userId, id string) (models.Point, error)
+	GetPointsByUserID(ctx context.Context, userId string) ([]models.Point, error)
 	SavePoint(ctx context.Context, point models.Point) error
 }
 
@@ -77,4 +76,44 @@ func (s *DynamoDbStorage) GetPointByID(ctx context.Context, userId, id string) (
 	}
 
 	return point, nil
+}
+
+func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string) ([]models.Point, error) {
+	points := []models.Point{}
+
+	keyEx := expression.Key("user_id").Equal(expression.Value(userId))
+	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
+	if err != nil {
+		return points, fmt.Errorf("failed to build expression for query: %w", err)
+	}
+
+	// setup query paginator
+	queryPaginator := dynamodb.NewQueryPaginator(s.client, &dynamodb.QueryInput{
+		TableName:                 aws.String(s.tablePoints),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		KeyConditionExpression:    expr.KeyCondition(),
+	})
+
+	// fetch items from each page
+	for queryPaginator.HasMorePages() {
+		qctx := context.TODO()
+		resp, err := queryPaginator.NextPage(qctx)
+
+		logger.WithContext(ctx).Infof("query points response: %+v", resp)
+
+		if err != nil {
+			return points, fmt.Errorf("failed to query next points page: %w", err)
+		} else {
+			var point []models.Point
+			err = attributevalue.UnmarshalListOfMaps(resp.Items, &point)
+			if err != nil {
+				return points, fmt.Errorf("failed to unmarshal point from query response: %w", err)
+			} else {
+				points = append(points, point...)
+			}
+		}
+	}
+
+	return points, nil
 }
