@@ -26,3 +26,7 @@ go.work
 
 # local environment
 .env.local
+
+# project specific
+*/cmd/lambda/**/bootstrap
+*/cmd/lambda/**/*.zip
