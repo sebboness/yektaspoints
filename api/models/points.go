@@ -36,6 +36,13 @@ type Point struct {
 	DecidedOn       time.Time   `json:"decidedOn" dynamodbav:"-"`
 }
 
+type QueryPointsFilters struct {
+	FromDate time.Time
+	ToDate   time.Time
+	Statuses []PointType
+	Types    []PointType
+}
+
 func (p Point) ParseTimes() {
 	if p.RequestedOnStr != "" {
 		p.RequestedOn = util.ParseTime_RFC3339Nano(p.RequestedOnStr)

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -16,6 +17,7 @@ var fail = errors.New("fail")
 
 func Test_Controller_RequestPointsHandler(t *testing.T) {
 	type state struct {
+		invalidBody  bool
 		errSavePoint error
 	}
 	type want struct {
@@ -30,6 +32,7 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 
 	cases := []test{
 		{"happy path", state{}, want{"", 200}},
+		{"fail - invalid body", state{invalidBody: true}, want{"failed to unmarshal json body", 500}},
 		{"fail - validation error", state{errSavePoint: apierr.New(apierr.InvalidInput)}, want{"invalid input", 400}},
 		{"fail - unauthorized", state{errSavePoint: apierr.New(apierr.Unauthorized)}, want{"unauthorized", 401}},
 		{"fail - internal server error", state{errSavePoint: errors.New("fail")}, want{"fail", 500}},
@@ -38,28 +41,38 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 	for _, c := range cases {
 
 		req := &pointsHandlerRequest{
-			APIGatewayProxyRequest: events.APIGatewayProxyRequest{
-				RequestContext: events.APIGatewayProxyRequestContext{
-					Authorizer: map[string]interface{}{
-						"claims": map[string]interface{}{
-							"cognito:username": "123",
-						},
-					},
-				},
-			},
 			Points: 1,
 			Reason: "I worked hard",
 		}
 
+		evtBody, _ := json.Marshal(req)
+		evtBodyStr := string(evtBody)
+
 		mockPointsDB := mocks.NewMockIPointsStorage(t)
-		mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Once()
+
+		if !c.state.invalidBody {
+			mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Once()
+		} else {
+			evtBodyStr = `{"user_id":`
+		}
 
 		ctrl := PointsController{
 			pointsDB: mockPointsDB,
 		}
 
+		evt := &events.APIGatewayProxyRequest{
+			Body: evtBodyStr,
+			RequestContext: events.APIGatewayProxyRequestContext{
+				Authorizer: map[string]interface{}{
+					"claims": map[string]interface{}{
+						"cognito:username": "123",
+					},
+				},
+			},
+		}
+
 		ctx := context.Background()
-		resp, err := ctrl.RequestPointsHandler(ctx, req)
+		resp, err := ctrl.RequestPointsHandler(ctx, evt)
 		if err != nil {
 			assert.Contains(t, err.Error(), c.want.err)
 		}

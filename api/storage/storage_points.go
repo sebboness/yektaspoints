@@ -15,7 +15,7 @@ import (
 
 type IPointsStorage interface {
 	GetPointByID(ctx context.Context, userId, id string) (models.Point, error)
-	GetPointsByUserID(ctx context.Context, userId string) ([]models.Point, error)
+	GetPointsByUserID(ctx context.Context, userId string, filters models.QueryPointsFilters) ([]models.Point, error)
 	SavePoint(ctx context.Context, point models.Point) error
 }
 
@@ -78,7 +78,7 @@ func (s *DynamoDbStorage) GetPointByID(ctx context.Context, userId, id string) (
 	return point, nil
 }
 
-func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string) ([]models.Point, error) {
+func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, filters models.QueryPointsFilters) ([]models.Point, error) {
 	points := []models.Point{}
 
 	keyEx := expression.Key("user_id").Equal(expression.Value(userId))

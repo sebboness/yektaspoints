@@ -3,13 +3,10 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/sebboness/yektaspoints/models"
-	"github.com/sebboness/yektaspoints/util"
 	apierr "github.com/sebboness/yektaspoints/util/error"
-	"github.com/segmentio/ksuid"
 )
 
 type getUserPointsHandlerRequest struct {
@@ -48,17 +45,7 @@ func (c *PointsController) handleGetUserPoints(ctx context.Context, req *getUser
 		return resp, err
 	}
 
-	point := models.Point{
-		ID:             ksuid.New().String(),
-		UserID:         req.UserID,
-		Points:         req.Points,
-		Reason:         req.Reason,
-		StatusID:       models.PointStatusRequested,
-		Type:           models.PointTypeAdd,
-		RequestedOnStr: util.ToFormattedUTC(time.Now()),
-	}
-
-	err := c.pointsDB.SavePoint(ctx, point)
+	_, err := c.pointsDB.GetPointsByUserID(ctx, req.UserID, models.QueryPointsFilters{})
 	if err != nil {
 		return resp, fmt.Errorf("failed to save points: %w", err)
 	}

@@ -2,8 +2,10 @@ package log
 
 import (
 	"context"
+	"fmt"
 	"os"
 
+	"github.com/sebboness/yektaspoints/util/env"
 	"github.com/sirupsen/logrus"
 )
 
@@ -12,6 +14,7 @@ var (
 	logger       *logrus.Logger
 	instance     *Logger
 
+	fieldAppName   = "app_name"
 	fieldName      = "name"
 	fieldRequestId = "request_id"
 )
@@ -32,10 +35,13 @@ func NewLoggerWithContext(name string, ctx context.Context) *Logger {
 	logger.Out = os.Stdout
 
 	instance = &Logger{logger: logger, ctx: ctx}
-	return instance.WithName(name)
+	return instance.WithAppName(getAppName()).WithName(name)
 }
 
 func Get() *Logger {
+	if instance == nil {
+		instance = NewLogger(getAppName())
+	}
 	return instance
 }
 
@@ -46,6 +52,11 @@ func (l *Logger) WithContext(ctx context.Context) *Logger {
 	l.ctx = ctx
 	l.addLoggerFields(loggerFields)
 	return l
+}
+
+// WithName sets the name for this logger
+func (l *Logger) WithAppName(value string) *Logger {
+	return l.WithField(fieldAppName, value)
 }
 
 // WithName sets the name for this logger
@@ -109,4 +120,8 @@ func (l *Logger) getLoggerFields() map[string]any {
 		return l.ctx.Value(ctxFieldsKey).(map[string]any)
 	}
 	return map[string]any{}
+}
+
+func getAppName() string {
+	return fmt.Sprintf("%s_%s", env.GetEnv("APPNAME"), env.GetEnv("ENV"))
 }

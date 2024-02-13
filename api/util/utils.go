@@ -7,7 +7,7 @@ import (
 	"github.com/sebboness/yektaspoints/util/log"
 )
 
-var logger = log.NewLogger("util_utils")
+var logger = log.Get()
 
 func ParseTime_RFC3339Nano(val string) time.Time {
 	time1, err := time.Parse(time.RFC3339Nano, val)

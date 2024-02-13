@@ -163,6 +163,39 @@ func TestReal_DynamoDbStorage_GetPointByID(t *testing.T) {
 	}
 }
 
+func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
+	// t.Skip("Skip real test")
+
+	type state struct {
+		userId string
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{userId: "d31b6627-cf66-4013-9e35-a46f0cb2e884"}, want{}},
+	}
+
+	for _, c := range cases {
+		s, err := NewDynamoDbStorage(Config{Env: env.GetEnv("ENV")})
+		assert.Nil(t, err)
+
+		res, err := s.GetPointsByUserID(context.Background(), c.state.userId, models.QueryPointsFilters{})
+
+		if err != nil {
+			assert.Contains(t, err.Error(), c.want.err)
+		} else {
+			assert.NotEmpty(t, res)
+		}
+	}
+}
+
 func TestReal_DynamoDbStorage_SavePoint(t *testing.T) {
 	t.Skip("Skip real test")
 
