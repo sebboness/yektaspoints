@@ -36,11 +36,10 @@ type Point struct {
 	DecidedOn       time.Time   `json:"decidedOn" dynamodbav:"-"`
 }
 
-type QueryPointsFilters struct {
-	FromDate time.Time
-	ToDate   time.Time
-	Statuses []PointType
-	Types    []PointType
+type QueryPointsFilter struct {
+	RequestedOn DateFilter
+	Statuses    []PointStatus
+	Types       []PointType
 }
 
 func (p Point) ParseTimes() {

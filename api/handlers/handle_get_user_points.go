@@ -45,7 +45,7 @@ func (c *PointsController) handleGetUserPoints(ctx context.Context, req *getUser
 		return resp, err
 	}
 
-	_, err := c.pointsDB.GetPointsByUserID(ctx, req.UserID, models.QueryPointsFilters{})
+	_, err := c.pointsDB.GetPointsByUserID(ctx, req.UserID, models.QueryPointsFilter{})
 	if err != nil {
 		return resp, fmt.Errorf("failed to save points: %w", err)
 	}

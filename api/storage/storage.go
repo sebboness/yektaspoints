@@ -6,7 +6,10 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/sebboness/yektaspoints/models"
+	"github.com/sebboness/yektaspoints/util"
 	"github.com/sebboness/yektaspoints/util/log"
 )
 
@@ -40,4 +43,47 @@ func NewDynamoDbStorage(cfg Config) (*DynamoDbStorage, error) {
 		client:      dynamoClient,
 		tablePoints: fmt.Sprintf("yektaspoints-%s-points", strings.ToLower(cfg.Env)),
 	}, nil
+}
+
+// dateFilterExpression builds a date filter expression based on the given date filter.
+// If both from and to dates are given, returns a "Between" filter.
+// If only from date is given, returns a "greater than or equal to" filter.
+// If only to date is given, returns a "less than or equal to" filter.
+func dateFilterExpression(name string, f models.DateFilter) expression.ConditionBuilder {
+
+	filterEx := expression.ConditionBuilder{}
+	nameExpr := expression.Name(name)
+
+	if f.From != nil && f.To != nil {
+		filterEx = nameExpr.Between(
+			expression.Value(util.ToFormatted(*f.From)), expression.Value(util.ToFormatted(*f.To)))
+	} else if f.From != nil {
+		filterEx = nameExpr.GreaterThanEqual(expression.Value(util.ToFormatted(*f.From)))
+	} else if f.To != nil {
+		filterEx = nameExpr.LessThanEqual(expression.Value(util.ToFormatted(*f.To)))
+	}
+
+	return filterEx
+}
+
+func valueInListExpression[K comparable](name string, values []K) expression.ConditionBuilder {
+	if len(values) == 0 {
+		return expression.ConditionBuilder{}
+	}
+
+	nameExpr := expression.Name(name)
+	in := []expression.OperandBuilder{}
+	for _, v := range values {
+		in = append(in, expression.Value(v))
+	}
+
+	filterEx := expression.ConditionBuilder{}
+
+	if len(in) == 1 {
+		filterEx = nameExpr.In(in[0])
+	} else {
+		filterEx = nameExpr.In(in[0], in[1:]...)
+	}
+
+	return filterEx
 }

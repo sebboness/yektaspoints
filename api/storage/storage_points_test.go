@@ -12,50 +12,13 @@ import (
 	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util"
 	"github.com/sebboness/yektaspoints/util/env"
+	"github.com/sebboness/yektaspoints/util/log"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 var errFail = errors.New("fail")
-
-func Test_DynamoDbStorage_SavePoint(t *testing.T) {
-	type state struct {
-		errSaveItem error
-	}
-	type want struct {
-		err string
-	}
-	type test struct {
-		name string
-		state
-		want
-	}
-
-	cases := []test{
-		{"happy path", state{}, want{}},
-		{"fail - save point", state{errSaveItem: errFail}, want{"failed to save point: fail"}},
-	}
-
-	for _, c := range cases {
-
-		output := &dynamodb.PutItemOutput{}
-
-		mockDynamoClient := mocks.NewMockDynamoDbClient(t)
-		mockDynamoClient.EXPECT().PutItem(mock.Anything, mock.Anything, mock.Anything).Return(output, c.state.errSaveItem)
-
-		s := DynamoDbStorage{
-			client: mockDynamoClient,
-		}
-
-		err := s.SavePoint(context.Background(), models.Point{})
-		if err != nil {
-			assert.Contains(t, err.Error(), c.want.err)
-		}
-
-		mockDynamoClient.AssertExpectations(t)
-	}
-}
 
 func Test_DynamoDbStorage_GetPointByID(t *testing.T) {
 	type state struct {
@@ -114,6 +77,119 @@ func Test_DynamoDbStorage_GetPointByID(t *testing.T) {
 			assert.Equal(t, "123", res.ID)
 			assert.Equal(t, "456", res.UserID)
 			assert.Equal(t, 100, res.Points)
+		}
+
+		mockDynamoClient.AssertExpectations(t)
+	}
+}
+
+func Test_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
+	type state struct {
+		errQuery      error
+		failUnmarshal bool
+		itemNotFound  bool
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{}, want{}},
+		{"fail - query", state{errQuery: errFail}, want{"failed to query next points page: fail"}},
+		{"fail - unmarshal", state{failUnmarshal: true}, want{"failed to unmarshal points from query response: unmarshal failed"}},
+	}
+
+	for _, c := range cases {
+
+		output := &dynamodb.QueryOutput{
+			Items: []map[string]types.AttributeValue{
+				{
+					"id":      &types.AttributeValueMemberS{Value: "1"},
+					"user_id": &types.AttributeValueMemberS{Value: "a"},
+					"points":  &types.AttributeValueMemberN{Value: "7"},
+				},
+				{
+					"id":      &types.AttributeValueMemberS{Value: "2"},
+					"user_id": &types.AttributeValueMemberS{Value: "b"},
+					"points":  &types.AttributeValueMemberN{Value: "9"},
+				},
+			},
+		}
+
+		if c.state.failUnmarshal {
+			output.Items = []map[string]types.AttributeValue{
+				{
+					"points": &types.AttributeValueMemberS{Value: "xyz"},
+				},
+			}
+		}
+
+		mockDynamoClient := mocks.NewMockDynamoDbClient(t)
+		mockDynamoClient.EXPECT().Query(mock.Anything, mock.Anything, mock.Anything).Return(output, c.state.errQuery)
+
+		s := DynamoDbStorage{
+			client: mockDynamoClient,
+		}
+
+		filter := models.QueryPointsFilter{
+			Statuses: []models.PointStatus{models.PointStatusApproved},
+			Types:    []models.PointType{models.PointTypeAdd},
+		}
+
+		res, err := s.GetPointsByUserID(context.Background(), "456", filter)
+		if err != nil {
+			assert.Contains(t, err.Error(), c.want.err)
+		} else {
+			assert.Len(t, res, 2)
+			assert.Equal(t, res[0].ID, "1")
+			assert.Equal(t, res[0].UserID, "a")
+			assert.Equal(t, res[0].Points, 7)
+			assert.Equal(t, res[1].ID, "2")
+			assert.Equal(t, res[1].UserID, "b")
+			assert.Equal(t, res[1].Points, 9)
+		}
+
+		mockDynamoClient.AssertExpectations(t)
+	}
+}
+
+func Test_DynamoDbStorage_SavePoint(t *testing.T) {
+	type state struct {
+		errSaveItem error
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{}, want{}},
+		{"fail - save point", state{errSaveItem: errFail}, want{"failed to save point: fail"}},
+	}
+
+	for _, c := range cases {
+
+		output := &dynamodb.PutItemOutput{}
+
+		mockDynamoClient := mocks.NewMockDynamoDbClient(t)
+		mockDynamoClient.EXPECT().PutItem(mock.Anything, mock.Anything, mock.Anything).Return(output, c.state.errSaveItem)
+
+		s := DynamoDbStorage{
+			client: mockDynamoClient,
+		}
+
+		err := s.SavePoint(context.Background(), models.Point{})
+		if err != nil {
+			assert.Contains(t, err.Error(), c.want.err)
 		}
 
 		mockDynamoClient.AssertExpectations(t)
@@ -186,11 +262,27 @@ func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 		s, err := NewDynamoDbStorage(Config{Env: env.GetEnv("ENV")})
 		assert.Nil(t, err)
 
-		res, err := s.GetPointsByUserID(context.Background(), c.state.userId, models.QueryPointsFilters{})
+		from := time.Date(2024, 2, 8, 0, 0, 0, 0, time.UTC)
+		to := time.Date(2024, 2, 11, 59, 59, 0, 0, time.UTC)
+
+		filter := models.QueryPointsFilter{
+			RequestedOn: models.DateFilter{
+				From: &from,
+				To:   &to,
+			},
+			Statuses: []models.PointStatus{models.PointStatusApproved},
+			Types:    []models.PointType{models.PointTypeCashout},
+		}
+
+		res, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
 
 		if err != nil {
+			log.Get().Errorf("%v", err)
 			assert.Contains(t, err.Error(), c.want.err)
 		} else {
+			for i, d := range res {
+				log.Get().WithField("data", d).Infof("[%v]points", i)
+			}
 			assert.NotEmpty(t, res)
 		}
 	}

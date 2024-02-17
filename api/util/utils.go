@@ -17,6 +17,10 @@ func ParseTime_RFC3339Nano(val string) time.Time {
 	return time1
 }
 
+func ToFormatted(t time.Time) string {
+	return t.Format(time.RFC3339Nano)
+}
+
 func ToFormattedUTC(t time.Time) string {
-	return t.UTC().Format(time.RFC3339Nano)
+	return ToFormatted(t.UTC())
 }

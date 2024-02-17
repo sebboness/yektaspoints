@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -15,7 +16,7 @@ import (
 
 type IPointsStorage interface {
 	GetPointByID(ctx context.Context, userId, id string) (models.Point, error)
-	GetPointsByUserID(ctx context.Context, userId string, filters models.QueryPointsFilters) ([]models.Point, error)
+	GetPointsByUserID(ctx context.Context, userId string, filters models.QueryPointsFilter) ([]models.Point, error)
 	SavePoint(ctx context.Context, point models.Point) error
 }
 
@@ -62,6 +63,10 @@ func (s *DynamoDbStorage) GetPointByID(ctx context.Context, userId, id string) (
 	})
 
 	if err != nil {
+		var provExceeded *types.ProvisionedThroughputExceededException
+		if errors.As(err, &provExceeded) {
+			return point, fmt.Errorf("failed to get point: %w", err)
+		}
 		return point, fmt.Errorf("failed to get point: %w", err)
 	}
 
@@ -78,11 +83,43 @@ func (s *DynamoDbStorage) GetPointByID(ctx context.Context, userId, id string) (
 	return point, nil
 }
 
-func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, filters models.QueryPointsFilters) ([]models.Point, error) {
+func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, filters models.QueryPointsFilter) ([]models.Point, error) {
 	points := []models.Point{}
 
 	keyEx := expression.Key("user_id").Equal(expression.Value(userId))
-	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
+	exprBuilder := expression.NewBuilder().WithKeyCondition(keyEx)
+	var filterExpr expression.ConditionBuilder
+
+	// Date filters
+	if filters.RequestedOn.IsSet() {
+		filterExpr = dateFilterExpression("requested_on", filters.RequestedOn)
+	}
+
+	// Statuses
+	if len(filters.Statuses) > 0 {
+		statusFilter := valueInListExpression("status_id", filters.Statuses)
+		if filterExpr.IsSet() {
+			filterExpr = filterExpr.And(statusFilter)
+		} else {
+			filterExpr = statusFilter
+		}
+	}
+
+	// Types
+	if len(filters.Types) > 0 {
+		typeFilter := valueInListExpression("type", filters.Types)
+		if filterExpr.IsSet() {
+			filterExpr = filterExpr.And(typeFilter)
+		} else {
+			filterExpr = typeFilter
+		}
+	}
+
+	if filterExpr.IsSet() {
+		exprBuilder = exprBuilder.WithFilter(filterExpr)
+	}
+
+	expr, err := exprBuilder.Build()
 	if err != nil {
 		return points, fmt.Errorf("failed to build expression for query: %w", err)
 	}
@@ -93,6 +130,7 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		KeyConditionExpression:    expr.KeyCondition(),
+		FilterExpression:          expr.Filter(),
 	})
 
 	// fetch items from each page
@@ -100,15 +138,13 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 		qctx := context.TODO()
 		resp, err := queryPaginator.NextPage(qctx)
 
-		logger.WithContext(ctx).Infof("query points response: %+v", resp)
-
 		if err != nil {
 			return points, fmt.Errorf("failed to query next points page: %w", err)
 		} else {
 			var point []models.Point
 			err = attributevalue.UnmarshalListOfMaps(resp.Items, &point)
 			if err != nil {
-				return points, fmt.Errorf("failed to unmarshal point from query response: %w", err)
+				return points, fmt.Errorf("failed to unmarshal points from query response: %w", err)
 			} else {
 				points = append(points, point...)
 			}

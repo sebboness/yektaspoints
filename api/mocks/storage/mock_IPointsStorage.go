@@ -81,7 +81,7 @@ func (_c *MockIPointsStorage_GetPointByID_Call) RunAndReturn(run func(context.Co
 }
 
 // GetPointsByUserID provides a mock function with given fields: ctx, userId, filters
-func (_m *MockIPointsStorage) GetPointsByUserID(ctx context.Context, userId string, filters models.QueryPointsFilters) ([]models.Point, error) {
+func (_m *MockIPointsStorage) GetPointsByUserID(ctx context.Context, userId string, filters models.QueryPointsFilter) ([]models.Point, error) {
 	ret := _m.Called(ctx, userId, filters)
 
 	if len(ret) == 0 {
@@ -90,10 +90,10 @@ func (_m *MockIPointsStorage) GetPointsByUserID(ctx context.Context, userId stri
 
 	var r0 []models.Point
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, models.QueryPointsFilters) ([]models.Point, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, models.QueryPointsFilter) ([]models.Point, error)); ok {
 		return rf(ctx, userId, filters)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, models.QueryPointsFilters) []models.Point); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, models.QueryPointsFilter) []models.Point); ok {
 		r0 = rf(ctx, userId, filters)
 	} else {
 		if ret.Get(0) != nil {
@@ -101,7 +101,7 @@ func (_m *MockIPointsStorage) GetPointsByUserID(ctx context.Context, userId stri
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, models.QueryPointsFilters) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, models.QueryPointsFilter) error); ok {
 		r1 = rf(ctx, userId, filters)
 	} else {
 		r1 = ret.Error(1)
@@ -123,9 +123,9 @@ func (_e *MockIPointsStorage_Expecter) GetPointsByUserID(ctx interface{}, userId
 	return &MockIPointsStorage_GetPointsByUserID_Call{Call: _e.mock.On("GetPointsByUserID", ctx, userId, filters)}
 }
 
-func (_c *MockIPointsStorage_GetPointsByUserID_Call) Run(run func(ctx context.Context, userId string, filters models.QueryPointsFilters)) *MockIPointsStorage_GetPointsByUserID_Call {
+func (_c *MockIPointsStorage_GetPointsByUserID_Call) Run(run func(ctx context.Context, userId string, filters models.QueryPointsFilter)) *MockIPointsStorage_GetPointsByUserID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(models.QueryPointsFilters))
+		run(args[0].(context.Context), args[1].(string), args[2].(models.QueryPointsFilter))
 	})
 	return _c
 }
@@ -135,7 +135,7 @@ func (_c *MockIPointsStorage_GetPointsByUserID_Call) Return(_a0 []models.Point, 
 	return _c
 }
 
-func (_c *MockIPointsStorage_GetPointsByUserID_Call) RunAndReturn(run func(context.Context, string, models.QueryPointsFilters) ([]models.Point, error)) *MockIPointsStorage_GetPointsByUserID_Call {
+func (_c *MockIPointsStorage_GetPointsByUserID_Call) RunAndReturn(run func(context.Context, string, models.QueryPointsFilter) ([]models.Point, error)) *MockIPointsStorage_GetPointsByUserID_Call {
 	_c.Call.Return(run)
 	return _c
 }

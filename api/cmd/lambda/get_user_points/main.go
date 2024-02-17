@@ -9,7 +9,7 @@ import (
 	"github.com/sebboness/yektaspoints/util/log"
 )
 
-var logger = log.NewLogger("request_points_lambda")
+var logger = log.NewLogger("get_user_points_lambda")
 
 func main() {
 	env := env.GetEnv("ENV")
@@ -22,5 +22,5 @@ func main() {
 		logger.Fatalf("failed to initialize points controller: %v", err)
 	}
 
-	lambda.Start(c.RequestPointsHandler)
+	lambda.Start(c.GetUserPointsHandler)
 }
