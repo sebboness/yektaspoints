@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/sebboness/yektaspoints/util/auth"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 )
 
@@ -15,11 +16,11 @@ type userAuthRequest struct {
 }
 
 type userAuthResponse struct {
-	Points int    `json:"points"`
-	Reason string `json:"reason"`
+	auth.AuthResult
 }
 
-func (c *PointsController) UserAuthHandler(ctx context.Context, event *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+// UserAuthHandler authenticates a user using a username/password auth flow
+func (c *LambdaController) UserAuthHandler(ctx context.Context, event *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	var req userAuthRequest
 
@@ -29,8 +30,6 @@ func (c *PointsController) UserAuthHandler(ctx context.Context, event *events.AP
 		err = fmt.Errorf("failed to unmarshal json body: %w", err)
 		return ApiResponseInternalServerError(err), err
 	}
-
-	req.Password = GetUserIDFromLambdaRequest(event)
 
 	resp, err := c.handleUserAuth(ctx, &req)
 	if err != nil {
@@ -44,13 +43,19 @@ func (c *PointsController) UserAuthHandler(ctx context.Context, event *events.AP
 	return ApiResponseOK(resp), nil
 }
 
-func (c *PointsController) handleUserAuth(ctx context.Context, req *userAuthRequest) (userAuthResponse, error) {
+func (c *LambdaController) handleUserAuth(ctx context.Context, req *userAuthRequest) (userAuthResponse, error) {
 	resp := userAuthResponse{}
 
 	if err := validateUserAuth(req); err != nil {
 		return resp, err
 	}
 
+	result, err := c.auth.Authenticate(ctx, req.Username, req.Password)
+	if err != nil {
+		return resp, fmt.Errorf("failed to authenticate: %w", err)
+	}
+
+	resp.AuthResult = result
 	return resp, nil
 }
 
@@ -63,6 +68,23 @@ func validateUserAuth(req *userAuthRequest) error {
 	if req.Password == "" {
 		apierr.AppendError("missing password")
 	}
+
+	// pwResult := auth.ValidatePassword(req.Password)
+	// if !pwResult.WithinLength {
+	// 	apierr.AppendError("password must be within 8 and 256 characters in length")
+	// }
+	// if !pwResult.Lower {
+	// 	apierr.AppendError("password must have at least one upper case letter")
+	// }
+	// if !pwResult.Upper {
+	// 	apierr.AppendError("password must have at least one lower case letter")
+	// }
+	// if !pwResult.Number {
+	// 	apierr.AppendError("password must have at least one digit")
+	// }
+	// if !pwResult.Special {
+	// 	apierr.AppendError("password must have at least one special character")
+	// }
 
 	if len(apierr.Errors()) > 0 {
 		return apierr

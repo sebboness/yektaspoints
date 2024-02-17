@@ -24,7 +24,7 @@ type pointsHandlerResponse struct {
 	Reason string `json:"reason"`
 }
 
-func (c *PointsController) RequestPointsHandler(ctx context.Context, event *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (c *LambdaController) RequestPointsHandler(ctx context.Context, event *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	logger.WithContext(ctx).Infof("authorizer: %+v", event.RequestContext.Authorizer)
 	var req pointsHandlerRequest
@@ -50,7 +50,7 @@ func (c *PointsController) RequestPointsHandler(ctx context.Context, event *even
 	return ApiResponseOK(resp), nil
 }
 
-func (c *PointsController) handleRequestPoints(ctx context.Context, req *pointsHandlerRequest) (pointsHandlerResponse, error) {
+func (c *LambdaController) handleRequestPoints(ctx context.Context, req *pointsHandlerRequest) (pointsHandlerResponse, error) {
 	resp := pointsHandlerResponse{}
 
 	if err := validateRequestPoints(req); err != nil {

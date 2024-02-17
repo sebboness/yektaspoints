@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/sebboness/yektaspoints/storage"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 	"github.com/sebboness/yektaspoints/util/log"
 	"github.com/sebboness/yektaspoints/util/result"
@@ -19,23 +18,6 @@ type Result struct {
 	Errors  []string `json:"errors"`
 	Message string   `json:"message"`
 	Data    any      `json:"data,omitempty"`
-}
-
-type PointsController struct {
-	pointsDB storage.IPointsStorage
-}
-
-func NewPointsController(env string) (*PointsController, error) {
-	storageCfg := storage.Config{Env: env}
-
-	pointsDB, err := storage.NewDynamoDbStorage(storageCfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize points db: %w", err)
-	}
-
-	return &PointsController{
-		pointsDB: pointsDB,
-	}, nil
 }
 
 // GetUserIDFromLambdaRequest returns the user ID from the lambda request.

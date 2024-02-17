@@ -7,7 +7,7 @@ import (
 )
 
 func Test_PointsController_New(t *testing.T) {
-	c, err := NewPointsController("local")
+	c, err := NewLambdaController("local")
 	assert.Nil(t, err)
 	assert.NotNil(t, c)
 }

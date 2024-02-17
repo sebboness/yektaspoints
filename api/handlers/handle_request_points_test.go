@@ -56,7 +56,7 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 			evtBodyStr = `{"user_id":`
 		}
 
-		ctrl := PointsController{
+		ctrl := LambdaController{
 			pointsDB: mockPointsDB,
 		}
 
@@ -120,7 +120,7 @@ func Test_Controller_handleRequestPoints(t *testing.T) {
 			mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Times(saveCalled)
 		}
 
-		ctrl := PointsController{
+		ctrl := LambdaController{
 			pointsDB: mockPointsDB,
 		}
 

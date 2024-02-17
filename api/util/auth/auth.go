@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"unicode"
 
 	cognito "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/sebboness/yektaspoints/util/log"
@@ -46,4 +47,49 @@ func computeSecretHash(username, clientID, clientSecret string) string {
 
 	encodedHash := base64.StdEncoding.EncodeToString(dataHmac)
 	return encodedHash
+}
+
+var pwSpecialChars = map[rune]bool{
+	'^': true, '$': true, '*': true, '.': true,
+	'[': true, ']': true, '{': true, '}': true, '(': true, ')': true, '?': true,
+	'"': true, '!': true, '@': true, '#': true, '%': true, '&': true, '/': true,
+	'\\': true, ',': true, '>': true, '<': true, '\'': true, ':': true, ';': true,
+	'|': true, '_': true, '~': true, '`': true, '=': true, '+': true, '-': true,
+}
+
+type pwResult struct {
+	WithinLength bool
+	Number       bool
+	Lower        bool
+	Upper        bool
+	Special      bool
+}
+
+// ValidatePassword validates that a password meets the minimum requirements, which are:
+//   - Between 8-256 characters
+//   - At least one lower case letter
+//   - At least one upper case letter
+//   - At least one digit
+//   - At least one special character (i.e. one or more of: ^ $ * . [ ] { } ( ) ? " ! @ # % & / \ , > < ' : ; | _ ~ ` = + -
+func ValidatePassword(s string) pwResult {
+	r := pwResult{}
+	letters := 0
+	for _, c := range s {
+		switch {
+		case unicode.IsNumber(c):
+			r.Number = true
+		case unicode.IsUpper(c):
+			r.Upper = true
+		case unicode.IsLower(c):
+			r.Lower = true
+		default:
+			if _, ok := pwSpecialChars[c]; ok {
+				r.Special = true
+			}
+		}
+
+		letters++
+	}
+	r.WithinLength = letters >= 8 && letters <= 256
+	return r
 }

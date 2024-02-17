@@ -21,7 +21,7 @@ type getUserPointsHandlerResponse struct {
 	Points []models.Point `json:"points"`
 }
 
-func (c *PointsController) GetUserPointsHandler(ctx context.Context, event *getUserPointsHandlerRequest) (events.APIGatewayProxyResponse, error) {
+func (c *LambdaController) GetUserPointsHandler(ctx context.Context, event *getUserPointsHandlerRequest) (events.APIGatewayProxyResponse, error) {
 
 	logger.WithContext(ctx).Infof("authorizer: %+v", event.RequestContext.Authorizer)
 	event.UserID = GetUserIDFromLambdaRequest(&event.APIGatewayProxyRequest)
@@ -38,7 +38,7 @@ func (c *PointsController) GetUserPointsHandler(ctx context.Context, event *getU
 	return ApiResponseOK(resp), nil
 }
 
-func (c *PointsController) handleGetUserPoints(ctx context.Context, req *getUserPointsHandlerRequest) (getUserPointsHandlerResponse, error) {
+func (c *LambdaController) handleGetUserPoints(ctx context.Context, req *getUserPointsHandlerRequest) (getUserPointsHandlerResponse, error) {
 	resp := getUserPointsHandlerResponse{}
 
 	if err := validateGetUserPoints(req); err != nil {

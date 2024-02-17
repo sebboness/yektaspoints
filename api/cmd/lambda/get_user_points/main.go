@@ -17,7 +17,7 @@ func main() {
 	ctx := context.Background()
 	logger.WithContext(ctx).WithField("env", env).Infof("Starting lambda")
 
-	c, err := handlers.NewPointsController(env)
+	c, err := handlers.NewLambdaController(env)
 	if err != nil {
 		logger.Fatalf("failed to initialize points controller: %v", err)
 	}
