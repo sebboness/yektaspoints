@@ -118,7 +118,7 @@ type MockIPointsStorage_GetPointsByUserID_Call struct {
 // GetPointsByUserID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userId string
-//   - filters models.QueryPointsFilters
+//   - filters models.QueryPointsFilter
 func (_e *MockIPointsStorage_Expecter) GetPointsByUserID(ctx interface{}, userId interface{}, filters interface{}) *MockIPointsStorage_GetPointsByUserID_Call {
 	return &MockIPointsStorage_GetPointsByUserID_Call{Call: _e.mock.On("GetPointsByUserID", ctx, userId, filters)}
 }

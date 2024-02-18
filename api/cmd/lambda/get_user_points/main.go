@@ -19,7 +19,7 @@ func main() {
 
 	c, err := handlers.NewLambdaController(env)
 	if err != nil {
-		logger.Fatalf("failed to initialize points controller: %v", err)
+		logger.Fatalf("failed to initialize lambda controller: %v", err)
 	}
 
 	lambda.Start(c.GetUserPointsHandler)

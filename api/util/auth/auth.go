@@ -11,6 +11,17 @@ import (
 	"github.com/sebboness/yektaspoints/util/log"
 )
 
+const (
+	GrantTypeClientCredentials = "client_credentials"
+	GrantTypePassword          = "password"
+	GrantTypeRefreshToken      = "refresh_token"
+)
+
+var SupportedGrantTypes = map[string]bool{
+	GrantTypePassword:     true,
+	GrantTypeRefreshToken: true,
+}
+
 type AuthClient interface {
 	GetUser(ctx context.Context, params *cognito.GetUserInput, optFns ...func(*cognito.Options)) (*cognito.GetUserOutput, error)
 	InitiateAuth(ctx context.Context, params *cognito.InitiateAuthInput, optFns ...func(*cognito.Options)) (*cognito.InitiateAuthOutput, error)

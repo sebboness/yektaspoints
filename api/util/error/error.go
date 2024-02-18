@@ -74,6 +74,11 @@ func (e *ApiError) AppendError(errors ...string) {
 	e.errors = append(e.errors, errors...)
 }
 
+func (e *ApiError) AppendErrorf(msg string, args ...any) {
+	err := fmt.Sprintf(msg, args...)
+	e.AppendError(err)
+}
+
 func (e *ApiError) Unwrap() error {
 	return e.Err
 }

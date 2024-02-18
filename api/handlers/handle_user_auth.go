@@ -11,8 +11,12 @@ import (
 )
 
 type userAuthRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	GrantType    string `json:"grant_type"`
+	Username     string `json:"username,omitempty"`
+	Password     string `json:"password,omitempty"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+	ClientID     string `json:"client_id,omitempty"`
+	ClientSecret string `json:"client_secret,omitempty"`
 }
 
 type userAuthResponse struct {
@@ -45,14 +49,25 @@ func (c *LambdaController) UserAuthHandler(ctx context.Context, event *events.AP
 
 func (c *LambdaController) handleUserAuth(ctx context.Context, req *userAuthRequest) (userAuthResponse, error) {
 	resp := userAuthResponse{}
+	result := auth.AuthResult{}
 
 	if err := validateUserAuth(req); err != nil {
 		return resp, err
 	}
 
-	result, err := c.auth.Authenticate(ctx, req.Username, req.Password)
-	if err != nil {
-		return resp, fmt.Errorf("failed to authenticate: %w", err)
+	// We validated that grant type can only be one of the following cases
+	if req.GrantType == auth.GrantTypePassword {
+		authResult, err := c.auth.Authenticate(ctx, req.Username, req.Password)
+		if err != nil {
+			return resp, fmt.Errorf("failed to authenticate: %w", err)
+		}
+		result = authResult
+	} else if req.GrantType == auth.GrantTypeRefreshToken {
+		authResult, err := c.auth.RefreshToken(ctx, req.Username, req.RefreshToken)
+		if err != nil {
+			return resp, fmt.Errorf("failed to refresh token: %w", err)
+		}
+		result = authResult
 	}
 
 	resp.AuthResult = result
@@ -62,11 +77,24 @@ func (c *LambdaController) handleUserAuth(ctx context.Context, req *userAuthRequ
 func validateUserAuth(req *userAuthRequest) error {
 	apierr := apierr.New(fmt.Errorf("%w: failed to validate request", apierr.InvalidInput))
 
-	if req.Username == "" {
-		apierr.AppendError("missing username")
+	if _, ok := auth.SupportedGrantTypes[req.GrantType]; !ok {
+		apierr.AppendErrorf("unsupported grant_type \"%s\"", req.GrantType)
 	}
-	if req.Password == "" {
-		apierr.AppendError("missing password")
+
+	if req.GrantType == auth.GrantTypePassword {
+		if req.Username == "" {
+			apierr.AppendError("missing username")
+		}
+		if req.Password == "" {
+			apierr.AppendError("missing password")
+		}
+	} else if req.GrantType == auth.GrantTypeRefreshToken {
+		if req.Username == "" {
+			apierr.AppendError("missing username")
+		}
+		if req.RefreshToken == "" {
+			apierr.AppendError("missing refresh_token")
+		}
 	}
 
 	// pwResult := auth.ValidatePassword(req.Password)

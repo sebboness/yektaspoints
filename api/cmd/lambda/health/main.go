@@ -1,4 +1,4 @@
-package request_points
+package health
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/sebboness/yektaspoints/util/log"
 )
 
-var logger = log.NewLogger("request_points_lambda")
+var logger = log.NewLogger("health_lambda")
 
 func main() {
 	env := env.GetEnv("ENV")
@@ -22,5 +22,5 @@ func main() {
 		logger.Fatalf("failed to initialize lambda controller: %v", err)
 	}
 
-	lambda.Start(c.RequestPointsHandler)
+	lambda.Start(c.HandleHealthCheck)
 }
