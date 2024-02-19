@@ -24,6 +24,18 @@
 go.work
 .test_coverage.txt
 
+# Terraform
+**/.terraform/*
+*.auto.tfvars
+*.tfoverride
+*.tfstate
+*.tfstate.backup
+.envrc
+.terraformrc
+terraform.rc
+.terraform.lock.hcl
+.terraform.lock.info
+
 # local environment
 .env.local
 

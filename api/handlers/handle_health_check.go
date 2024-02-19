@@ -19,5 +19,7 @@ func (c *LambdaController) HandleHealthCheck(ctx context.Context, event *events.
 		BuiltAt: env.GetEnv("BUILT_AT"),
 	}
 
+	logger.WithContext(ctx).Infof("hello from health check endpoint")
+
 	return ApiResponseOK(resp), nil
 }
