@@ -9,5 +9,5 @@ Resources:
     Type: AWS::Serverless::Function 
     Properties:
       CodeUri: cmd/lambda/ # format is projectPath/
-      Handler: main # format is filename.functionName
-      Runtime: provided.al2
+      Handler: bootstrap # format is filename.functionName
+      Runtime: provided.al2023

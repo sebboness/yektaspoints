@@ -37,7 +37,7 @@ resource "aws_lambda_function" "main" {
   s3_key    = aws_s3_object.lambda_main.key
 
   package_type = "Zip"
-  runtime = "provided.al2"
+  runtime = "provided.al2023"
   handler = "bootstrap"
   architectures = ["x86_64"]
 
