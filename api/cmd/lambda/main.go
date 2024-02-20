@@ -12,6 +12,7 @@ import (
 	"github.com/sebboness/yektaspoints/util/log"
 )
 
+var c *handlers.LambdaController
 var ginLambda *ginadapter.GinLambda
 var logger = log.NewLogger("mypoints_lambda")
 
@@ -21,19 +22,26 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 
 	env := env.GetEnv("ENV")
 
-	logger.WithContext(ctx).WithField("env", env).Infof("Starting lambda")
+	logger.WithContext(ctx).WithField("env", env).Infof("starting lambda")
 
-	c, err := handlers.NewLambdaController(env)
-	if err != nil {
-		logger.Fatalf("failed to initialize lambda controller: %v", err)
+	if c == nil {
+		logger.Infof("initializing new lambda controller")
+
+		_c, err := handlers.NewLambdaController(env)
+		if err != nil {
+			logger.Fatalf("failed to initialize lambda controller: %v", err)
+		}
+
+		c = _c
 	}
 
 	if ginLambda == nil {
 		// stdout and stderr are sent to AWS CloudWatch Logs
-		logger.Infof("Gin cold start")
+		logger.Infof("gin cold start")
 		r := gin.Default()
 
 		// Health
+		r.GET("/", c.HealthCheckHandler)
 		r.GET("/health", c.HealthCheckHandler)
 
 		// Auth

@@ -13,10 +13,8 @@ test:
 --build-lambda:
 	cd $(LAMBDA_DIR) \
 	&& echo "we're on $$(pwd)" \
-	&& echo 'cleaning lambda...' && find . -type f -not -name '*go' -delete \
-	&& echo 'building lambda...' && $(GOVARS) go build -tags "lambda.norpc" -a -o ./bootstrap -ldflags "$(LDFLAGS)" . \
-	&& echo 'zipping lambda...' && zip main.zip bootstrap
+	&& echo 'cleaning lambda...' && find . -type f -not \( -name '*go' -or -name '*bootstrap' \) -delete \
+	&& echo 'building lambda...' && $(GOVARS) go build -tags lambda.norpc -o ./main -ldflags "-s -w" main.go \
+	&& echo 'zipping lambda...' && chmod 755 main bootstrap && zip -FS main.zip main
 
-# run with argument l=
-# for example: make build l=request_points
 build: --build-lambda
