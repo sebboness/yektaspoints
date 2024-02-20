@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
-	"github.com/aws/aws-lambda-go/events"
+	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util"
 	apierr "github.com/sebboness/yektaspoints/util/error"
@@ -24,30 +24,33 @@ type pointsHandlerResponse struct {
 	Reason string `json:"reason"`
 }
 
-func (c *LambdaController) RequestPointsHandler(ctx context.Context, event *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (c *LambdaController) RequestPointsHandler(cgin *gin.Context) {
 
-	logger.WithContext(ctx).Infof("authorizer: %+v", event.RequestContext.Authorizer)
+	logger.WithContext(cgin.Request.Context()).Infof("authorizer: %+v", cgin.Params)
 	var req pointsHandlerRequest
 
 	// try to unmarshal from request body
-	err := json.Unmarshal([]byte(event.Body), &req)
+	err := cgin.BindJSON(&req)
 	if err != nil {
 		err = fmt.Errorf("failed to unmarshal json body: %w", err)
-		return ApiResponseInternalServerError(err), err
+		cgin.JSON(http.StatusBadRequest, ErrorResult(err))
+		return
 	}
 
-	req.UserID = GetUserIDFromLambdaRequest(event)
+	req.UserID = "0" //GetUserIDFromLambdaRequest(event)
 
-	resp, err := c.handleRequestPoints(ctx, &req)
+	resp, err := c.handleRequestPoints(cgin.Request.Context(), &req)
 	if err != nil {
 		if apierr := apierr.IsApiError(err); apierr != nil {
-			return ApiErrorResponse(apierr), apierr
+			cgin.JSON(apierr.StatusCode(), ErrorResult(apierr))
+			return
 		}
 
-		return ApiResponseInternalServerError(err), err
+		cgin.JSON(http.StatusInternalServerError, ErrorResult(err))
+		return
 	}
 
-	return ApiResponseOK(resp), nil
+	cgin.JSON(http.StatusOK, SuccessResult(resp))
 }
 
 func (c *LambdaController) handleRequestPoints(ctx context.Context, req *pointsHandlerRequest) (pointsHandlerResponse, error) {

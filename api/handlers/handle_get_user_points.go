@@ -3,8 +3,10 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/models"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 )
@@ -21,21 +23,20 @@ type getUserPointsHandlerResponse struct {
 	Points []models.Point `json:"points"`
 }
 
-func (c *LambdaController) GetUserPointsHandler(ctx context.Context, event *getUserPointsHandlerRequest) (events.APIGatewayProxyResponse, error) {
+func (c *LambdaController) GetUserPointsHandler(cgin *gin.Context) {
 
-	logger.WithContext(ctx).Infof("authorizer: %+v", event.RequestContext.Authorizer)
-	event.UserID = GetUserIDFromLambdaRequest(&event.APIGatewayProxyRequest)
-
-	resp, err := c.handleGetUserPoints(ctx, event)
+	resp, err := c.handleGetUserPoints(cgin.Request.Context(), &getUserPointsHandlerRequest{})
 	if err != nil {
 		if apierr := apierr.IsApiError(err); apierr != nil {
-			return ApiErrorResponse(apierr), apierr
+			cgin.JSON(apierr.StatusCode(), ErrorResult(apierr))
+			return
 		}
 
-		return ApiResponseInternalServerError(err), err
+		cgin.JSON(http.StatusInternalServerError, ErrorResult(err))
+		return
 	}
 
-	return ApiResponseOK(resp), nil
+	cgin.JSON(http.StatusOK, SuccessResult(resp))
 }
 
 func (c *LambdaController) handleGetUserPoints(ctx context.Context, req *getUserPointsHandlerRequest) (getUserPointsHandlerResponse, error) {

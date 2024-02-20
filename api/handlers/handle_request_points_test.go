@@ -1,19 +1,22 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/aws/aws-lambda-go/events"
+	"github.com/gin-gonic/gin"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-var fail = errors.New("fail")
+var errFail = errors.New("fail")
 
 func Test_Controller_RequestPointsHandler(t *testing.T) {
 	type state struct {
@@ -32,52 +35,53 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 
 	cases := []test{
 		{"happy path", state{}, want{"", 200}},
-		{"fail - invalid body", state{invalidBody: true}, want{"failed to unmarshal json body", 500}},
+		{"fail - invalid body", state{invalidBody: true}, want{"failed to unmarshal json body", 400}},
 		{"fail - validation error", state{errSavePoint: apierr.New(apierr.InvalidInput)}, want{"invalid input", 400}},
 		{"fail - unauthorized", state{errSavePoint: apierr.New(apierr.Unauthorized)}, want{"unauthorized", 401}},
 		{"fail - internal server error", state{errSavePoint: errors.New("fail")}, want{"fail", 500}},
 	}
 
 	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
 
-		req := &pointsHandlerRequest{
-			Points: 1,
-			Reason: "I worked hard",
-		}
+			req := &pointsHandlerRequest{
+				Points: 1,
+				Reason: "I worked hard",
+			}
 
-		evtBody, _ := json.Marshal(req)
-		evtBodyStr := string(evtBody)
+			evtBody, _ := json.Marshal(req)
+			evtBodyStr := string(evtBody)
 
-		mockPointsDB := mocks.NewMockIPointsStorage(t)
+			mockPointsDB := mocks.NewMockIPointsStorage(t)
 
-		if !c.state.invalidBody {
-			mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Once()
-		} else {
-			evtBodyStr = `{"user_id":`
-		}
+			if !c.state.invalidBody {
+				mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Once()
+			} else {
+				evtBodyStr = `{"user_id":`
+			}
 
-		ctrl := LambdaController{
-			pointsDB: mockPointsDB,
-		}
+			ctrl := LambdaController{
+				pointsDB: mockPointsDB,
+			}
 
-		evt := &events.APIGatewayProxyRequest{
-			Body: evtBodyStr,
-			RequestContext: events.APIGatewayProxyRequestContext{
-				Authorizer: map[string]interface{}{
-					"claims": map[string]interface{}{
-						"cognito:username": "123",
-					},
-				},
-			},
-		}
+			w := httptest.NewRecorder()
+			cgin, _ := gin.CreateTestContext(w)
+			cgin.Request = httptest.NewRequest("POST", "/points", bytes.NewReader([]byte(evtBodyStr)))
 
-		ctx := context.Background()
-		resp, err := ctrl.RequestPointsHandler(ctx, evt)
-		if err != nil {
-			assert.Contains(t, err.Error(), c.want.err)
-		}
+			ctrl.RequestPointsHandler(cgin)
 
-		assert.Equal(t, c.want.code, resp.StatusCode)
+			assert.Equal(t, c.want.code, w.Code)
+			body, err := io.ReadAll(w.Body)
+			assert.Nil(t, err, "reading response body should have no error")
+
+			if c.want.err == "" {
+				assert.Contains(t, string(body), `"points":0`)
+			} else {
+				assert.Contains(t, string(body), c.want.err)
+			}
+
+			mockPointsDB.AssertExpectations(t)
+		})
 	}
 }
 
@@ -98,7 +102,7 @@ func Test_Controller_handleRequestPoints(t *testing.T) {
 	cases := []test{
 		{"happy path", state{}, want{}},
 		{"fail - validation error", state{validationError: true}, want{"invalid input: failed to validate request"}},
-		{"fail - save points", state{errSavePoint: fail}, want{"failed to save points: fail"}},
+		{"fail - save points", state{errSavePoint: errFail}, want{"failed to save points: fail"}},
 	}
 
 	for _, c := range cases {

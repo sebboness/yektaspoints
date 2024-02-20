@@ -82,3 +82,11 @@ func ApiResponseInternalServerError(err error) events.APIGatewayProxyResponse {
 func ApiErrorResponse(err *apierr.ApiError) events.APIGatewayProxyResponse {
 	return ApiResponseWithError(err.StatusCode(), err.Err)
 }
+
+func ErrorResult(err error) *result.Result {
+	return result.ErrorResult(err)
+}
+
+func SuccessResult(data any) *result.Result {
+	return result.SuccessResult(data)
+}

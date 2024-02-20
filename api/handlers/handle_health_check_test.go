@@ -1,22 +1,30 @@
 package handlers
 
 import (
-	"context"
+	"io"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/aws/aws-lambda-go/events"
+	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/util/env"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_HandleHealthCheck(t *testing.T) {
+func Test_Controller_HealthCheckHandler(t *testing.T) {
 	c, err := NewLambdaController(env.GetEnv("ENV"))
 	if err != nil {
 		panic("failed to initialize lambda controller: " + err.Error())
 	}
 
-	resp, err := c.HandleHealthCheck(context.Background(), &events.APIGatewayProxyRequest{})
-	assert.Nil(t, err)
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Contains(t, resp.Body, `"env":"local"`)
+	w := httptest.NewRecorder()
+	cgin, _ := gin.CreateTestContext(w)
+	cgin.Request = httptest.NewRequest("GET", "/health", nil)
+
+	c.HealthCheckHandler(cgin)
+
+	assert.Equal(t, 200, w.Code)
+
+	body, err := io.ReadAll(w.Body)
+	assert.Nil(t, err, "response body read should have no error")
+	assert.Contains(t, string(body), `"env":"local"`)
 }

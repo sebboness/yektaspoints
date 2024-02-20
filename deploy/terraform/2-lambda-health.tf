@@ -39,7 +39,7 @@ resource "aws_lambda_function" "health" {
   package_type = "Zip"
   runtime = "provided.al2023"
   handler = "bootstrap.handler"
-  architectures = ["arm64"]
+  architectures = ["amd64"]
 
   source_code_hash = data.external.output_hash.result.filebase64sha256
 

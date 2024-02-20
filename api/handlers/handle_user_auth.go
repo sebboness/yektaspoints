@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"net/http"
 
-	"github.com/aws/aws-lambda-go/events"
+	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/util/auth"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 )
@@ -23,28 +23,31 @@ type userAuthResponse struct {
 	auth.AuthResult
 }
 
-// UserAuthHandler authenticates a user using a username/password auth flow
-func (c *LambdaController) UserAuthHandler(ctx context.Context, event *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+// UserAuthHandler authenticates a user depending on the request grant_type
+func (c *LambdaController) UserAuthHandler(cgin *gin.Context) {
 
 	var req userAuthRequest
 
 	// try to unmarshal from request body
-	err := json.Unmarshal([]byte(event.Body), &req)
+	err := cgin.BindJSON(&req)
 	if err != nil {
 		err = fmt.Errorf("failed to unmarshal json body: %w", err)
-		return ApiResponseInternalServerError(err), err
+		cgin.JSON(http.StatusBadRequest, ErrorResult(err))
+		return
 	}
 
-	resp, err := c.handleUserAuth(ctx, &req)
+	resp, err := c.handleUserAuth(cgin.Request.Context(), &req)
 	if err != nil {
 		if apierr := apierr.IsApiError(err); apierr != nil {
-			return ApiErrorResponse(apierr), apierr
+			cgin.JSON(apierr.StatusCode(), ErrorResult(apierr))
+			return
 		}
 
-		return ApiResponseInternalServerError(err), err
+		cgin.JSON(http.StatusInternalServerError, ErrorResult(err))
+		return
 	}
 
-	return ApiResponseOK(resp), nil
+	cgin.JSON(http.StatusOK, SuccessResult(resp))
 }
 
 func (c *LambdaController) handleUserAuth(ctx context.Context, req *userAuthRequest) (userAuthResponse, error) {

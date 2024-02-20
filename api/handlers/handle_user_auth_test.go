@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/aws/aws-lambda-go/events"
+	"github.com/gin-gonic/gin"
 	mocks "github.com/sebboness/yektaspoints/mocks/auth"
 
 	"github.com/sebboness/yektaspoints/util/auth"
@@ -33,51 +36,55 @@ func Test_UserAuthHandler(t *testing.T) {
 
 	cases := []test{
 		{"happy path", state{}, want{"", 200}},
-		{"fail - invalid body", state{invalidBody: true}, want{"failed to unmarshal json body", 500}},
+		{"fail - invalid body", state{invalidBody: true}, want{"failed to unmarshal json body", 400}},
 		{"fail - validation error", state{errAuth: apierr.New(apierr.InvalidInput)}, want{"invalid input", 400}},
 		{"fail - internal server error", state{errAuth: errors.New("fail")}, want{"fail", 500}},
 	}
 
 	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
 
-		req := &userAuthRequest{
-			GrantType: auth.GrantTypePassword,
-			Username:  "john",
-			Password:  "123",
-		}
+			req := &userAuthRequest{
+				GrantType: auth.GrantTypePassword,
+				Username:  "john",
+				Password:  "123",
+			}
 
-		evtBody, _ := json.Marshal(req)
-		evtBodyStr := string(evtBody)
+			evtBody, _ := json.Marshal(req)
+			evtBodyStr := string(evtBody)
 
-		mockAuther := mocks.NewMockAuthController(t)
+			mockAuther := mocks.NewMockAuthController(t)
 
-		authRes := auth.AuthResult{Token: "abc"}
+			authRes := auth.AuthResult{Token: "abc"}
 
-		if !c.state.invalidBody {
-			mockAuther.EXPECT().Authenticate(mock.Anything, mock.Anything, mock.Anything).Return(authRes, c.state.errAuth).Once()
-		} else {
-			evtBodyStr = `{"user_id":`
-		}
+			if !c.state.invalidBody {
+				mockAuther.EXPECT().Authenticate(mock.Anything, mock.Anything, mock.Anything).Return(authRes, c.state.errAuth).Once()
+			} else {
+				evtBodyStr = `{"user_id":`
+			}
 
-		ctrl := LambdaController{
-			auth: mockAuther,
-		}
+			ctrl := LambdaController{
+				auth: mockAuther,
+			}
 
-		evt := &events.APIGatewayProxyRequest{
-			Body: evtBodyStr,
-		}
+			w := httptest.NewRecorder()
+			cgin, _ := gin.CreateTestContext(w)
+			cgin.Request = httptest.NewRequest("GET", "/auth/token", bytes.NewReader([]byte(evtBodyStr)))
 
-		ctx := context.Background()
-		resp, err := ctrl.UserAuthHandler(ctx, evt)
+			ctrl.UserAuthHandler(cgin)
 
-		tests.AssertError(t, err, c.want.err)
-		assert.Equal(t, c.want.code, resp.StatusCode)
+			assert.Equal(t, c.want.code, w.Code)
+			body, err := io.ReadAll(w.Body)
+			assert.Nil(t, err, "reading response body should have no error")
 
-		if err == nil {
-			assert.Contains(t, resp.Body, `token":"abc"`)
-		}
+			if c.want.err == "" {
+				assert.Contains(t, string(body), `token":"abc"`)
+			} else {
+				assert.Contains(t, string(body), c.want.err)
+			}
 
-		mockAuther.AssertExpectations(t)
+			mockAuther.AssertExpectations(t)
+		})
 	}
 }
 
@@ -101,8 +108,8 @@ func Test_handleUserAuth(t *testing.T) {
 		{"happy path - password flow", state{isPwFlow: true}, want{}},
 		{"happy path - refresh token flow", state{isRtFlow: true}, want{}},
 		{"fail - invalid input", state{isPwFlow: true, hasValidationErr: true}, want{"failed to validate request"}},
-		{"fail - password flow", state{isPwFlow: true, authErr: fail}, want{"failed to authenticate"}},
-		{"fail - refresh token flow", state{isRtFlow: true, authErr: fail}, want{"failed to refresh token"}},
+		{"fail - password flow", state{isPwFlow: true, authErr: errFail}, want{"failed to authenticate"}},
+		{"fail - refresh token flow", state{isRtFlow: true, authErr: errFail}, want{"failed to refresh token"}},
 	}
 
 	for _, c := range cases {
