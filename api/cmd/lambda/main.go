@@ -22,7 +22,14 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 
 	env := env.GetEnv("ENV")
 
-	logger.WithContext(ctx).WithField("env", env).Infof("starting lambda")
+	logger.WithContext(ctx).WithFields(map[string]any{
+		"env":              env,
+		"method":           req.HTTPMethod,
+		"path":             req.Path,
+		"path_parameters":  req.PathParameters,
+		"query_parameters": req.QueryStringParameters,
+		"request_id":       req.RequestContext.RequestID,
+	}).Infof("starting lambda")
 
 	if c == nil {
 		logger.Infof("initializing new lambda controller")
@@ -36,21 +43,21 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	}
 
 	if ginLambda == nil {
-		// stdout and stderr are sent to AWS CloudWatch Logs
 		logger.Infof("gin cold start")
 		r := gin.Default()
-
-		// Health
-		r.GET("/", c.HealthCheckHandler)
-		r.GET("/health", c.HealthCheckHandler)
 
 		// Auth
 		r.POST("/auth/token", c.UserAuthHandler)
 
+		// Health
+		r.GET("/", c.HealthCheckHandler)
+		r.GET("/health", c.HealthCheckHandler)
+		r.GET("/v1/health", c.HealthCheckHandler)
+
 		// Points
-		r.GET("/points", c.GetUserPointsHandler)
-		r.GET("/points/:point_id", c.GetUserPointsHandler)
-		r.POST("/points", c.RequestPointsHandler)
+		r.GET("/v1/points", c.GetUserPointsHandler)
+		r.GET("/v1/points/:point_id", c.GetUserPointsHandler)
+		r.POST("/v1/points", c.RequestPointsHandler)
 
 		ginLambda = ginadapter.New(r)
 	}

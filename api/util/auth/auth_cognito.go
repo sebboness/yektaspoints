@@ -63,12 +63,13 @@ func (c *CognitoController) Authenticate(ctx context.Context, username, password
 		return result, nil
 	}
 
-	result.Token = *resp.AuthenticationResult.AccessToken
+	result.AccessToken = *resp.AuthenticationResult.AccessToken
+	result.IdToken = *resp.AuthenticationResult.IdToken
 	result.ExpiresIn = resp.AuthenticationResult.ExpiresIn
 
 	// We need to grab the user record after authentication in order to store the "username" (aka the "sub") value
 	// which we need for token refreshes later
-	userResp, err := c.authClient.GetUser(ctx, &cognito.GetUserInput{AccessToken: &result.Token})
+	userResp, err := c.authClient.GetUser(ctx, &cognito.GetUserInput{AccessToken: &result.AccessToken})
 	if err != nil {
 		return result, fmt.Errorf("failed to get user after authentication: %w", err)
 	}
@@ -95,8 +96,8 @@ func (c *CognitoController) RefreshToken(ctx context.Context, username, refreshT
 	}
 
 	return AuthResult{
-		Token:     *resp.AuthenticationResult.IdToken,
-		ExpiresIn: resp.AuthenticationResult.ExpiresIn,
+		AccessToken: *resp.AuthenticationResult.IdToken,
+		ExpiresIn:   resp.AuthenticationResult.ExpiresIn,
 	}, nil
 }
 

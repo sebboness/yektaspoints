@@ -1,6 +1,11 @@
 CUR_DIR = $(shell pwd)
 TERRAFORM_DIR = $(CUR_DIR)/terraform
 
+.PHONY: init
+init:
+	cd ${TERRAFORM_DIR} \
+	&& terraform init \
+
 .PHONY: plan
 plan:
 	cd ${TERRAFORM_DIR} \
@@ -24,11 +29,6 @@ destroy:
 	cd ${TERRAFORM_DIR} \
 	&& terraform workspace select $(env) \
 	&& terraform apply -destroy -auto-approve
-
-.PHONY: init
-init:
-	cd ${TERRAFORM_DIR} \
-	&& terraform init \
 
 # DEV
 plan-dev: 

@@ -55,7 +55,7 @@ func Test_UserAuthHandler(t *testing.T) {
 
 			mockAuther := mocks.NewMockAuthController(t)
 
-			authRes := auth.AuthResult{Token: "abc"}
+			authRes := auth.AuthResult{AccessToken: "abc"}
 
 			if !c.state.invalidBody {
 				mockAuther.EXPECT().Authenticate(mock.Anything, mock.Anything, mock.Anything).Return(authRes, c.state.errAuth).Once()
@@ -125,7 +125,7 @@ func Test_handleUserAuth(t *testing.T) {
 				Username: "123",
 			}
 
-			authRes := auth.AuthResult{Token: "abc"}
+			authRes := auth.AuthResult{AccessToken: "abc"}
 
 			if c.state.isPwFlow {
 				req.GrantType = auth.GrantTypePassword
@@ -153,7 +153,7 @@ func Test_handleUserAuth(t *testing.T) {
 
 			tests.AssertError(t, err, c.want.err)
 			if err == nil {
-				assert.Equal(t, res.Token, "abc")
+				assert.Equal(t, res.AccessToken, "abc")
 			}
 
 			mockAuther.AssertExpectations(t)
