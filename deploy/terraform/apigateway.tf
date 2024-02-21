@@ -137,19 +137,6 @@ resource "aws_api_gateway_deployment" "deployment" {
 }
 
 # domain
-resource "aws_acm_certificate" "api_cert" {
-  domain_name               = "${local.apiSubdomain}.hexonite.net"
-  provider                  = aws
-  subject_alternative_names = ["${local.apiSubdomain}.hexonite.net"] # Your custom domain
-  validation_method         = "DNS"
-}
-
-resource "aws_api_gateway_domain_name" "gw_domain" {
-  certificate_arn = aws_acm_certificate.api_cert.arn
-  domain_name     = "${local.apiSubdomain}.hexonite.net"
-  security_policy = "TLS_1_2"
-}
-
 resource "aws_api_gateway_base_path_mapping" "gw_mapping" {
   domain_name = "${local.apiSubdomain}.hexonite.net"
   api_id      = aws_api_gateway_rest_api.api.id

@@ -31,7 +31,7 @@ locals {
   corsAllowMethods = "DELETE,GET,OPTIONS,PATCH,POST,PUT"
   corsAllowOrigins = "mypoints.hexonite.net,dev-mypoints.hexonite.net,staging-mypoints.hexonite.net"
 
-  apiSubdomain = local.env == "prod" ? "mypoints-api" : "${local.env}-mypoints-api" # (i.e. mypoints-api.hexonite.net)
+  apiSubdomain = local.env == "prod" ? "mypoints-api" : "mypoints-api-${local.env}" # (i.e. mypoints-api.hexonite.net)
 }
 
 provider "aws" {
