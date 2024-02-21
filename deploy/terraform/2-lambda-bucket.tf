@@ -1,14 +1,14 @@
 resource "random_id" "suffix" {
   keepers = {
     # Generate a new id each time we switch to a new AMI id
-    env = var.env
+    env = local.env
   }
 
   byte_length = 8
 }
 
 resource "aws_s3_bucket" "lambda_bucket" {
-  bucket        = "hexonite-${var.app}-${var.env}-${random_id.suffix.hex}"
+  bucket        = "hexonite-${local.app}-${local.env}-${random_id.suffix.hex}"
   force_destroy = true
 }
 

@@ -1,5 +1,5 @@
 resource "aws_iam_role" "lambda_exec" {
-  name = "hexonite-${var.app}-${var.env}-main-lambda"
+  name = "hexonite-${local.app}-${local.env}-main-lambda"
 
   assume_role_policy = <<POLICY
 {
@@ -26,12 +26,16 @@ variable "output_path" {
   default = "../../api/cmd/lambda/bootstrap.zip"
 }
 
+variable "lambda_version" {
+  default = "../../api/VERSION"
+}
+
 data "external" "output_hash" {
   program = ["/bin/sh", "${path.module}/compute_file_hash.sh", "${var.output_path}"]
 }
 
 resource "aws_lambda_function" "main" {
-  function_name = "${var.app}-${var.env}-main"
+  function_name = "${local.app}-${local.env}-main"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
   s3_key    = aws_s3_object.lambda_main.key
@@ -47,8 +51,10 @@ resource "aws_lambda_function" "main" {
 
   environment {
     variables = {
-      APPNAME = var.app
-      ENV     = var.env
+      APPNAME  = local.app
+      ENV      = local.env
+      VERSION  = file(var.lambda_version)
+      GIN_MODE = local.env == "prod" ? "release" : "debug" 
       COGNITO_USER_POOL_ID  = local.ssm_secrets["COGNITO_USER_POOL_ID"]
       COGNITO_CLIENT_ID     = local.ssm_secrets["COGNITO_CLIENT_ID"]
       COGNITO_CLIENT_SECRET = local.ssm_secrets["COGNITO_CLIENT_SECRET"]
@@ -65,8 +71,17 @@ resource "aws_cloudwatch_log_group" "main" {
 resource "aws_s3_object" "lambda_main" {
   bucket = aws_s3_bucket.lambda_bucket.id
 
-  key    = "${var.app}-${var.env}-main.zip"
+  key    = "${local.app}-${local.env}-main.zip"
   source = var.output_path
 
   etag = filemd5(var.output_path)
+}
+
+resource "aws_lambda_permission" "apigw_lambda" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.main.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_api_gateway_rest_api.api.execution_arn}/*/*/*"
 }
