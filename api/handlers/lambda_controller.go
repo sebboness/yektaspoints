@@ -13,7 +13,7 @@ type LambdaController struct {
 	pointsDB storage.IPointsStorage
 }
 
-func NewLambdaController(env string) (*LambdaController, error) {
+func NewLambdaController(ctx context.Context, env string) (*LambdaController, error) {
 	storageCfg := storage.Config{Env: env}
 
 	pointsDB, err := storage.NewDynamoDbStorage(storageCfg)
@@ -21,7 +21,7 @@ func NewLambdaController(env string) (*LambdaController, error) {
 		return nil, fmt.Errorf("failed to initialize points db: %w", err)
 	}
 
-	authController, err := auth.New(context.TODO())
+	authController, err := auth.New(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize auth controller: %w", err)
 	}

@@ -24,7 +24,7 @@ type userRegisterResponse struct {
 	auth.UserRegisterResult
 }
 
-// UserRegisterHandler authenticates a user depending on the request grant_type
+// UserRegisterHandler registers a new user
 func (c *UserController) UserRegisterHandler(cgin *gin.Context) {
 
 	var req userRegisterRequest
@@ -48,7 +48,7 @@ func (c *UserController) UserRegisterHandler(cgin *gin.Context) {
 		return
 	}
 
-	cgin.JSON(http.StatusOK, handlers.SuccessResult(resp))
+	cgin.JSON(http.StatusCreated, handlers.SuccessResult(resp))
 }
 
 func (c *UserController) handleUserRegister(ctx context.Context, req *userRegisterRequest) (userRegisterResponse, error) {
@@ -76,12 +76,16 @@ func (c *UserController) handleUserRegister(ctx context.Context, req *userRegist
 func validateUserRegister(req *userRegisterRequest) error {
 	apierr := apierr.New(fmt.Errorf("%w: failed to validate request", apierr.InvalidInput))
 
-	if req.Username == "" {
-		apierr.AppendError("missing username")
+	if len(req.Username) < 4 {
+		apierr.AppendError("username must be at least 4 characters long")
 	}
 
 	if _, err := mail.ParseAddress(req.Email); err != nil {
 		apierr.AppendError("email must be a valid email address")
+	}
+
+	if len(req.Name) < 2 {
+		apierr.AppendError("name must be at least 2 characters long")
 	}
 
 	pwResult := auth.ValidatePassword(req.Password)
@@ -89,10 +93,10 @@ func validateUserRegister(req *userRegisterRequest) error {
 		apierr.AppendError("password must be within 8 and 256 characters in length")
 	}
 	if !pwResult.Lower {
-		apierr.AppendError("password must have at least one upper case letter")
+		apierr.AppendError("password must have at least one lower case letter")
 	}
 	if !pwResult.Upper {
-		apierr.AppendError("password must have at least one lower case letter")
+		apierr.AppendError("password must have at least one upper case letter")
 	}
 	if !pwResult.Number {
 		apierr.AppendError("password must have at least one digit")

@@ -37,7 +37,7 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	// intialize catchall lambda controller
 	if lambdaCtrl == nil {
 		logger.Infof("initializing new lambda controller")
-		_c, err := handlers.NewLambdaController(env)
+		_c, err := handlers.NewLambdaController(ctx, env)
 		if err != nil {
 			logger.Fatalf("failed to initialize lambda controller: %v", err)
 		}
@@ -48,7 +48,7 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	// initialize user controller
 	if userCtrl == nil {
 		logger.Infof("initializing new user controller")
-		_c, err := userHandlers.NewUserController(env)
+		_c, err := userHandlers.NewUserController(ctx, env)
 		if err != nil {
 			logger.Fatalf("failed to initialize user controller: %v", err)
 		}

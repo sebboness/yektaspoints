@@ -12,7 +12,7 @@ type UserController struct {
 	// userDB storage.IPointsStorage
 }
 
-func NewUserController(env string) (*UserController, error) {
+func NewUserController(ctx context.Context, env string) (*UserController, error) {
 	// storageCfg := storage.Config{Env: env}
 
 	// userDB, err := storage.NewDynamoDbStorage(storageCfg)
@@ -20,7 +20,7 @@ func NewUserController(env string) (*UserController, error) {
 	// 	return nil, fmt.Errorf("failed to initialize points db: %w", err)
 	// }
 
-	authController, err := auth.New(context.TODO())
+	authController, err := auth.New(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize auth controller: %w", err)
 	}

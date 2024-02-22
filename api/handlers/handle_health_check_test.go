@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"io"
 	"net/http/httptest"
 	"testing"
@@ -11,7 +12,7 @@ import (
 )
 
 func Test_Controller_HealthCheckHandler(t *testing.T) {
-	c, err := NewLambdaController(env.GetEnv("ENV"))
+	c, err := NewLambdaController(context.Background(), env.GetEnv("ENV"))
 	if err != nil {
 		panic("failed to initialize lambda controller: " + err.Error())
 	}
