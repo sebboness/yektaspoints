@@ -30,3 +30,7 @@ func (r *Result) WithMessage(message string) *Result {
 	r.Message = message
 	return r
 }
+
+func (r Result) IsSuccess() bool {
+	return r.Status == ResultSuccess
+}

@@ -9,7 +9,6 @@ import (
 	cognito "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
-	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util/env"
 )
 
@@ -81,6 +80,25 @@ func (c *CognitoController) Authenticate(ctx context.Context, username, password
 	return result, nil
 }
 
+func (c *CognitoController) ConfirmRegistration(ctx context.Context, username, code string) error {
+
+	resp, err := c.authClient.ConfirmSignUp(ctx, &cognito.ConfirmSignUpInput{
+		ConfirmationCode: aws.String(code),
+		Username:         aws.String(username),
+		ClientId:         aws.String(c.cognitoClientID),
+		SecretHash:       aws.String(c.computeSecretHash(username)),
+	})
+
+	logger.WithField("resp", resp).Infof("user confirm signup response")
+
+	if err != nil {
+		logger.WithField("error", err).Errorf("user confirm signup")
+		return err
+	}
+
+	return nil
+}
+
 func (c *CognitoController) RefreshToken(ctx context.Context, username, refreshToken string) (AuthResult, error) {
 
 	resp, err := c.authClient.InitiateAuth(ctx, &cognito.InitiateAuthInput{
@@ -103,7 +121,8 @@ func (c *CognitoController) RefreshToken(ctx context.Context, username, refreshT
 	}, nil
 }
 
-func (c *CognitoController) Register(ctx context.Context, req models.UserRegister) error {
+func (c *CognitoController) Register(ctx context.Context, req UserRegisterRequest) (UserRegisterResult, error) {
+	result := UserRegisterResult{}
 
 	resp, err := c.authClient.SignUp(ctx, &cognito.SignUpInput{
 		Username:   aws.String(req.Username),
@@ -125,11 +144,16 @@ func (c *CognitoController) Register(ctx context.Context, req models.UserRegiste
 	logger.WithField("resp", resp).Infof("user signup response")
 
 	if err != nil {
-		logger.WithField("error", err).Errorf("update signup error")
-		return fmt.Errorf("failed to register user: %w", err)
+		logger.WithField("error", err).Errorf("user signup error")
+		return result, fmt.Errorf("failed to register user: %w", err)
 	}
 
-	return nil
+	result.IsConfirmed = resp.UserConfirmed
+	result.Username = *resp.UserSub
+	result.ConfirmationType = string(resp.CodeDeliveryDetails.DeliveryMedium)
+	result.ConfirmationSentTo = *resp.CodeDeliveryDetails.Destination
+
+	return result, nil
 }
 
 func (c *CognitoController) UpdatePassword(ctx context.Context, session, username, password string) error {

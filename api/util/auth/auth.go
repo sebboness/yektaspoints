@@ -7,8 +7,6 @@ import (
 	"encoding/base64"
 	"unicode"
 
-	cognito "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util/log"
 )
 
@@ -23,12 +21,12 @@ var SupportedGrantTypes = map[string]bool{
 	GrantTypeRefreshToken: true,
 }
 
-type AuthClient interface {
-	GetUser(ctx context.Context, params *cognito.GetUserInput, optFns ...func(*cognito.Options)) (*cognito.GetUserOutput, error)
-	InitiateAuth(ctx context.Context, params *cognito.InitiateAuthInput, optFns ...func(*cognito.Options)) (*cognito.InitiateAuthOutput, error)
-	RespondToAuthChallenge(ctx context.Context, params *cognito.RespondToAuthChallengeInput, optFns ...func(*cognito.Options)) (*cognito.RespondToAuthChallengeOutput, error)
-	SignUp(ctx context.Context, params *cognito.SignUpInput, optFns ...func(*cognito.Options)) (*cognito.SignUpOutput, error)
-	UpdateUserAttributes(ctx context.Context, params *cognito.UpdateUserAttributesInput, optFns ...func(*cognito.Options)) (*cognito.UpdateUserAttributesOutput, error)
+type AuthController interface {
+	Authenticate(ctx context.Context, username, password string) (AuthResult, error)
+	ConfirmRegistration(ctx context.Context, username, code string) error
+	RefreshToken(ctx context.Context, username, token string) (AuthResult, error)
+	Register(ctx context.Context, ur UserRegisterRequest) (UserRegisterResult, error)
+	UpdatePassword(ctx context.Context, session, username, password string) error
 }
 
 type AuthResult struct {
@@ -40,11 +38,18 @@ type AuthResult struct {
 	Session             string `json:"session"`
 }
 
-type AuthController interface {
-	Authenticate(ctx context.Context, username, password string) (AuthResult, error)
-	RefreshToken(ctx context.Context, username, token string) (AuthResult, error)
-	Register(ctx context.Context, ur models.UserRegister) error
-	UpdatePassword(ctx context.Context, session, username, password string) error
+type UserRegisterRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+}
+
+type UserRegisterResult struct {
+	IsConfirmed        bool   `json:"is_confirmed"`
+	ConfirmationType   string `json:"confirmation_type"`
+	ConfirmationSentTo string `json:"confirmation_sent_to"`
+	Username           string `json:"username"`
 }
 
 var logger = log.Get()

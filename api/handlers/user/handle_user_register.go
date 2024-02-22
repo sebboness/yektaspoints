@@ -21,6 +21,7 @@ type userRegisterRequest struct {
 }
 
 type userRegisterResponse struct {
+	auth.UserRegisterResult
 }
 
 // UserRegisterHandler authenticates a user depending on the request grant_type
@@ -57,6 +58,18 @@ func (c *UserController) handleUserRegister(ctx context.Context, req *userRegist
 		return resp, err
 	}
 
+	result, err := c.auth.Register(ctx, auth.UserRegisterRequest{
+		Username: req.Username,
+		Password: req.Password,
+		Email:    req.Email,
+		Name:     req.Name,
+	})
+
+	if err != nil {
+		return resp, fmt.Errorf("failed to register user '%s': %w", req.Username, err)
+	}
+
+	resp.UserRegisterResult = result
 	return resp, nil
 }
 
@@ -86,6 +99,10 @@ func validateUserRegister(req *userRegisterRequest) error {
 	}
 	if !pwResult.Special {
 		apierr.AppendError("password must have at least one special character")
+	}
+
+	if req.Password != "" && req.Password != req.ConfirmPassword {
+		apierr.AppendError("confirm password does not match password")
 	}
 
 	if len(apierr.Errors()) > 0 {

@@ -20,6 +20,7 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 
 	// User
 	r.POST("/v1/user/register", userCtrl.UserRegisterHandler)
+	r.POST("/v1/user/register/confirm", userCtrl.UserRegisterConfirmHandler)
 
 	return r
 }
