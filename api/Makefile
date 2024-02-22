@@ -14,7 +14,7 @@ test:
 	cd $(LAMBDA_DIR) \
 	&& echo "we're on $$(pwd)" \
 	&& echo 'cleaning lambda...' && find . -type f -not \( -name '*go' -or -name '*go' \) -delete \
-	&& echo 'building lambda...' && $(GOVARS) go build -tags lambda.norpc -o ./bootstrap -ldflags "$(LDFLAGS)" main.go \
+	&& echo 'building lambda...' && $(GOVARS) go build -tags lambda.norpc -o ./bootstrap -ldflags "$(LDFLAGS)" . \
 	&& echo 'zipping lambda...' && chmod 755 * && zip -FS bootstrap.zip bootstrap
 
 build: --build-lambda

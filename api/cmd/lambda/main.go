@@ -8,11 +8,14 @@ import (
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
+	userHandlers "github.com/sebboness/yektaspoints/handlers/user"
 	"github.com/sebboness/yektaspoints/util/env"
 	"github.com/sebboness/yektaspoints/util/log"
 )
 
-var c *handlers.LambdaController
+var lambdaCtrl *handlers.LambdaController
+var userCtrl *userHandlers.UserController
+
 var ginLambda *ginadapter.GinLambda
 var logger = log.NewLogger("mypoints_lambda")
 
@@ -31,33 +34,33 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 		"request_id":       req.RequestContext.RequestID,
 	}).Infof("starting lambda")
 
-	if c == nil {
+	// intialize catchall lambda controller
+	if lambdaCtrl == nil {
 		logger.Infof("initializing new lambda controller")
-
 		_c, err := handlers.NewLambdaController(env)
 		if err != nil {
 			logger.Fatalf("failed to initialize lambda controller: %v", err)
 		}
 
-		c = _c
+		lambdaCtrl = _c
+	}
+
+	// initialize user controller
+	if userCtrl == nil {
+		logger.Infof("initializing new user controller")
+		_c, err := userHandlers.NewUserController(env)
+		if err != nil {
+			logger.Fatalf("failed to initialize user controller: %v", err)
+		}
+
+		userCtrl = _c
 	}
 
 	if ginLambda == nil {
 		logger.Infof("gin cold start")
 		r := gin.Default()
 
-		// Auth
-		r.POST("/auth/token", c.UserAuthHandler)
-
-		// Health
-		r.GET("/", c.HealthCheckHandler)
-		r.GET("/health", c.HealthCheckHandler)
-		r.GET("/v1/health", c.HealthCheckHandler)
-
-		// Points
-		r.GET("/v1/points", c.GetUserPointsHandler)
-		r.GET("/v1/points/:point_id", c.GetUserPointsHandler)
-		r.POST("/v1/points", c.RequestPointsHandler)
+		RegisterRoutes(r)
 
 		ginLambda = ginadapter.New(r)
 	}

@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	cognito "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util/log"
 )
 
@@ -26,6 +27,7 @@ type AuthClient interface {
 	GetUser(ctx context.Context, params *cognito.GetUserInput, optFns ...func(*cognito.Options)) (*cognito.GetUserOutput, error)
 	InitiateAuth(ctx context.Context, params *cognito.InitiateAuthInput, optFns ...func(*cognito.Options)) (*cognito.InitiateAuthOutput, error)
 	RespondToAuthChallenge(ctx context.Context, params *cognito.RespondToAuthChallengeInput, optFns ...func(*cognito.Options)) (*cognito.RespondToAuthChallengeOutput, error)
+	SignUp(ctx context.Context, params *cognito.SignUpInput, optFns ...func(*cognito.Options)) (*cognito.SignUpOutput, error)
 	UpdateUserAttributes(ctx context.Context, params *cognito.UpdateUserAttributesInput, optFns ...func(*cognito.Options)) (*cognito.UpdateUserAttributesOutput, error)
 }
 
@@ -41,6 +43,7 @@ type AuthResult struct {
 type AuthController interface {
 	Authenticate(ctx context.Context, username, password string) (AuthResult, error)
 	RefreshToken(ctx context.Context, username, token string) (AuthResult, error)
+	Register(ctx context.Context, ur models.UserRegister) error
 	UpdatePassword(ctx context.Context, session, username, password string) error
 }
 

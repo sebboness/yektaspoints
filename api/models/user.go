@@ -11,3 +11,10 @@ type User struct {
 	CreatedOn time.Time `json:"createdOn"`
 	UpdatedOn time.Time `json:"updatedOn"`
 }
+
+type UserRegister struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+}

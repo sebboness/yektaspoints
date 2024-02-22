@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	cognito "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
+	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util/env"
 )
 
@@ -99,6 +101,35 @@ func (c *CognitoController) RefreshToken(ctx context.Context, username, refreshT
 		AccessToken: *resp.AuthenticationResult.IdToken,
 		ExpiresIn:   resp.AuthenticationResult.ExpiresIn,
 	}, nil
+}
+
+func (c *CognitoController) Register(ctx context.Context, req models.UserRegister) error {
+
+	resp, err := c.authClient.SignUp(ctx, &cognito.SignUpInput{
+		Username:   aws.String(req.Username),
+		Password:   aws.String(req.Password),
+		ClientId:   aws.String(c.cognitoClientID),
+		SecretHash: aws.String(c.computeSecretHash(req.Username)),
+		UserAttributes: []types.AttributeType{
+			{
+				Name:  aws.String("name"),
+				Value: aws.String(req.Name),
+			},
+			{
+				Name:  aws.String("email"),
+				Value: aws.String(req.Email),
+			},
+		},
+	})
+
+	logger.WithField("resp", resp).Infof("user signup response")
+
+	if err != nil {
+		logger.WithField("error", err).Errorf("update signup error")
+		return fmt.Errorf("failed to register user: %w", err)
+	}
+
+	return nil
 }
 
 func (c *CognitoController) UpdatePassword(ctx context.Context, session, username, password string) error {
