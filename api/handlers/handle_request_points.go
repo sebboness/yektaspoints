@@ -26,7 +26,6 @@ type pointsHandlerResponse struct {
 
 func (c *LambdaController) RequestPointsHandler(cgin *gin.Context) {
 
-	logger.WithContext(cgin.Request.Context()).Infof("authorizer: %+v", cgin.Params)
 	var req pointsHandlerRequest
 
 	// try to unmarshal from request body
@@ -37,7 +36,8 @@ func (c *LambdaController) RequestPointsHandler(cgin *gin.Context) {
 		return
 	}
 
-	req.UserID = "0" //GetUserIDFromLambdaRequest(event)
+	authInfo := GetAuthorizerInfo(cgin)
+	req.UserID = authInfo.GetUserID()
 
 	resp, err := c.handleRequestPoints(cgin.Request.Context(), &req)
 	if err != nil {

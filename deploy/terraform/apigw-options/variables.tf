@@ -17,9 +17,3 @@ variable "corsAllowMethods" {
 variable "corsAllowOrigins" {
     type = string
 }
-
-# rest_api_id
-# resource_id
-# corsAllowHeaders
-# corsAllowMethods
-# corsAllowOrigins

@@ -7,6 +7,41 @@ resource "aws_api_gateway_rest_api" "api" {
   }
 }
 
+resource "aws_api_gateway_gateway_response" "responses" {
+  for_each = {
+    BAD_REQUEST_BODY               = 400
+    BAD_REQUEST_PARAMETERS         = 400
+    DEFAULT_4XX                    = 400
+    MISSING_AUTHENTICATION_TOKEN   = 400
+    UNAUTHORIZED                   = 401
+    ACCESS_DENIED                  = 403
+    EXPIRED_TOKEN                  = 403
+    INVALID_API_KEY                = 403
+    INVALID_SIGNATURE              = 403
+    WAF_FILTERED                   = 403
+    RESOURCE_NOT_FOUND             = 404
+    REQUEST_TOO_LARGE              = 413
+    UNSUPPORTED_MEDIA_TYPE         = 415
+    QUOTA_EXCEEDED                 = 429
+    THROTTLED                      = 429
+    API_CONFIGURATION_ERROR        = 500
+    AUTHORIZER_CONFIGURATION_ERROR = 500
+    AUTHORIZER_FAILURE             = 500
+    DEFAULT_5XX                    = 500
+    INTEGRATION_FAILURE            = 504
+    INTEGRATION_TIMEOUT            = 504
+  }
+  response_type = each.key
+  status_code   = each.value
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  response_templates = {
+    "application/json" = "{\"status\":\"FAILURE\",\"errors\":[$context.error.messageString],\"message\":$context.error.messageString}"
+  }
+  depends_on = [
+    aws_api_gateway_rest_api.api
+  ]
+}
+
 data "aws_cognito_user_pools" "pools" {
   name = "mypoints"
 }
@@ -167,7 +202,7 @@ resource "aws_api_gateway_integration_response" "auth_token_post" {
   ]
 }
 
-# /health
+# resource /health
 resource "aws_api_gateway_resource" "health" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
@@ -177,6 +212,7 @@ resource "aws_api_gateway_resource" "health" {
   ]
 }
 
+# method /health
 resource "aws_api_gateway_method" "health_get" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   resource_id = aws_api_gateway_resource.health.id
@@ -221,6 +257,126 @@ resource "aws_api_gateway_integration_response" "health_get" {
   ]
 }
 
+# resource /v1/user
+resource "aws_api_gateway_resource" "user" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.root.id
+  path_part   = "user"
+  depends_on = [
+    aws_api_gateway_resource.root
+  ]
+}
+
+# resource /v1/user/register
+resource "aws_api_gateway_resource" "user_register" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.user.id
+  path_part   = "register"
+  depends_on = [
+    aws_api_gateway_resource.user
+  ]
+}
+
+# method POST /v1/user/register
+resource "aws_api_gateway_method" "post_user_register" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_register.id
+  http_method = "POST"
+  authorization = "NONE"
+  depends_on = [
+    aws_api_gateway_resource.user_register
+  ]
+}
+
+resource "aws_api_gateway_integration" "user_register_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.user_register.id
+  http_method             = aws_api_gateway_method.post_user_register.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.main.invoke_arn
+  depends_on = [
+    aws_api_gateway_method.post_user_register
+  ]
+
+}
+
+resource "aws_api_gateway_method_response" "post_user_register" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_register.id
+  http_method = aws_api_gateway_method.post_user_register.http_method
+  status_code = "200"
+  depends_on = [
+    aws_api_gateway_method.post_user_register
+  ]
+}
+
+resource "aws_api_gateway_integration_response" "post_user_register" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_register.id
+  http_method = aws_api_gateway_method.post_user_register.http_method
+  status_code = aws_api_gateway_method_response.post_user_register.status_code
+  depends_on = [
+    aws_api_gateway_method.post_user_register,
+    aws_api_gateway_method_response.post_user_register
+  ]
+}
+
+# resource /v1/user/register/confirm
+resource "aws_api_gateway_resource" "user_register_confirm" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.user_register.id
+  path_part   = "confirm"
+  depends_on = [
+    aws_api_gateway_resource.user_register
+  ]
+}
+
+# method POST /v1/user/register/confirm
+resource "aws_api_gateway_method" "post_user_register_confirm" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_register_confirm.id
+  http_method = "POST"
+  authorization = "NONE"
+  depends_on = [
+    aws_api_gateway_resource.user_register_confirm
+  ]
+}
+
+resource "aws_api_gateway_integration" "user_register_confirm_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.user_register_confirm.id
+  http_method             = aws_api_gateway_method.post_user_register_confirm.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.main.invoke_arn
+  depends_on = [
+    aws_api_gateway_method.post_user_register_confirm
+  ]
+
+}
+
+resource "aws_api_gateway_method_response" "post_user_register_confirm" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_register_confirm.id
+  http_method = aws_api_gateway_method.post_user_register_confirm.http_method
+  status_code = "200"
+  depends_on = [
+    aws_api_gateway_method.post_user_register_confirm
+  ]
+}
+
+resource "aws_api_gateway_integration_response" "post_user_register_confirm" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_register_confirm.id
+  http_method = aws_api_gateway_method.post_user_register_confirm.http_method
+  status_code = aws_api_gateway_method_response.post_user_register_confirm.status_code
+  depends_on = [
+    aws_api_gateway_method.post_user_register_confirm,
+    aws_api_gateway_method_response.post_user_register_confirm
+  ]
+}
+
 # Deployment and domain
 resource "aws_api_gateway_deployment" "deployment" {
   rest_api_id = aws_api_gateway_rest_api.api.id
@@ -234,6 +390,8 @@ resource "aws_api_gateway_deployment" "deployment" {
     aws_api_gateway_integration.root_integration,
     aws_api_gateway_integration.auth_token_integration,
     aws_api_gateway_integration.health_integration,
+    aws_api_gateway_integration.user_register_integration,
+    aws_api_gateway_integration.user_register_confirm_integration,
     module.apigw_root_options,
   ]
 }

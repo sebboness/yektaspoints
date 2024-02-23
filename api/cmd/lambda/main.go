@@ -32,6 +32,7 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 		"path_parameters":  req.PathParameters,
 		"query_parameters": req.QueryStringParameters,
 		"request_id":       req.RequestContext.RequestID,
+		"authorizer":       req.RequestContext.Authorizer,
 	}).Infof("starting lambda")
 
 	// intialize catchall lambda controller
@@ -64,6 +65,9 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 
 		ginLambda = ginadapter.New(r)
 	}
+
+	// prepare context with authorizer info provided in lambda event
+	ctx = handlers.PrepareAuthorizedContext(ctx, req)
 
 	return ginLambda.ProxyWithContext(ctx, req)
 }

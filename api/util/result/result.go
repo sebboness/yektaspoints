@@ -22,6 +22,7 @@ func ErrorResult(err error) *Result {
 func SuccessResult(data any) *Result {
 	return &Result{
 		Data:   data,
+		Errors: []string{},
 		Status: ResultSuccess,
 	}
 }
