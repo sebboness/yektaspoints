@@ -19,8 +19,8 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 	r.POST("/v1/user/register", userCtrl.UserRegisterHandler)
 	r.POST("/v1/user/register/confirm", userCtrl.UserRegisterConfirmHandler)
 
-	authRoutes := r.Group("/v1")
-	authRoutes.Use(middleware.WithAuthorizer())
+	authedUserRoutes := r.Group("/v1")
+	authedUserRoutes.Use(middleware.WithAuthorizedUser())
 	{
 		r.GET("/v1/health", lambdaCtrl.HealthCheckHandler)
 

@@ -64,9 +64,12 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 				pointsDB: mockPointsDB,
 			}
 
+			ctx := PrepareAuthorizedContext(context.Background(), mockApiGWEvent)
+
 			w := httptest.NewRecorder()
 			cgin, _ := gin.CreateTestContext(w)
-			cgin.Request = httptest.NewRequest("POST", "/points", bytes.NewReader([]byte(evtBodyStr)))
+			cgin.Request = httptest.NewRequest("POST", "/points", bytes.NewReader([]byte(evtBodyStr))).WithContext(ctx)
+			PrepareAuthorizedContext(ctx, mockApiGWEvent)
 
 			ctrl.RequestPointsHandler(cgin)
 

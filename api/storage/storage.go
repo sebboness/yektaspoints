@@ -41,7 +41,7 @@ func NewDynamoDbStorage(cfg Config) (*DynamoDbStorage, error) {
 
 	return &DynamoDbStorage{
 		client:      dynamoClient,
-		tablePoints: fmt.Sprintf("yektaspoints-%s-points", strings.ToLower(cfg.Env)),
+		tablePoints: fmt.Sprintf("mypoints-%s-points", strings.ToLower(cfg.Env)),
 	}, nil
 }
 

@@ -23,10 +23,10 @@ var logger = log.NewLogger("mypoints_lambda")
 // returns a proxy response
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	env := env.GetEnv("ENV")
+	_env := env.GetEnv("ENV")
 
 	logger.WithContext(ctx).WithFields(map[string]any{
-		"env":              env,
+		"env":              _env,
 		"method":           req.HTTPMethod,
 		"path":             req.Path,
 		"path_parameters":  req.PathParameters,
@@ -38,7 +38,7 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	// intialize catchall lambda controller
 	if lambdaCtrl == nil {
 		logger.Infof("initializing new lambda controller")
-		_c, err := handlers.NewLambdaController(ctx, env)
+		_c, err := handlers.NewLambdaController(ctx, _env)
 		if err != nil {
 			logger.Fatalf("failed to initialize lambda controller: %v", err)
 		}
@@ -49,7 +49,7 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	// initialize user controller
 	if userCtrl == nil {
 		logger.Infof("initializing new user controller")
-		_c, err := userHandlers.NewUserController(ctx, env)
+		_c, err := userHandlers.NewUserController(ctx, _env)
 		if err != nil {
 			logger.Fatalf("failed to initialize user controller: %v", err)
 		}

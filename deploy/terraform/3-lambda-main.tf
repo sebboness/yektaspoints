@@ -52,12 +52,13 @@ resource "aws_lambda_function" "main" {
   environment {
     variables = {
       APPNAME  = local.app
-      ENV      = local.env
-      VERSION  = file(var.lambda_version)
-      GIN_MODE = local.env == "prod" ? "release" : "debug" 
+      BUILT_AT = timestamp()
       COGNITO_USER_POOL_ID  = local.ssm_secrets["COGNITO_USER_POOL_ID"]
       COGNITO_CLIENT_ID     = local.ssm_secrets["COGNITO_CLIENT_ID"]
       COGNITO_CLIENT_SECRET = local.ssm_secrets["COGNITO_CLIENT_SECRET"]
+      ENV      = local.env
+      GIN_MODE = local.env == "prod" ? "release" : "debug" 
+      VERSION  = file(var.lambda_version)
     }
   }
 }
