@@ -2,6 +2,7 @@ package error
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -213,6 +214,80 @@ func Test_Error_IsApiError(t *testing.T) {
 			} else {
 				assert.Nil(t, apiErr)
 			}
+		})
+	}
+}
+
+func Test_BaseError(t *testing.T) {
+	type state struct {
+		err error
+	}
+	type want struct {
+		apiErr  string
+		baseErr string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	errF1 := errors.New("fail 1")
+
+	cases := []test{
+		{"err is nil", state{}, want{"", ""}},
+		{"chain 1", state{err: errF1}, want{"fail 1", "fail 1"}},
+		{"chain 2", state{err: fmt.Errorf("fail 2: %w", errF1)}, want{"fail 2: fail 1", "fail 1"}},
+		{"chain 3", state{err: fmt.Errorf("fail 3: %w", fmt.Errorf("fail 2: %w", errF1))}, want{"fail 3: fail 2: fail 1", "fail 1"}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			apiErr := New(c.state.err)
+			baseErr := apiErr.BaseError()
+			assert.Equal(t, c.want.apiErr, apiErr.Error())
+
+			if c.state.err == nil {
+				assert.Nil(t, baseErr)
+			} else {
+				assert.Equal(t, c.want.baseErr, baseErr.Error())
+			}
+		})
+	}
+}
+
+func Test_ClientError(t *testing.T) {
+	type state struct {
+		err    error
+		errors []string
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"just error array", state{errors: []string{"fail 1", "fail 2"}}, want{"fail 1; fail 2"}},
+		{"just error", state{err: errors.New("fail")}, want{"fail"}},
+		{"both", state{err: errors.New("some err"), errors: []string{"fail 1", "fail 2"}}, want{"some err: fail 1; fail 2"}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			apiErr := New(c.state.err)
+
+			if len(c.state.errors) > 0 {
+				for _, e := range c.state.errors {
+					apiErr.AppendError(e)
+				}
+			}
+
+			res := apiErr.ClientError()
+			assert.Equal(t, c.want.err, res)
 		})
 	}
 }

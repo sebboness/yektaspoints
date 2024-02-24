@@ -1,5 +1,11 @@
 package result
 
+import (
+	"errors"
+
+	apierr "github.com/sebboness/yektaspoints/util/error"
+)
+
 type ResultStatus string
 
 const ResultSuccess ResultStatus = "SUCCESS"
@@ -13,8 +19,14 @@ type Result struct {
 }
 
 func ErrorResult(err error) *Result {
+	errStr := err.Error()
+	var apiErr *apierr.ApiError
+	if errors.As(err, &apiErr) {
+		errStr = apiErr.ClientError()
+	}
+
 	return &Result{
-		Errors: []string{err.Error()},
+		Errors: []string{errStr},
 		Status: ResultFailure,
 	}
 }

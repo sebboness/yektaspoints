@@ -47,7 +47,7 @@ func (e *ApiError) WithStatus(statusCode int) *ApiError {
 }
 
 func (e *ApiError) Error() string {
-	joinedErrors := strings.Join(e.errors, "; ")
+	joinedErrors := e.ErrorsJoined()
 	if len(joinedErrors) > 0 {
 		joinedErrors = ": " + joinedErrors
 	}
@@ -61,6 +61,10 @@ func (e *ApiError) Error() string {
 
 func (e *ApiError) Errors() []string {
 	return e.errors
+}
+
+func (e *ApiError) ErrorsJoined() string {
+	return strings.Join(e.errors, "; ")
 }
 
 func (e *ApiError) StatusCode() int {
@@ -81,6 +85,34 @@ func (e *ApiError) AppendErrorf(msg string, args ...any) {
 
 func (e *ApiError) Unwrap() error {
 	return e.Err
+}
+
+func (e *ApiError) BaseError() error {
+	err := e.Err
+	for {
+		unwrapped := errors.Unwrap(err)
+		if unwrapped == nil {
+			break
+		} else {
+			err = unwrapped
+		}
+	}
+
+	return err
+}
+
+// ClientError returns the error string allowed for client to see
+func (e *ApiError) ClientError() string {
+	errs := e.ErrorsJoined()
+	baseErr := e.BaseError()
+
+	if baseErr == nil {
+		return errs
+	} else if errs == "" {
+		return baseErr.Error()
+	}
+
+	return strings.Join([]string{baseErr.Error(), errs}, ": ")
 }
 
 func (e *ApiError) Is(err error) bool {

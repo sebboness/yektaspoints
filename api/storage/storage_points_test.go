@@ -13,6 +13,7 @@ import (
 	"github.com/sebboness/yektaspoints/util"
 	"github.com/sebboness/yektaspoints/util/env"
 	"github.com/sebboness/yektaspoints/util/log"
+	"github.com/sebboness/yektaspoints/util/tests"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -35,44 +36,51 @@ func Test_DynamoDbStorage_GetPointByID(t *testing.T) {
 		want
 	}
 
+	throughputErr := &types.ProvisionedThroughputExceededException{}
+
 	cases := []test{
 		{"happy path", state{}, want{}},
-		{"fail - get item", state{errGetItem: errFail}, want{"failed to get point: fail"}},
+		{"fail - get item", state{errGetItem: errFail}, want{"fail"}},
+		{"fail - get item - exceeded throughput", state{errGetItem: throughputErr}, want{"ProvisionedThroughputExceededException"}},
 		{"fail - unmarshal", state{failUnmarshal: true}, want{"failed to unmarshal item: unmarshal failed"}},
 		{"fail - not found", state{itemNotFound: true}, want{"resource not found: point (id=123)"}},
 	}
 
 	for _, c := range cases {
 
-		output := &dynamodb.GetItemOutput{
-			Item: map[string]types.AttributeValue{
-				"id":      &types.AttributeValueMemberS{Value: "123"},
-				"user_id": &types.AttributeValueMemberS{Value: "456"},
-				"points":  &types.AttributeValueMemberN{Value: "100"},
+		output := &dynamodb.QueryOutput{
+			Items: []map[string]types.AttributeValue{
+				{
+					"id":      &types.AttributeValueMemberS{Value: "123"},
+					"user_id": &types.AttributeValueMemberS{Value: "456"},
+					"points":  &types.AttributeValueMemberN{Value: "100"},
+				},
 			},
 		}
 
 		if c.state.failUnmarshal {
-			output.Item = map[string]types.AttributeValue{
-				"points": &types.AttributeValueMemberS{Value: "abc"},
+			output.Items = []map[string]types.AttributeValue{
+				{
+					"points": &types.AttributeValueMemberS{Value: "abc"},
+				},
 			}
 		}
 
 		if c.state.itemNotFound {
-			output.Item = nil
+			output.Items = []map[string]types.AttributeValue{}
 		}
 
 		mockDynamoClient := mocks.NewMockDynamoDbClient(t)
-		mockDynamoClient.EXPECT().GetItem(mock.Anything, mock.Anything, mock.Anything).Return(output, c.state.errGetItem)
+		mockDynamoClient.EXPECT().Query(mock.Anything, mock.Anything).Return(output, c.state.errGetItem)
 
 		s := DynamoDbStorage{
 			client: mockDynamoClient,
 		}
 
 		res, err := s.GetPointByID(context.Background(), "456", "123")
-		if err != nil {
-			assert.Contains(t, err.Error(), c.want.err)
-		} else {
+		tests.AssertError(t, err, c.want.err)
+
+		if err == nil {
 			assert.Empty(t, c.want.err)
 			assert.Equal(t, "123", res.ID)
 			assert.Equal(t, "456", res.UserID)
@@ -142,9 +150,9 @@ func Test_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 		}
 
 		res, err := s.GetPointsByUserID(context.Background(), "456", filter)
-		if err != nil {
-			assert.Contains(t, err.Error(), c.want.err)
-		} else {
+		tests.AssertError(t, err, c.want.err)
+
+		if err == nil {
 			assert.Len(t, res, 2)
 			assert.Equal(t, res[0].ID, "1")
 			assert.Equal(t, res[0].UserID, "a")
@@ -173,7 +181,7 @@ func Test_DynamoDbStorage_SavePoint(t *testing.T) {
 
 	cases := []test{
 		{"happy path", state{}, want{}},
-		{"fail - save point", state{errSaveItem: errFail}, want{"failed to save point: fail"}},
+		{"fail - save point", state{errSaveItem: errFail}, want{"fail"}},
 	}
 
 	for _, c := range cases {
@@ -188,10 +196,7 @@ func Test_DynamoDbStorage_SavePoint(t *testing.T) {
 		}
 
 		err := s.SavePoint(context.Background(), models.Point{})
-		if err != nil {
-			assert.Contains(t, err.Error(), c.want.err)
-		}
-
+		tests.AssertError(t, err, c.want.err)
 		mockDynamoClient.AssertExpectations(t)
 	}
 }
@@ -224,9 +229,9 @@ func TestReal_DynamoDbStorage_GetPointByID(t *testing.T) {
 		assert.Nil(t, err)
 
 		res, err := s.GetPointByID(context.Background(), c.state.userId, c.state.id)
-		if err != nil {
-			assert.Contains(t, err.Error(), c.want.err)
-		} else {
+		tests.AssertError(t, err, c.want.err)
+
+		if err == nil {
 			res.ParseTimes()
 			assert.Empty(t, c.want.err)
 			assert.Equal(t, c.state.id, res.ID)
@@ -240,7 +245,7 @@ func TestReal_DynamoDbStorage_GetPointByID(t *testing.T) {
 }
 
 func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
-	// t.Skip("Skip real test")
+	t.Skip("Skip real test")
 
 	type state struct {
 		userId string
@@ -275,11 +280,9 @@ func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 		}
 
 		res, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
+		tests.AssertError(t, err, c.want.err)
 
-		if err != nil {
-			log.Get().Errorf("%v", err)
-			assert.Contains(t, err.Error(), c.want.err)
-		} else {
+		if err == nil {
 			for i, d := range res {
 				log.Get().WithField("data", d).Infof("[%v]points", i)
 			}
@@ -323,10 +326,6 @@ func TestReal_DynamoDbStorage_SavePoint(t *testing.T) {
 		}
 
 		err = s.SavePoint(context.Background(), p)
-		if err != nil {
-			assert.Contains(t, err.Error(), c.want.err)
-		} else {
-			assert.Nil(t, err)
-		}
+		tests.AssertError(t, err, c.want.err)
 	}
 }

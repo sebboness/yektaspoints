@@ -2,14 +2,12 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/sebboness/yektaspoints/models"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 )
@@ -33,7 +31,8 @@ func (s *DynamoDbStorage) SavePoint(ctx context.Context, point models.Point) err
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to save point: %w", err)
+		apiErr := apierr.GetAwsError(err)
+		return apiErr
 	}
 
 	return nil
@@ -42,40 +41,34 @@ func (s *DynamoDbStorage) SavePoint(ctx context.Context, point models.Point) err
 func (s *DynamoDbStorage) GetPointByID(ctx context.Context, userId, id string) (models.Point, error) {
 	point := models.Point{}
 
-	idKey, err := attributevalue.Marshal(id)
+	keyEx := expression.Key("user_id").Equal(expression.Value(userId))
+	filterEx := expression.Name("id").Equal(expression.Value(id))
+	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).WithFilter(filterEx).Build()
+
 	if err != nil {
-		return point, fmt.Errorf("failed to marshal id key: %w", err)
+		return point, fmt.Errorf("failed to build query expression: %w", err)
 	}
 
-	userIdKey, err := attributevalue.Marshal(userId)
-	if err != nil {
-		return point, fmt.Errorf("failed to marshal user_id key: %w", err)
-	}
-
-	key := map[string]types.AttributeValue{
-		"id":      idKey,
-		"user_id": userIdKey,
-	}
-
-	resp, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
-		Key:       key,
-		TableName: aws.String(s.tablePoints),
+	resp, err := s.client.Query(ctx, &dynamodb.QueryInput{
+		TableName:                 aws.String(s.tablePoints),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		FilterExpression:          expr.Filter(),
+		ScanIndexForward:          aws.Bool(false),
 	})
 
 	if err != nil {
-		var provExceeded *types.ProvisionedThroughputExceededException
-		if errors.As(err, &provExceeded) {
-			return point, fmt.Errorf("failed to get point: %w", err)
-		}
-		return point, fmt.Errorf("failed to get point: %w", err)
+		apiErr := apierr.GetAwsError(err)
+		return point, apiErr
 	}
 
-	if resp.Item == nil {
+	if len(resp.Items) == 0 {
 		logger.WithContext(ctx).WithFields(map[string]any{"userId": userId, "id": id}).Warnf("item (id:%s) not found", id)
 		return point, apierr.New(apierr.NotFound).WithError(fmt.Sprintf("point (id=%s)", id))
 	}
 
-	err = attributevalue.UnmarshalMap(resp.Item, &point)
+	err = attributevalue.UnmarshalMap(resp.Items[0], &point)
 	if err != nil {
 		return point, fmt.Errorf("failed to unmarshal item: %w", err)
 	}
@@ -139,7 +132,8 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 		resp, err := queryPaginator.NextPage(qctx)
 
 		if err != nil {
-			return points, fmt.Errorf("failed to query next points page: %w", err)
+			apiErr := apierr.GetAwsError(err)
+			return points, fmt.Errorf("failed to query next points page: %w", apiErr)
 		} else {
 			var point []models.Point
 			err = attributevalue.UnmarshalListOfMaps(resp.Items, &point)
