@@ -7,6 +7,7 @@ import (
 )
 
 type AuthClient interface {
+	AdminAddUserToGroup(ctx context.Context, params *cognito.AdminAddUserToGroupInput, optFns ...func(*cognito.Options)) (*cognito.AdminAddUserToGroupOutput, error)
 	ConfirmSignUp(ctx context.Context, params *cognito.ConfirmSignUpInput, optFns ...func(*cognito.Options)) (*cognito.ConfirmSignUpOutput, error)
 	GetUser(ctx context.Context, params *cognito.GetUserInput, optFns ...func(*cognito.Options)) (*cognito.GetUserOutput, error)
 	InitiateAuth(ctx context.Context, params *cognito.InitiateAuthInput, optFns ...func(*cognito.Options)) (*cognito.InitiateAuthOutput, error)

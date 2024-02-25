@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	cognito "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	apierr "github.com/sebboness/yektaspoints/util/error"
 
 	"github.com/sebboness/yektaspoints/util/env"
 )
@@ -16,15 +17,17 @@ type CognitoController struct {
 	authClient          AuthClient
 	cognitoClientID     string
 	cognitoClientSecret string
+	userPoolID          string
 }
 
 func New(ctx context.Context) (AuthController, error) {
 	cognitoClientID := env.GetEnv("COGNITO_CLIENT_ID")
 	cognitoClientSecret := env.GetEnv("COGNITO_CLIENT_SECRET")
-	return NewWithClient(ctx, cognitoClientID, cognitoClientSecret)
+	userPoolID := env.GetEnv("COGNITO_USER_POOL_ID")
+	return NewWithClient(ctx, cognitoClientID, cognitoClientSecret, userPoolID)
 }
 
-func NewWithClient(ctx context.Context, cognitoClientID, cognitoClientSecret string) (AuthController, error) {
+func NewWithClient(ctx context.Context, cognitoClientID, cognitoClientSecret, userPoolID string) (AuthController, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load aws config: %w", err)
@@ -36,6 +39,7 @@ func NewWithClient(ctx context.Context, cognitoClientID, cognitoClientSecret str
 		authClient:          cognitoClient,
 		cognitoClientID:     cognitoClientID,
 		cognitoClientSecret: cognitoClientSecret,
+		userPoolID:          userPoolID,
 	}, nil
 }
 
@@ -55,7 +59,8 @@ func (c *CognitoController) Authenticate(ctx context.Context, username, password
 	logger.WithContext(ctx).WithField("resp", resp).Infof("initiate auth response")
 
 	if err != nil {
-		return result, fmt.Errorf("failed to authenticate: %w", err)
+		apiErr := apierr.GetAwsError(err)
+		return result, apiErr
 	}
 
 	if resp.ChallengeName == types.ChallengeNameTypeNewPasswordRequired {
@@ -72,12 +77,31 @@ func (c *CognitoController) Authenticate(ctx context.Context, username, password
 	// which we need for token refreshes later
 	userResp, err := c.authClient.GetUser(ctx, &cognito.GetUserInput{AccessToken: &result.AccessToken})
 	if err != nil {
-		return result, fmt.Errorf("failed to get user after authentication: %w", err)
+		apiErr := apierr.GetAwsError(err)
+		return result, apiErr
 	}
 
 	result.Username = *userResp.Username
 
 	return result, nil
+}
+
+func (c *CognitoController) AssignUserToRole(ctx context.Context, username, role string) error {
+
+	resp, err := c.authClient.AdminAddUserToGroup(ctx, &cognito.AdminAddUserToGroupInput{
+		GroupName:  aws.String(role),
+		Username:   aws.String(username),
+		UserPoolId: aws.String(c.userPoolID),
+	})
+
+	logger.WithField("resp", resp).Infof("user confirm signup response")
+
+	if err != nil {
+		apiErr := apierr.GetAwsError(err)
+		return apiErr
+	}
+
+	return nil
 }
 
 func (c *CognitoController) ConfirmRegistration(ctx context.Context, username, code string) error {
@@ -92,8 +116,8 @@ func (c *CognitoController) ConfirmRegistration(ctx context.Context, username, c
 	logger.WithField("resp", resp).Infof("user confirm signup response")
 
 	if err != nil {
-		logger.WithField("error", err).Errorf("user confirm signup")
-		return err
+		apiErr := apierr.GetAwsError(err)
+		return apiErr
 	}
 
 	return nil
@@ -112,7 +136,8 @@ func (c *CognitoController) RefreshToken(ctx context.Context, username, refreshT
 	})
 
 	if err != nil {
-		return AuthResult{}, fmt.Errorf("failed to refresh token: %w", err)
+		apiErr := apierr.GetAwsError(err)
+		return AuthResult{}, apiErr
 	}
 
 	return AuthResult{
@@ -144,8 +169,8 @@ func (c *CognitoController) Register(ctx context.Context, req UserRegisterReques
 	logger.WithField("resp", resp).Infof("user signup response")
 
 	if err != nil {
-		logger.WithField("error", err).Errorf("user signup error")
-		return result, fmt.Errorf("failed to register user: %w", err)
+		apiErr := apierr.GetAwsError(err)
+		return result, apiErr
 	}
 
 	result.IsConfirmed = resp.UserConfirmed
@@ -178,8 +203,8 @@ func (c *CognitoController) UpdatePassword(ctx context.Context, session, usernam
 	logger.WithContext(ctx).WithField("resp", resp).Infof("update password response")
 
 	if err != nil {
-		logger.WithContext(ctx).WithField("error", err).Errorf("update password error")
-		return fmt.Errorf("failed to update user password: %w", err)
+		apiErr := apierr.GetAwsError(err)
+		return apiErr
 	}
 
 	return nil

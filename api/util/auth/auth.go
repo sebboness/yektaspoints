@@ -23,6 +23,7 @@ var SupportedGrantTypes = map[string]bool{
 
 type AuthController interface {
 	Authenticate(ctx context.Context, username, password string) (AuthResult, error)
+	AssignUserToRole(ctx context.Context, username, role string) error
 	ConfirmRegistration(ctx context.Context, username, code string) error
 	RefreshToken(ctx context.Context, username, token string) (AuthResult, error)
 	Register(ctx context.Context, ur UserRegisterRequest) (UserRegisterResult, error)

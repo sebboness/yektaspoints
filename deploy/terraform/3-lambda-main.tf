@@ -17,9 +17,42 @@ resource "aws_iam_role" "lambda_exec" {
 POLICY
 }
 
+resource "aws_iam_policy" "policy" {
+  name = "${local.app}-${local.env}-main-lambda-policy"
+  description = "${local.app} ${local.env} main lambda policy"
+  policy = jsonencode(
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+          {
+              "Effect": "Allow",
+              "Action": [
+                  "dynamodb:*",
+                  "logs:*",
+                  "s3:*"
+              ],
+              "Resource": [
+                "arn:aws:dynamodb:*:*:table/${local.app}-${local.env}-points",
+                "arn:aws:dynamodb:*:*:table/${local.app}-${local.env}-user",
+                "arn:aws:logs:*:*:*",
+                "arn:aws:s3:::*"
+              ]
+          },
+          {
+              "Effect": "Allow",
+              "Action": [
+                  "cognito-idp:AdminAddUserToGroup",
+              ],
+              "Resource": tolist(data.aws_cognito_user_pools.pools.arns)
+          }
+      ]
+    } 
+  )
+}
+
 resource "aws_iam_role_policy_attachment" "lambda_policy" {
   role       = aws_iam_role.lambda_exec.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  policy_arn = aws_iam_policy.policy.arn
 }
 
 variable "output_path" {
@@ -52,7 +85,7 @@ resource "aws_lambda_function" "main" {
   environment {
     variables = {
       APPNAME  = local.app
-      BUILT_AT = timestamp()
+      BUILT_AT = "${timestamp()}"
       COGNITO_USER_POOL_ID  = local.ssm_secrets["COGNITO_USER_POOL_ID"]
       COGNITO_CLIENT_ID     = local.ssm_secrets["COGNITO_CLIENT_ID"]
       COGNITO_CLIENT_SECRET = local.ssm_secrets["COGNITO_CLIENT_SECRET"]
