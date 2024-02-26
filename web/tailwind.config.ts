@@ -7,10 +7,16 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    extend: {
+      backgroundImage: theme => ({
+        'gradient-45': 'linear-gradient(45deg, var(--tw-gradient-stops))',
+        'gradient-135': 'linear-gradient(135deg, var(--tw-gradient-stops))',
+      })
+    },
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: ["cupcake"],
+    themes: ["light", "dark", "cupcake"],
   },
 };
 export default config;

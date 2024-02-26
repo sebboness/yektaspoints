@@ -29,12 +29,10 @@ export default function Home() {
             </div>
         
             <section>
-                <div className="w-screen grid grid-rows-2 gap-8  text-4xl xl:grid-cols-2">
+                <div className="w-screen grid grid-rows-2 gap-8 xl:grid-cols-2 p-16">
                     {/* Left */}
                     <div className="container mx-auto p-4">
-                        <div className="card bg-base-100 shadow-xl">
-
-
+                        <div className="card soft-concave-shadow bg-gradient-135 from-pink-100 to-stone-50">
                             <figure className="px-10 pt-10">
                                 <div className="hero-points-display rounded-xl p-16 bg-lime-400 w-full text-center text-teal-600">
                                     <div className="text-9xl font-bold">
@@ -46,7 +44,7 @@ export default function Home() {
                                 </div>
                             </figure>
                             <div className="card-body items-center text-center">
-                                <p>Wow, great job!</p>
+                                <p className="text-4xl">Wow, great job!</p>
                                 <div className="card-actions">
                                     <button className="btn btn-primary btn-lg">Request points</button>
                                     <button className="btn btn-secondary btn-lg">Cashout points</button>
@@ -56,9 +54,19 @@ export default function Home() {
                     </div>
 
                     {/* Right */}
-                    <div className="centered">
-                        <div className="container mx-auto border-2 p-4">
-                            <div className="p-2">Right</div>
+                    <div className="container mx-auto p-4">
+                        <div className="card soft-concave-shadow bg-gradient-135 from-pink-100 to-stone-50 mb-16">
+                            <div className="card-body">
+                                <div className="p-2">
+                                    <p className="text-2xl font-bold">History</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card soft-concave-shadow bg-gradient-135 from-pink-100 to-stone-50">
+                            <div className="card-body">
+                                <p className="text-2xl font-bold">Open requests</p>
+                            </div>
                         </div>
                     </div>
                 </div>

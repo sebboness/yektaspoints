@@ -31,3 +31,7 @@ body {
     text-wrap: balance;
   }
 }
+
+.soft-concave-shadow {
+  box-shadow: 20px 20px 60px #ddd, -20px -20px 60px #ffffff;
+}
