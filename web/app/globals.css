@@ -18,12 +18,26 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
+  /* background: linear-gradient(
       to bottom,
       transparent,
-      rgb(var(--background-end-rgb))
+      rgb(var(--background-start-rgb))
     )
-    rgb(var(--background-start-rgb));
+    rgb(var(--background-end-rgb)); */
+
+  --bgs: 100px; /* control the size */
+  --bgc1: #eee;
+  --bgc2: #e8e8e8;
+
+  --_g: var(--bgc1) 0% 5%, var(--bgc2) 6% 15%, var(--bgc1) 16% 25%, var(--bgc2) 26% 35%,
+    var(--bgc1) 36% 45%, var(--bgc2) 46% 55%, var(--bgc1) 56% 65%, var(--bgc2) 66% 75%,
+    var(--bgc1) 76% 85%, var(--bgc2) 86% 95%, #0000 96%;
+  background: radial-gradient(50% 50% at 100% 0, var(--_g)),
+    radial-gradient(50% 50% at 0 100%, var(--_g)),
+    radial-gradient(50% 50%, var(--_g)),
+    radial-gradient(50% 50%, var(--_g)) calc(var(--bgs) / 2) calc(var(--bgs) / 2)
+      var(--bgc1);
+  background-size: var(--bgs) var(--bgs);
 }
 
 @layer utilities {
@@ -33,5 +47,5 @@ body {
 }
 
 .soft-concave-shadow {
-  box-shadow: 20px 20px 60px #ddd, -20px -20px 60px #ffffff;
+  box-shadow: 20px 20px 60px #bbb;
 }
