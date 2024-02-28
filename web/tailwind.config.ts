@@ -11,7 +11,11 @@ const config: Config = {
       backgroundImage: theme => ({
         'gradient-45': 'linear-gradient(45deg, var(--tw-gradient-stops))',
         'gradient-135': 'linear-gradient(135deg, var(--tw-gradient-stops))',
-      })
+      }),
+      fontFamily: {
+        primary: ["Fuzzy Bubbles", "sans-serif"],
+        sketch: ["CabinSketchBold", "sans-serif"],
+      },
     },
   },
   plugins: [require("daisyui")],

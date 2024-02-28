@@ -1,45 +1,85 @@
 "use client"
 
 import Image from "next/image";
-import { ArrowDownRightIcon, ArrowUpRightIcon, CircleStackIcon, ClockIcon, CurrencyDollarIcon } from '@heroicons/react/24/solid'
+import {
+    ArrowDownRightIcon,
+    ArrowUpRightIcon,
+    CircleStackIcon,
+    ClockIcon,
+    CurrencyDollarIcon,
+    LightBulbIcon,
+    HandThumbUpIcon,
+} from '@heroicons/react/24/solid'
 import { AnimatedCounter } from  "react-animated-counter";
 export default function Home() {
     return (
-        <main className="overflow-hidden">
+        <>
             {/* Top navbar */}
             {/* TK TK */}
         
             <section>
                 <div className="w-screen xl:grid gap-8 xl:grid-cols-2 p-12">
                     {/* Left */}
-                    <div className="container mx-auto p-4">
+                    <div className="container mx-auto">
                         <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 border border-zinc-500 mb-8">
-                            <figure className="px-10 pt-10">
-                                <div className="hero-points-display rounded-xl p-16 bg-gradient-45 from-lime-500 to-lime-300 w-full text-center text-teal-600">
-                                    <div className="text-9xl font-bold">
+                            <div className="card-body items-center">
+                                <Image
+                                    className="md:mt-8"
+                                    src="/img/logo-512.svg"
+                                    width={768}
+                                    height={327}
+                                    priority={true}
+                                    alt="Picture of the author"
+                                />
+
+                                <div className="hero-points-display rounded-xl w-full text-center text-teal-600">
+                                    <div className="text-7xl sm:text-9xl font-bold py-16">
                                         213
                                     </div>
-                                    <div className="text-7xl">
-                                        points
+                                </div>
+                            </div>
+                            <div className="card-body">
+                                <p className="text-xl sm:text-4xl"><b>Wow!</b> Great job, Yekta!</p>
+                                
+                                {/* Info items */}
+                                <div className="list-container">
+                                    <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
+                                        <div className="flex flex-row items-center space-x-4">
+                                            <LightBulbIcon className="bg-orange-400 rounded-full p-2 h-12 w-12 text-yellow-200" />
+                                            <div>
+                                                <h1 className="text-lg md:text-2xl">You earned 47 points this week. Keept it up!</h1>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
+                                        <div className="flex flex-row items-center space-x-4">
+                                            <HandThumbUpIcon className="bg-blue-700 rounded-full p-2 h-12 w-12 text-blue-300" />
+                                            <div>
+                                                <h1 className="text-lg md:text-2xl">You didn't lose any points this week!</h1>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </figure>
-                            <div className="card-body items-center text-center">
-                                <p className="text-4xl">Wow, great job!</p>
+                                {/* End Info items */}
+                            </div>
+
+                            {/* Point actions */}
+                            <div className="card-body items-center text-center">                                
                                 <div className="card-actions mt-4">
-                                    <button className="btn btn-primary sm:btn-lg">
-                                        <CircleStackIcon className="w-8 h-8" />Request
+                                    <button className="btn btn-primary btn-lg">
+                                        <CircleStackIcon className="w-8 h-8" />Earn
                                     </button>
-                                    <button className="btn btn-secondary sm:btn-lg">
+                                    <button className="btn btn-secondary btn-lg">
                                         <CurrencyDollarIcon className="w-8 h-8" />Cashout
                                     </button>
                                 </div>
+                                
                             </div>
                         </div>
                     </div>
 
                     {/* Right */}
-                    <div className="container mx-auto p-4">
+                    <div className="container mx-auto">
                         <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 mb-16 border border-zinc-500">
                             <div className="card-body">
                                 <p className="text-2xl font-bold">What I got so far</p>
@@ -138,6 +178,6 @@ export default function Home() {
                     </div>
                 </div>
             </section>
-        </main>
+        </>
     );
 }
