@@ -17,7 +17,7 @@ export default function Home() {
                                 height={164}
                                 priority={true}
                                 alt="Picture of the author"
-                                />
+                            />
                         </figure>
 
                         <h1 className="text-5xl">Hello there! :)</h1>

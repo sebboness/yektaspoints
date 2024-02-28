@@ -34,6 +34,7 @@ type AuthResult struct {
 	Username            string `json:"username"`
 	AccessToken         string `json:"access_token"`
 	IdToken             string `json:"id_token"`
+	RefreshToken        string `json:"refresh_token"`
 	ExpiresIn           int32  `json:"expires_in"`
 	NewPasswordRequired bool   `json:"new_password_required"`
 	Session             string `json:"session"`

@@ -72,6 +72,7 @@ func (c *CognitoController) Authenticate(ctx context.Context, username, password
 	result.AccessToken = *resp.AuthenticationResult.AccessToken
 	result.IdToken = *resp.AuthenticationResult.IdToken
 	result.ExpiresIn = resp.AuthenticationResult.ExpiresIn
+	result.RefreshToken = *resp.AuthenticationResult.RefreshToken
 
 	// We need to grab the user record after authentication in order to store the "username" (aka the "sub") value
 	// which we need for token refreshes later

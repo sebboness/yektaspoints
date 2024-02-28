@@ -1,5 +1,8 @@
-"use client"
+"use client";
 
+import { useSelector , useDispatch } from "react-redux";
+import { fetchUsers } from "@/slices/authSlice";
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import {
     ArrowDownRightIcon,
@@ -7,11 +10,28 @@ import {
     CircleStackIcon,
     ClockIcon,
     CurrencyDollarIcon,
-    LightBulbIcon,
     HandThumbUpIcon,
-} from '@heroicons/react/24/solid'
-import { AnimatedCounter } from  "react-animated-counter";
+    LightBulbIcon,
+} from "@heroicons/react/24/solid";
+import { AppDispatch, RootState } from "@/store/store";
+
 export default function Home() {
+
+    const userRef = useRef(false);
+    const { accessToken } = useSelector((state: RootState) => state.auth);
+    const dispatch = useDispatch<AppDispatch>();
+    
+    // useEffect(() => {
+    //     if (userRef.current === false) {
+    //         console.log("use effect called");
+    //         dispatch(fetchUsers());
+    //     }
+
+    //     return () => {
+    //         userRef.current = true;
+    //     }
+    // }, []);
+
     return (
         <>
             {/* Top navbar */}
@@ -55,7 +75,7 @@ export default function Home() {
                                         <div className="flex flex-row items-center space-x-4">
                                             <HandThumbUpIcon className="bg-blue-700 rounded-full p-2 h-12 w-12 text-blue-300" />
                                             <div>
-                                                <h1 className="text-lg md:text-2xl">You didn't lose any points this week!</h1>
+                                                <h1 className="text-lg md:text-2xl">You didn&apos;t lose any points this week!</h1>
                                             </div>
                                         </div>
                                     </div>
