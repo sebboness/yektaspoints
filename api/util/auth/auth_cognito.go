@@ -69,10 +69,24 @@ func (c *CognitoController) Authenticate(ctx context.Context, username, password
 		return result, nil
 	}
 
-	result.AccessToken = *resp.AuthenticationResult.AccessToken
-	result.IdToken = *resp.AuthenticationResult.IdToken
+	accessToken := ""
+	idToken := ""
+	refreshToken := ""
+
+	if resp.AuthenticationResult.AccessToken != nil {
+		accessToken = *resp.AuthenticationResult.AccessToken
+	}
+	if resp.AuthenticationResult.IdToken != nil {
+		idToken = *resp.AuthenticationResult.IdToken
+	}
+	if resp.AuthenticationResult.RefreshToken != nil {
+		refreshToken = *resp.AuthenticationResult.RefreshToken
+	}
+
+	result.AccessToken = accessToken
+	result.IdToken = idToken
+	result.RefreshToken = refreshToken
 	result.ExpiresIn = resp.AuthenticationResult.ExpiresIn
-	result.RefreshToken = *resp.AuthenticationResult.RefreshToken
 
 	// We need to grab the user record after authentication in order to store the "username" (aka the "sub") value
 	// which we need for token refreshes later
@@ -141,9 +155,25 @@ func (c *CognitoController) RefreshToken(ctx context.Context, username, refreshT
 		return AuthResult{}, apiErr
 	}
 
+	accessToken := ""
+	idToken := ""
+
+	if resp.AuthenticationResult.AccessToken != nil {
+		accessToken = *resp.AuthenticationResult.AccessToken
+	}
+	if resp.AuthenticationResult.IdToken != nil {
+		idToken = *resp.AuthenticationResult.IdToken
+	}
+	if resp.AuthenticationResult.RefreshToken != nil {
+		refreshToken = *resp.AuthenticationResult.RefreshToken
+	}
+
 	return AuthResult{
-		AccessToken: *resp.AuthenticationResult.IdToken,
-		ExpiresIn:   resp.AuthenticationResult.ExpiresIn,
+		AccessToken:  accessToken,
+		IdToken:      idToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    resp.AuthenticationResult.ExpiresIn,
+		Username:     username,
 	}, nil
 }
 

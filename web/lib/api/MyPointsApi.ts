@@ -1,8 +1,9 @@
 import { Api } from "./Api";
-import { ResultT } from "./Result";
+import { NewErrorResult, ResultT, SUCCESS } from "./Result";
 
 // Define base URIs for different environments
 const baseUris: {[key: string]: string} = {
+    "test":    "https://localhost:8080",
     "local":   "https://mypoints-api-dev.hexonite.net",
     "dev":     "https://mypoints-api-dev.hexonite.net",
     "staging": "https://mypoints-api-staging.hexonite.net",
@@ -49,15 +50,33 @@ export class MyPointsApi extends Api {
                 credentials: "include",
             };
 
+            console.debug(`making request: ${method} ${url}`);
+
             fetch(url, reqOps)
                 .then((resp) => {
+                    console.log("response: ", resp);
+                    // if (resp.status >= 200 && resp.status < 300)
+                    //     resp.json();
+                    // else                
                     resp.json();
                 })
-                .then((obj: ResultT<T>) => {
-                    
+                .then((obj: any) => {
+                    console.log("response json decoded: ", obj);
+                    if (obj.status) {
+                        if (obj.status == SUCCESS)
+                            resolve(obj);
+                        else
+                            reject(obj);
+                    }
+                    else
+                        reject(NewErrorResult(`Unknown error: ${JSON.stringify(obj)}`));
                 })
-                .catch((err) => {
-
+                .catch((err: any) => {
+                    console.error("fetch caught error:", err);
+                    if (err.errors)
+                        reject(err); // Assume error object is a Result
+                    else
+                        reject(NewErrorResult(`Caught the following error: ${JSON.stringify(err)}`));
                 });
         });
     }
