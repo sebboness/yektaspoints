@@ -13,7 +13,7 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 	r.GET("/health", lambdaCtrl.HealthCheckHandler)
 
 	// Auth
-	r.POST("/auth/token", lambdaCtrl.UserAuthHandler)
+	r.POST("/auth/token", authCtrl.UserAuthHandler)
 
 	// User registration
 	r.POST("/v1/user/register", userCtrl.UserRegisterHandler)

@@ -9,11 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
 	userHandlers "github.com/sebboness/yektaspoints/handlers/user"
+	"github.com/sebboness/yektaspoints/handlers/userauth"
 	"github.com/sebboness/yektaspoints/util/env"
 	"github.com/sebboness/yektaspoints/util/log"
 )
 
 var lambdaCtrl *handlers.LambdaController
+var authCtrl *userauth.UserAuthController
 var userCtrl *userHandlers.UserController
 
 var ginLambda *ginadapter.GinLambda
@@ -44,6 +46,17 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 		}
 
 		lambdaCtrl = _c
+	}
+
+	// initialize auth user controller
+	if authCtrl == nil {
+		logger.Infof("initializing new user controller")
+		_c, err := userauth.NewUserAuthController(ctx, _env)
+		if err != nil {
+			logger.Fatalf("failed to initialize user auth controller: %v", err)
+		}
+
+		authCtrl = _c
 	}
 
 	// initialize user controller

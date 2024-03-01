@@ -1,4 +1,4 @@
-package handlers
+package userauth
 
 import (
 	"bytes"
@@ -18,6 +18,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var errFail = errors.New("fail")
 
 func Test_UserAuthHandler(t *testing.T) {
 	type state struct {
@@ -63,7 +65,7 @@ func Test_UserAuthHandler(t *testing.T) {
 				evtBodyStr = `{"user_id":`
 			}
 
-			ctrl := LambdaController{
+			ctrl := UserAuthController{
 				auth: mockAuther,
 			}
 
@@ -117,7 +119,7 @@ func Test_handleUserAuth(t *testing.T) {
 
 			mockAuther := mocks.NewMockAuthController(t)
 
-			ctrl := LambdaController{
+			ctrl := UserAuthController{
 				auth: mockAuther,
 			}
 

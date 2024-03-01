@@ -1,4 +1,4 @@
-package handlers
+package userauth
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sebboness/yektaspoints/handlers"
 	"github.com/sebboness/yektaspoints/util/auth"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 )
@@ -24,7 +25,7 @@ type userAuthResponse struct {
 }
 
 // UserAuthHandler authenticates a user depending on the request grant_type
-func (c *LambdaController) UserAuthHandler(cgin *gin.Context) {
+func (c *UserAuthController) UserAuthHandler(cgin *gin.Context) {
 
 	var req userAuthRequest
 
@@ -32,25 +33,25 @@ func (c *LambdaController) UserAuthHandler(cgin *gin.Context) {
 	err := cgin.BindJSON(&req)
 	if err != nil {
 		err = fmt.Errorf("failed to unmarshal json body: %w", err)
-		cgin.JSON(http.StatusBadRequest, ErrorResult(err))
+		cgin.JSON(http.StatusBadRequest, handlers.ErrorResult(err))
 		return
 	}
 
 	resp, err := c.handleUserAuth(cgin.Request.Context(), &req)
 	if err != nil {
 		if apierr := apierr.IsApiError(err); apierr != nil {
-			cgin.JSON(apierr.StatusCode(), ErrorResult(apierr))
+			cgin.JSON(apierr.StatusCode(), handlers.ErrorResult(apierr))
 			return
 		}
 
-		cgin.JSON(http.StatusInternalServerError, ErrorResult(err))
+		cgin.JSON(http.StatusInternalServerError, handlers.ErrorResult(err))
 		return
 	}
 
-	cgin.JSON(http.StatusOK, SuccessResult(resp))
+	cgin.JSON(http.StatusOK, handlers.SuccessResult(resp))
 }
 
-func (c *LambdaController) handleUserAuth(ctx context.Context, req *userAuthRequest) (userAuthResponse, error) {
+func (c *UserAuthController) handleUserAuth(ctx context.Context, req *userAuthRequest) (userAuthResponse, error) {
 	resp := userAuthResponse{}
 	result := auth.AuthResult{}
 
