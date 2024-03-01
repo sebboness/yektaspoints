@@ -1,3 +1,5 @@
+test.skip('Workaround', () => {});
+
 type Method = "get" | "options" | "post" | "put" | "patch" | "delete";
 
 export const DefaultStubOptions: StubOptions = {
