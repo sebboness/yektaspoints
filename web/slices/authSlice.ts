@@ -6,7 +6,7 @@ export const fetchUsers = createAsyncThunk("auth/fetchUsers", async (thunkApi) =
     const data = await response.json();
     console.log("got users.");
     return data;
-})
+});
 
 type UserData = {
     roles: string[];
@@ -14,18 +14,20 @@ type UserData = {
     username: string;
     email: string;
     name: string;
-}
+};
 
 type AuthState = {
     accessToken: string;
     idToken: string;
+    refreshToken: string;
     expiresIn: number;
     user: UserData | null;
-}
+};
 
 const initialState: AuthState = {
     accessToken: "",
     idToken: "",
+    refreshToken: "",
     expiresIn: 0,
     user: null,
 };

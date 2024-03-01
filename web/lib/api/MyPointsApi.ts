@@ -13,7 +13,7 @@ const baseUris: {[key: string]: string} = {
 type QueryParams = {[key: string]: string[]} | undefined;
 
 type CallOptions = {
-    withAuth: boolean;
+    authToken: boolean;
     queryParams: QueryParams;
     payload: object | undefined;
 };
@@ -51,18 +51,19 @@ export class MyPointsApi extends Api {
         return `${baseUri}/${endpoint}${queryString}`;
     }
 
-    public callApi<T>(method: string, endpoint: string, options: CallOptions | undefined = undefined): Promise<ResultT<T>> {
+    public callApi<T>(method: string, endpoint: string, opts: CallOptions | undefined = undefined): Promise<ResultT<T>> {
         return new Promise((resolve, reject) => {
             const headers: HeadersInit = {
                 "Content-Type": "json/application",
             };
 
-            if (options?.withAuth) {
-                headers["Authentication"] = "";
+            // Attach auth token to headers if it is set
+            if (opts?.authToken) {
+                headers["Authentication"] = "Bearer " + opts.authToken;
             }
 
             // Build call url
-            const url = this.getCallUrl(this.baseUri, endpoint, options?.queryParams);
+            const url = this.getCallUrl(this.baseUri, endpoint, opts?.queryParams);
 
             // Initialize fetch request
             const reqOps: RequestInit = {
@@ -72,8 +73,8 @@ export class MyPointsApi extends Api {
             };
 
             // Add payload
-            if (options?.payload)
-                reqOps.body = JSON.stringify(options.payload);
+            if (opts?.payload)
+                reqOps.body = JSON.stringify(opts.payload);
 
             console.debug(`MyPointsAPi making request: ${method} ${url}`);
 
@@ -103,7 +104,23 @@ export class MyPointsApi extends Api {
         });
     }
 
-    public post<T>(endpoint: string, options: CallOptions | undefined = undefined): Promise<ResultT<T>> {
-        return this.callApi<T>("post", endpoint, options);
+    public delete<T>(endpoint: string, opts: CallOptions | undefined = undefined): Promise<ResultT<T>> {
+        return this.callApi<T>("delete", endpoint, opts);
+    }
+
+    public get<T>(endpoint: string, opts: CallOptions | undefined = undefined): Promise<ResultT<T>> {
+        return this.callApi<T>("get", endpoint, opts);
+    }
+
+    public patch<T>(endpoint: string, opts: CallOptions | undefined = undefined): Promise<ResultT<T>> {
+        return this.callApi<T>("patch", endpoint, opts);
+    }
+
+    public post<T>(endpoint: string, opts: CallOptions | undefined = undefined): Promise<ResultT<T>> {
+        return this.callApi<T>("post", endpoint, opts);
+    }
+
+    public put<T>(endpoint: string, opts: CallOptions | undefined = undefined): Promise<ResultT<T>> {
+        return this.callApi<T>("put", endpoint, opts);
     }
 }
