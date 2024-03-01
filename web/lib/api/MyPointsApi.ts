@@ -1,9 +1,9 @@
 import { Api } from "./Api";
-import { NewErrorResult, ResultT, SUCCESS } from "./Result";
+import { NewErrorResult, NewErrorResultT, ResultT, SUCCESS } from "./Result";
 
 // Define base URIs for different environments
 const baseUris: {[key: string]: string} = {
-    "test":    "https://localhost:8080",
+    "test":    "http://localhost",
     "local":   "https://mypoints-api-dev.hexonite.net",
     "dev":     "https://mypoints-api-dev.hexonite.net",
     "staging": "https://mypoints-api-staging.hexonite.net",
@@ -32,7 +32,7 @@ export class MyPointsApi extends Api {
         return MyPointsApi.instance;
     }
 
-    callApi<T>(method: string, endpoint: string, options: CallOptions | undefined): Promise<ResultT<T>> {
+    callApi<T>(method: string, endpoint: string, options: CallOptions | undefined = undefined): Promise<ResultT<T>> {
         return new Promise((resolve, reject) => {
             const headers: HeadersInit = {
                 "Content-Type": "json/application",
@@ -55,21 +55,16 @@ export class MyPointsApi extends Api {
             fetch(url, reqOps)
                 .then((resp) => {
                     console.log("response: ", resp);
-                    // if (resp.status >= 200 && resp.status < 300)
-                    //     resp.json();
-                    // else                
-                    resp.json();
-                })
-                .then((obj: any) => {
-                    console.log("response json decoded: ", obj);
-                    if (obj.status) {
-                        if (obj.status == SUCCESS)
-                            resolve(obj);
-                        else
-                            reject(obj);
-                    }
-                    else
-                        reject(NewErrorResult(`Unknown error: ${JSON.stringify(obj)}`));
+                    resp.json()
+                        .then((obj: any) => {
+                            console.log("response json decoded: ", obj);
+                            if (obj && obj.status) { // this means it's a formatted result object
+                                resolve(obj);
+                            }
+                            else
+                                resolve(NewErrorResultT(`Unknown error: ${JSON.stringify(obj)}`));
+                        })
+                    
                 })
                 .catch((err: any) => {
                     console.error("fetch caught error:", err);

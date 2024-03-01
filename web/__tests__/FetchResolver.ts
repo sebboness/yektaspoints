@@ -1,5 +1,12 @@
 type Method = "get" | "options" | "post" | "put" | "patch" | "delete";
 
+export const DefaultStubOptions: StubOptions = {
+    reqHeaders: {
+        "Content-Type": "json/application",
+    },
+    credentials: "include",
+}
+
 // https://httpstat.us
 export enum Status {
     OK = 200,
@@ -60,6 +67,11 @@ export enum Status {
     Atimeoutoccurred = 524
 }
 
+export type StubOptions = {
+    reqHeaders: HeadersInit | undefined
+    credentials: RequestCredentials | undefined
+}
+
 /**
  * Stub API request, response in test cases.
  * - should be initialized and destroyed within the context of a specific case.
@@ -104,13 +116,15 @@ export class FetchResolver {
         this.init();
     }
 
-    public stub(uri: string, method: Method, payload: any, response: any, status: Status) {
+    public stub(uri: string, method: Method, payload: any, response: any, status: Status, opts: StubOptions | undefined = undefined) {
 
         const finalRequest: { input: RequestInfo | URL; init?: RequestInit } = {
             input: uri,
             init: {
                 method: method,
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                headers: opts?.reqHeaders,
+                credentials: opts?.credentials,
             }
         };
 
@@ -141,7 +155,8 @@ export class FetchResolver {
                 const request = {input, init };
 
                 return new Promise((resolve, reject) => {
-                    let response = this.mocks.get(JSON.stringify(request));
+                    const key = JSON.stringify(request);
+                    const response = this.mocks.get(key);
 
                     if (response) {
                         resolve(response);

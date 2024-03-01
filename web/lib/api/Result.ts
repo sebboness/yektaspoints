@@ -19,6 +19,15 @@ export function NewErrorResult(err: string, msg: string | null = null): Result {
     }
 };
 
+export function NewErrorResultT<T>(err: string, msg: string | null = null): ResultT<T> {
+    return {
+        status: FAILURE,
+        errors: [err],
+        message: msg || null,
+        data: null,
+    }
+};
+
 export function NewSuccessResult<T> (data: T, msg: string | null = null): ResultT<T> {
     return {
         status: SUCCESS,
