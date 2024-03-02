@@ -1,21 +1,23 @@
 package userauth
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
-	"github.com/sebboness/yektaspoints/util/auth"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 )
 
 type getUserAuthResponse struct {
-	auth.AuthResult
+	UserID   string   `json:"user_id"`
+	Username string   `json:"username"`
+	Email    string   `json:"email"`
+	Name     string   `json:"name"`
+	Groups   []string `json:"groups"`
 }
 
-// GetUserAuthHandler authenticates a user depending on the request grant_type
+// GetUserAuthHandler returns auth info from the currently logged in user.
+// We get this info from the passed in auth token via Cognito
 func (c *UserAuthController) GetUserAuthHandler(cgin *gin.Context) {
 
 	authInfo := handlers.GetAuthorizerInfo(cgin)
@@ -24,27 +26,13 @@ func (c *UserAuthController) GetUserAuthHandler(cgin *gin.Context) {
 		return
 	}
 
-	resp, err := c.handleGetUserAuth(cgin.Request.Context(), authInfo.GetUsername())
-	if err != nil {
-		if apierr := apierr.IsApiError(err); apierr != nil {
-			cgin.JSON(apierr.StatusCode(), handlers.ErrorResult(apierr))
-			return
-		}
-
-		cgin.JSON(http.StatusInternalServerError, handlers.ErrorResult(err))
-		return
+	resp := getUserAuthResponse{
+		UserID:   authInfo.GetUserID(),
+		Username: authInfo.GetUsername(),
+		Email:    authInfo.GetEmail(),
+		Name:     authInfo.GetName(),
+		Groups:   authInfo.GetGroups(),
 	}
 
 	cgin.JSON(http.StatusOK, handlers.SuccessResult(resp))
-}
-
-func (c *UserAuthController) handleGetUserAuth(ctx context.Context, username string) error {
-	resp := getUserAuthResponse{}
-
-	result, err := c.auth.RefreshToken(ctx, username)
-	if err != nil {
-		return resp, fmt.Errorf("failed to refresh token: %w", err)
-	}
-
-	return nil
 }

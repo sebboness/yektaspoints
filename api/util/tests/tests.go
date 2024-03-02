@@ -45,6 +45,6 @@ func AssertResultError(t *testing.T, res result.Result, wantErr string) {
 				break
 			}
 		}
-		assert.True(t, hasErr, "expected result to contain error")
+		assert.True(t, hasErr, "expected result to contain error "+wantErr)
 	}
 }

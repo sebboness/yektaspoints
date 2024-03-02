@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,7 @@ const (
 	claimKeyEmail         = "email"
 	claimKeyEmailVerified = "email_verified"
 	claimKeyName          = "name"
+	claimKeyGroups        = "cognito:groups"
 )
 
 type AuthorizerInfo struct {
@@ -67,6 +69,11 @@ func (i AuthorizerInfo) IsEmailVerified() bool {
 
 func (i AuthorizerInfo) GetEmail() string {
 	return i.ValueOrEmpty(claimKeyEmail)
+}
+
+func (i AuthorizerInfo) GetGroups() []string {
+	groupStr := i.ValueOrEmpty(claimKeyGroups)
+	return strings.Split(groupStr, ",")
 }
 
 func (i AuthorizerInfo) GetName() string {

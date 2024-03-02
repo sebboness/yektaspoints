@@ -28,6 +28,9 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 		r.GET("/v1/points", lambdaCtrl.GetUserPointsHandler)
 		r.GET("/v1/points/:point_id", lambdaCtrl.GetUserPointsHandler)
 		r.POST("/v1/points", lambdaCtrl.RequestPointsHandler)
+
+		// User
+		r.GET("/v1/user/auth", authCtrl.GetUserAuthHandler)
 	}
 
 	return r
