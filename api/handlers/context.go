@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -22,18 +24,26 @@ const (
 )
 
 type AuthorizerInfo struct {
-	Claims map[string]string `json:"claims"`
+	Claims map[string]interface{} `json:"claims"`
 }
 
 func PrepareAuthorizedContext(ctx context.Context, req events.APIGatewayProxyRequest) context.Context {
 	authorizer := AuthorizerInfo{}
 
+	authInfoJson, _ := json.Marshal(req.RequestContext.Authorizer)
+	logger.Infof("PrepareAuthorizedContext authorizer: " + string(authInfoJson))
+
 	if len(req.RequestContext.Authorizer) > 0 {
+		logger.Infof("PrepareAuthorizedContext A")
 		if claimsObj, ok := req.RequestContext.Authorizer["claims"]; ok {
-			if claims, ok := claimsObj.(map[string]string); ok {
+			logger.Infof("PrepareAuthorizedContext C")
+			if claims, ok := claimsObj.(map[string]interface{}); ok {
+				logger.Infof("PrepareAuthorizedContext D")
 				authorizer.Claims = claims
 			}
 		}
+	} else {
+		logger.Infof("PrepareAuthorizedContext B")
 	}
 
 	return context.WithValue(ctx, ctxKeyAuthInfo, authorizer)
@@ -43,6 +53,10 @@ func GetAuthorizerInfo(c *gin.Context) AuthorizerInfo {
 	if c.Request != nil {
 		ctx := c.Request.Context()
 		info := ctx.Value(ctxKeyAuthInfo)
+
+		authInfoJson, _ := json.Marshal(info)
+		logger.Infof("GetAuthorizerInfo authInfo?: " + string(authInfoJson))
+
 		if info != nil {
 			return info.(AuthorizerInfo)
 		}
@@ -57,7 +71,9 @@ func (i AuthorizerInfo) HasInfo() bool {
 
 func (i AuthorizerInfo) ValueOrEmpty(key string) string {
 	if i.HasInfo() {
-		return i.Claims[key]
+		if _val, ok := i.Claims[key]; ok {
+			return fmt.Sprintf("%v", _val)
+		}
 	}
 	return ""
 }

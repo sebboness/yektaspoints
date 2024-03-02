@@ -6,7 +6,7 @@ import "github.com/aws/aws-lambda-go/events"
 var mockApiGWEvent = events.APIGatewayProxyRequest{
 	RequestContext: events.APIGatewayProxyRequestContext{
 		Authorizer: map[string]interface{}{
-			"claims": map[string]string{
+			"claims": map[string]interface{}{
 				"cognito:username": "john",
 				"email":            "john@info.co",
 				"email_verified":   "true",

@@ -37,7 +37,7 @@ func Test_PrepareAuthorizedContext(t *testing.T) {
 			evt := events.APIGatewayProxyRequest{
 				RequestContext: events.APIGatewayProxyRequestContext{
 					Authorizer: map[string]interface{}{
-						"claims": map[string]string{
+						"claims": map[string]interface{}{
 							"cognito:username": "john",
 							"email":            "john@info.co",
 							"email_verified":   "true",
@@ -87,7 +87,7 @@ func Test_GetAuthorizerInfo(t *testing.T) {
 
 			if c.state.setupCtxWithInfo {
 				ctx = context.WithValue(ctx, ctxKeyAuthInfo, AuthorizerInfo{
-					Claims: map[string]string{
+					Claims: map[string]any{
 						"sub": "123",
 					},
 				})

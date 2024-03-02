@@ -35,12 +35,14 @@ func NewLoggerWithContext(name string, ctx context.Context) *Logger {
 	logger.Out = os.Stdout
 
 	instance = &Logger{logger: logger, ctx: ctx}
+	instance.Infof("Initialized new logger")
 	return instance.WithAppName(getAppName()).WithName(name)
 }
 
 func Get() *Logger {
 	if instance == nil {
 		instance = NewLogger(getAppName())
+		instance.Infof("Got new instance of logger")
 	}
 	return instance
 }

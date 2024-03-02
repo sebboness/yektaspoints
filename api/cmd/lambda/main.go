@@ -19,11 +19,13 @@ var authCtrl *userauth.UserAuthController
 var userCtrl *userHandlers.UserController
 
 var ginLambda *ginadapter.GinLambda
-var logger = log.NewLogger("mypoints_lambda")
+var logger *log.Logger
 
 // Handler is the main entry point for Lambda. Receives a proxy request and
 // returns a proxy response
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
+	logger = log.NewLogger("mypoints_lambda")
 
 	_env := env.GetEnv("ENV")
 
