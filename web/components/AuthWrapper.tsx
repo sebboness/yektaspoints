@@ -12,30 +12,35 @@ export const AuthWrapper = ({ children }: Props) => {
     const { push } = useRouter();
     const { user } = useSelector((state: RootState) => state.auth);
 
-    const { token } = getValidAuthTokens();
+    // is user defined? if not, we know user is not logged in
+    if (!user) {
 
-    // this query will only execute if the token is valid and the user email is not already in the redux store
-    const { error, isLoading } = useGetAuthDataQuery(
-        { token: token || "" },
-        {
-            // The useGetAuthDataQuery hook will not execute the query at all if these values are falsy
-            skip: !!userEmail || !token,
-        }
-    );
+    }
+
+    // const { token } = getValidAuthTokens();
+
+    // // this query will only execute if the token is valid and the user email is not already in the redux store
+    // const { error, isLoading } = useGetAuthDataQuery(
+    //     { token: token || "" },
+    //     {
+    //         // The useGetAuthDataQuery hook will not execute the query at all if these values are falsy
+    //         skip: !!userEmail || !token,
+    //     }
+    // );
 
     // if the user doesnt have a valid token, redirect to login page
-    useEffect(() => {
-        if (!token) {
-            push("/login");
-            // will explain this in a moment
-            dispatch(logout());
-        }
-    }, [token, push]);
+    // useEffect(() => {
+    //     if (!token) {
+    //         push("/login");
+    //         // will explain this in a moment
+    //         // dispatch(logout());
+    //     }
+    // }, [token, push]);
 
-    // optional: show a loading indicator while the query is loading
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
+    // // optional: show a loading indicator while the query is loading
+    // if (isLoading) {
+    //     return <div>Loading...</div>;
+    // }
 
     return children;
 };

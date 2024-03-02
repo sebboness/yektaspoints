@@ -1,6 +1,6 @@
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { ErrorAsResult, SUCCESS } from "@/lib/api/Result";
-import { TokenData, UserData } from "@/lib/auth/Auth";
+import { ParseToken, TokenData, UserData } from "@/lib/auth/Auth";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 export const fetchUsers = createAsyncThunk("auth/fetchUsers", async (params, thunkApi) => {
@@ -63,12 +63,17 @@ const authSlice = createSlice({
 
         builder.addCase(login.fulfilled, (state, action) => {
             console.log("login fulfilled", action.payload);
-            state.token = action.payload
 
+            const user = ParseToken(action.payload.id_token);
+            state.token = action.payload;
+            state.user = user;
         });
 
         builder.addCase(login.rejected, (state, action) => {
             console.log("login rejected", action.error);
+
+            state.token = undefined;
+            state.user = undefined;
         });
     },
 });
