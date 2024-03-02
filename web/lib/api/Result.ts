@@ -32,3 +32,16 @@ export function NewSuccessResult<T> (data: T, msg: string | null = null): Result
         data: data,
     }
 };
+
+
+/**
+ * Returns an error result containing information of the given error object
+ * @param err The error object which could be a result object or any other kind of error
+ * @returns The result object with error information
+ */
+export const ErrorAsResult = <T>(err: ResultT<T> | any): ResultT<T> => {
+    if (err.status)
+        return err;
+    else
+        return NewErrorResultT(JSON.stringify(err));
+}
