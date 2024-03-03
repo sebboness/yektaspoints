@@ -50,6 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                         {children}
                     </Providers>
                 </main>
+                <script src="https://kit.fontawesome.com/67e614e582.js" crossOrigin="anonymous"></script>
             </body>
         </html>
     );

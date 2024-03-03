@@ -1,8 +1,6 @@
 "use client";
 
-import { useSelector , useDispatch } from "react-redux";
-import { fetchUsers } from "@/slices/authSlice";
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import Image from "next/image";
 import {
     ArrowDownRightIcon,
@@ -13,13 +11,14 @@ import {
     HandThumbUpIcon,
     LightBulbIcon,
 } from "@heroicons/react/24/solid";
-import { AppDispatch, RootState } from "@/store/store";
+// import { AppDispatch, RootState } from "@/store/store";
+import { AuthWrapper } from "@/components/AuthWrapper";
 
 export default function Home() {
 
     const userRef = useRef(false);
-    const { accessToken } = useSelector((state: RootState) => state.auth);
-    const dispatch = useDispatch<AppDispatch>();
+    // const { accessToken } = useSelector((state: RootState) => state.auth);
+    // const dispatch = useDispatch<AppDispatch>();
     
     // useEffect(() => {
     //     if (userRef.current === false) {
@@ -33,7 +32,7 @@ export default function Home() {
     // }, []);
 
     return (
-        <>
+        <AuthWrapper>
             {/* Top navbar */}
             {/* TK TK */}
         
@@ -198,6 +197,6 @@ export default function Home() {
                     </div>
                 </div>
             </section>
-        </>
+        </AuthWrapper>
     );
 }

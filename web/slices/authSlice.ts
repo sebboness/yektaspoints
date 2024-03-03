@@ -3,7 +3,6 @@ import { LocalApi } from "@/lib/api/LocalApi";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { ErrorAsResult, SUCCESS } from "@/lib/api/Result";
 import { ParseToken, TokenData, UserData } from "@/lib/auth/Auth";
-import { store } from "@/store/store";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 /**
@@ -49,23 +48,6 @@ export const getSimpleTokenRetriever = (token: string): TokenGetter => {
     return {
         getToken() {return token; },
         getTokenType()  { return "Bearer"; },
-    };
-}
-
-/**
- * Gets a token getter that returns the auth token from the auth store.
- * @returns The token getter
- */
-export const getTokenRetriever = (): TokenGetter => {
-    return {
-        getToken() {
-            const authStore = store.getState().auth;
-            return authStore.token
-                ? authStore.token.id_token
-                : "";
-        },
-
-        getTokenType()  { return "Bearer"},
     };
 }
 

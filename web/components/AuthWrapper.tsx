@@ -1,8 +1,8 @@
 import { useEffect } from "react";
-import { useRouter } from "next/router";
+import { redirect, useRouter } from "next/navigation";
 import { getTokenFromCookie } from "@/lib/auth/Auth";
 import { checkUserAuth } from "@/slices/authSlice";
-import { useAppStore } from "@/store/hooks";
+import { useAppStore, useAppSelector } from "@/store/hooks";
 
 type Props = {
    children?: React.ReactNode;
@@ -11,9 +11,14 @@ type Props = {
 export const AuthWrapper = ({ children }: Props) => {
     const { push } = useRouter();
     const store = useAppStore();
+    const userLoggedIn = false;
+    const authState = useAppSelector((state) => state.auth);
+
+    console.log("state", store.getState());
+    console.log("authState", authState);
 
     // is user defined? if not, we know user is not logged in
-    if (!store.getState().auth.user) {
+    if (!authState.user) {
         console.info("no auth data in state");
         const tokenData = getTokenFromCookie();
         if (tokenData) {
@@ -22,10 +27,19 @@ export const AuthWrapper = ({ children }: Props) => {
             store.dispatch(checkUserAuth(tokenData));
         } else {
             console.info("no token data in cookie");
+            redirect("/login");
         }
     } else {
         console.info("auth data in state", store.getState().auth);
     }
+
+    useEffect(() => {
+        if (!userLoggedIn) {
+            push("/login");
+            // will explain this in a moment
+            // dispatch(logout());
+        }
+    }, [userLoggedIn, push]);
 
 
 
