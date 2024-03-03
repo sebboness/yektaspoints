@@ -1,13 +1,13 @@
 import { NewErrorResult, NewSuccessResult } from "@/lib/api/Result";
-import { TokenData } from "@/lib/auth/Auth";
+import { TokenCookieName, TokenData } from "@/lib/auth/Auth";
 import { NextRequest, NextResponse } from "next/server";
 
-const cookieName = "mypoints_web_auth";
+
 const env = process.env["ENV"];
 
 export async function GET(req: NextRequest) {
-    const cookie = req.cookies.get(cookieName);
-    console.info(`${cookieName} set? ${cookie !== undefined}`);
+    const cookie = req.cookies.get(TokenCookieName);
+    console.info(`${TokenCookieName} set? ${cookie !== undefined}`);
     if (!cookie) {
         return NextResponse.json(NewErrorResult("not set"), {
             status: 404,
@@ -28,9 +28,9 @@ export async function POST(req: NextRequest) {
         statusText: "Set cookie successfully",
     });
 
-    console.info(`Setting ${cookieName} cookie on ${env}:${domain} with value ${JSON.stringify(body)}`);
+    console.info(`Setting ${TokenCookieName} cookie on ${env}:${domain} with value ${JSON.stringify(body)}`);
     response.cookies.set({
-        name: cookieName,
+        name: TokenCookieName,
         value: JSON.stringify(body),
         maxAge: 60*60*24*30, // 30 days
         httpOnly: true,
@@ -48,9 +48,9 @@ export async function DELETE(req: NextRequest) {
         statusText: "Auth cookie deleted successfully",
     });
 
-    console.info(`Deleting ${cookieName} cookie`);
+    console.info(`Deleting ${TokenCookieName} cookie`);
     response.cookies.set({
-        name: cookieName,
+        name: TokenCookieName,
         value: "",
         maxAge: -100,
         httpOnly: true,

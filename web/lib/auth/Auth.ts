@@ -1,4 +1,7 @@
 import { jwtDecode } from "jwt-decode";
+import { getCookie } from "cookies-next";
+
+export const TokenCookieName = "mypoints_web_auth";
 
 export type TokenData = {
     access_token: string;
@@ -43,4 +46,12 @@ export const ParseToken = (token: string): UserData | undefined => {
     }
 
     return undefined;
+}
+
+export const getTokenFromCookie = (): TokenData | undefined => {
+    const tokenCookie = getCookie(TokenCookieName);
+    if (!tokenCookie)
+        return undefined;
+
+    return JSON.parse(tokenCookie) as TokenData;
 }
