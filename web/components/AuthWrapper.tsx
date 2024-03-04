@@ -1,45 +1,53 @@
-import { useEffect } from "react";
-import { redirect, useRouter } from "next/navigation";
-import { getTokenFromCookie } from "@/lib/auth/Auth";
-import { checkUserAuth } from "@/slices/authSlice";
-import { useAppStore, useAppSelector } from "@/store/hooks";
+// import { useEffect } from "react";
+// import { redirect } from "next/navigation";
+// import { getTokenFromCookie } from "@/lib/auth/Auth";
+// import { checkUserAuth } from "@/slices/authSlice";
+// import { useAppStore, useAppSelector } from "@/store/hooks";
+// import { LocalApi } from "@/lib/api/LocalApi";
+
+import { AuthChecker } from "./AuthChecker";
 
 type Props = {
    children?: React.ReactNode;
 };
 
+export const Some = async () => {
+    return (<></>);
+}
+
 export const AuthWrapper = ({ children }: Props) => {
-    const { push } = useRouter();
-    const store = useAppStore();
-    const userLoggedIn = false;
-    const authState = useAppSelector((state) => state.auth);
+    // // const store = useAppStore();
+    // const userLoggedIn = false;
+    // const authState = useAppSelector((state) => state.auth);
 
-    console.log("state", store.getState());
-    console.log("authState", authState);
+    // // console.log("state", store.getState());
+    // console.log("authState", authState);
 
-    // is user defined? if not, we know user is not logged in
-    if (!authState.user) {
-        console.info("no auth data in state");
-        const tokenData = getTokenFromCookie();
-        if (tokenData) {
-            console.info("got token data from cookie");
-            // checks if token in cookie is still valid
-            store.dispatch(checkUserAuth(tokenData));
-        } else {
-            console.info("no token data in cookie");
-            redirect("/login");
-        }
-    } else {
-        console.info("auth data in state", store.getState().auth);
-    }
+    // // is user defined? if not, we know user is not logged in
+    // if (!authState.user) {
+    //     console.info("no auth data in state");
+    //     // const localApi = LocalApi.getInstance().getAuthCookie()
+    //     //     .then(())
+    //     const tokenData = getTokenFromCookie();
+    //     if (tokenData) {
+    //         console.info("got token data from cookie");
+    //         // checks if token in cookie is still valid
+    //         // store.dispatch(checkUserAuth(tokenData));
+    //     } else {
+    //         console.info("no token data in cookie");
+    //         redirect("/login");
+    //     }
+    // } else {
+    //     // console.info("auth data in state", store.getState().auth);
+    // }
 
-    useEffect(() => {
-        if (!userLoggedIn) {
-            push("/login");
-            // will explain this in a moment
-            // dispatch(logout());
-        }
-    }, [userLoggedIn, push]);
+    // useEffect(() => {
+    //     if (!userLoggedIn) {
+    //         push("/login");
+    //         // will explain this in a moment
+    //         // dispatch(logout());
+    //     }
+    // }, [userLoggedIn, push]);
 
 
 
@@ -68,5 +76,8 @@ export const AuthWrapper = ({ children }: Props) => {
     //     return <div>Loading...</div>;
     // }
 
-    return children;
+    return <>
+        <AuthChecker />
+        {children}
+    </>;
 };

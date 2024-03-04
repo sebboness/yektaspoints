@@ -12,11 +12,6 @@ resource "aws_api_gateway_integration" "options_integration" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = var.lambda_invoke_arn
-  # integration_http_method = "OPTIONS"
-  # type                    = "MOCK"
-  # request_templates = {
-  #   "application/json" = "{\"statusCode\": 200}"
-  # }
 }
 
 resource "aws_api_gateway_method_response" "response" {
@@ -24,12 +19,6 @@ resource "aws_api_gateway_method_response" "response" {
   resource_id = var.resource_id
   http_method = aws_api_gateway_method.options.http_method
   status_code = "200"
-
-  # response_parameters = {
-  #   "method.response.header.Access-Control-Allow-Headers" = true,
-  #   "method.response.header.Access-Control-Allow-Methods" = true,
-  #   "method.response.header.Access-Control-Allow-Origin"  = true
-  # }
 }
 
 resource "aws_api_gateway_integration_response" "options_integration_response" {
@@ -37,13 +26,6 @@ resource "aws_api_gateway_integration_response" "options_integration_response" {
   resource_id = var.resource_id
   http_method = aws_api_gateway_method.options.http_method
   status_code = aws_api_gateway_method_response.response.status_code
-
-  # response_parameters = {
-  #   "method.response.header.Access-Control-Allow-Headers" = "'${var.corsAllowHeaders}'",
-  #   "method.response.header.Access-Control-Allow-Methods" = "'${var.corsAllowMethods}'",
-  #   "method.response.header.Access-Control-Allow-Origin"  = "'${var.corsAllowOrigins}'"
-  # }
-
   depends_on = [
     aws_api_gateway_method.options,
     aws_api_gateway_integration.options_integration,

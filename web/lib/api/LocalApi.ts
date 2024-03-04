@@ -17,15 +17,15 @@ export class LocalApi extends Api {
     }
 
     public deleteAuthCookie(): Promise<ResultT<boolean>> {
-        return this.delete("/api/auth-cookie");
+        return this.delete("api/auth-cookie");
     }
 
     public getAuthCookie(): Promise<ResultT<TokenData>> {
-        return this.get("/api/auth-cookie");
+        return this.get("api/auth-cookie");
     }
 
     public setAuthCookie(tokenData: TokenData): Promise<ResultT<boolean>> {
-        return this.post("/api/auth-cookie", {
+        return this.post("api/auth-cookie", {
             payload: tokenData,
         });
     }

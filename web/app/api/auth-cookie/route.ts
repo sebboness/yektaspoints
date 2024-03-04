@@ -1,21 +1,21 @@
 import { NewErrorResult, NewSuccessResult } from "@/lib/api/Result";
-import { TokenCookieName, TokenData } from "@/lib/auth/Auth";
+import { TokenData } from "@/lib/auth/Auth";
+import authCookie from "@/lib/auth/AuthCookie";
 import { NextRequest, NextResponse } from "next/server";
 
 
-const env = process.env["ENV"];
-
 export async function GET(req: NextRequest) {
-    const cookie = req.cookies.get(TokenCookieName);
-    console.info(`${TokenCookieName} set? ${cookie !== undefined}`);
-    if (!cookie) {
+    const tokenData = await authCookie.get();
+    if (!tokenData) {
         return NextResponse.json(NewErrorResult("not set"), {
             status: 404,
             statusText: "Auth cookie not set",
         });
     }
 
-    const tokenData = JSON.parse(cookie.value) as TokenData;
+    // const cookieDecompressed = await decompress(cookie.value);
+    // const tokenData = JSON.parse(cookieDecompressed) as TokenData;
+
     return NextResponse.json(NewSuccessResult(tokenData), { status: 200 });
 }
 
@@ -28,16 +28,7 @@ export async function POST(req: NextRequest) {
         statusText: "Set cookie successfully",
     });
 
-    console.info(`Setting ${TokenCookieName} cookie on ${env}:${domain} with value ${JSON.stringify(body)}`);
-    response.cookies.set({
-        name: TokenCookieName,
-        value: JSON.stringify(body),
-        maxAge: 60*60*24*30, // 30 days
-        httpOnly: true,
-        sameSite: "strict",
-        secure: env == "local" ? false : true,
-        domain: domain === "localhost" ? domain : "hexonite.net",
-    });
+    await authCookie.set(response, domain, body);
 
     return response;
 }

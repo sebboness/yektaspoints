@@ -70,7 +70,7 @@ export class Api {
             if (opts.payload)
                 reqOps.body = JSON.stringify(opts.payload);
 
-            console.debug(`MyPointsAPI preparing${isAuthedReq ? " authorized" : ""} request: ${method} ${url}`);
+            console.info(`MyPointsAPI preparing${isAuthedReq ? " authorized" : ""} request: ${method} ${url}`);
 
             fetch(url, reqOps)
                 .then((resp) => {

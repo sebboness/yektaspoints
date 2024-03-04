@@ -27,10 +27,6 @@ locals {
   app = "mypoints"
   env = terraform.workspace == "default" ? "dev" : terraform.workspace
 
-  corsAllowHeaders = "Accept,Content-Type,Content-Length,Accept-Encoding,Origin,Cache-Control,X-Requested-With,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-CSRF-Token" 
-  corsAllowMethods = "DELETE,GET,OPTIONS,PATCH,POST,PUT"
-  corsAllowOrigins = "*"
-
   apiSubdomain = local.env == "prod" ? "mypoints-api" : "mypoints-api-${local.env}" # (i.e. mypoints-api.hexonite.net)
 }
 

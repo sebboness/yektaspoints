@@ -13,7 +13,7 @@ export const checkUserAuth = createAsyncThunk("auth/checkUserAuth", async (token
     try {
         const result = await api.withToken(getSimpleTokenRetriever(tokenData.id_token)).getUserAuth();
         if (result.status === SUCCESS) {
-            thunkApi.dispatch(authSlice.actions.setAuthToken(tokenData));
+            thunkApi.dispatch(AuthSlice.actions.setAuthToken(tokenData));
             return tokenData;
         }
         else
@@ -35,7 +35,7 @@ const clearAuthCookie = createAsyncThunk("auth/clearAuthCookie", async (params, 
 /**
  * Sets auth cookie
  */
-const setAuthCookie = createAsyncThunk("auth/setAuthCookie", async (tokenData: TokenData, thunkApi) => {
+export const setAuthCookie = createAsyncThunk("auth/setAuthCookie", async (tokenData: TokenData, thunkApi) => {
     const api = LocalApi.getInstance();
     const resp = await api.setAuthCookie(tokenData);
     return resp.status === SUCCESS;
@@ -67,7 +67,7 @@ export const login = createAsyncThunk("auth/login", async (options: LoginOptions
     try {
         const result = await api.authenticate(options.username, options.password);
         if (result.status === SUCCESS) {
-            thunkApi.dispatch(authSlice.actions.setAuthToken(result.data!));
+            thunkApi.dispatch(AuthSlice.actions.setAuthToken(result.data!));
             return result.data!;
         }
         else
@@ -87,7 +87,7 @@ const initialState: AuthState = {
     authCookieSet: false,
 };
 
-export const authSlice = createSlice({
+export const AuthSlice = createSlice({
     name: "auth",
     initialState,
     reducers: {
@@ -102,18 +102,24 @@ export const authSlice = createSlice({
     extraReducers: (builder) => {
         builder.addCase(checkUserAuth.rejected, (state, action) => {
             console.log("checkUserAuth rejected", action.error);
-
             state.token = undefined;
             state.user = undefined;
         });
 
         builder.addCase(login.rejected, (state, action) => {
             console.log("login rejected", action.error);
-
             state.token = undefined;
             state.user = undefined;
+        });
+
+        builder.addCase(setAuthCookie.fulfilled, (state, action) => {
+            state.authCookieSet = action.payload;
+        });
+        builder.addCase(setAuthCookie.rejected, (state, action) => {
+            console.log("setAuthCookie rejected", action.error);
+            state.authCookieSet = false;
         });
     },
 });
 
-export default authSlice.reducer;
+export default AuthSlice.reducer;

@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useRef } from "react";
+import React from "react";
 import Image from "next/image";
 import {
     ArrowDownRightIcon,
@@ -13,10 +11,12 @@ import {
 } from "@heroicons/react/24/solid";
 // import { AppDispatch, RootState } from "@/store/store";
 import { AuthWrapper } from "@/components/AuthWrapper";
+import { LocalApi } from "@/lib/api/LocalApi";
+// import { getTokenFromCookie } from "@/lib/auth/Auth";
+// import { cookies } from "next/headers";
 
-export default function Home() {
+export default async function Home() {
 
-    const userRef = useRef(false);
     // const { accessToken } = useSelector((state: RootState) => state.auth);
     // const dispatch = useDispatch<AppDispatch>();
     
@@ -30,6 +30,10 @@ export default function Home() {
     //         userRef.current = true;
     //     }
     // }, []);
+
+    // console.log("cookied", cookies().getAll());
+    // const tokenData = getTokenFromCookie();
+    // console.log("cookieResp", tokenData);
 
     return (
         <AuthWrapper>
@@ -198,5 +202,5 @@ export default function Home() {
                 </div>
             </section>
         </AuthWrapper>
-    );
+        );
 }

@@ -10,7 +10,7 @@ import { TokenData } from "@/lib/auth/Auth";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { SUCCESS } from "@/lib/api/Result";
 import { useAppDispatch } from "@/store/hooks";
-import { authSlice } from "@/slices/authSlice";
+import authSlice, { AuthSlice, setAuthCookie } from "@/slices/authSlice";
 
 const formSchema = yup.object({
     username: yup.string().required().max(30),
@@ -39,6 +39,7 @@ const LoginForm = (props: Props) => {
     
     // Loading when credentials are submitted
     const [loading, setLoading] = useState(false);
+    const [preparing, setPreparing] = useState(false);
 
     // Setup form validation variables and methods
     const { 
@@ -57,8 +58,8 @@ const LoginForm = (props: Props) => {
         const result = await api.authenticate(data.username!, data.password!);
         if (result.status === SUCCESS) {
             console.log("api logged in", result.data);            
-            
-            dispatch(authSlice.actions.setAuthToken(result.data!));
+            dispatch(AuthSlice.actions.setAuthToken(result.data!));
+            dispatch(setAuthCookie(result.data!));
             return
         }
 
