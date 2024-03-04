@@ -1,7 +1,15 @@
 import LoginForm from "@/components/login/LoginForm";
+// import { redirect, useRouter } from "next/navigation";
+// import { useAppSelector } from "@/store/hooks";
 import Image from "next/image";
 
 export default function LoginPage() {    
+    
+    // const authState = useAppSelector((state) => state.auth);
+    // if (authState.user && authState.user.user_id) {
+    //     console.info("Already logged in");
+    //     redirect("/");
+    // }
 
     return (
         <>
@@ -22,7 +30,10 @@ export default function LoginPage() {
                             />
                         </figure>
 
-                        <h1 className="text-3xl">Hello there! :)</h1>
+                        <h1 className="text-3xl">
+                            {/* {authState.user ? "Logged in" : "Not logged in"} */}
+                            {/* Hello there! :) */}
+                        </h1>
 
                         <LoginForm />
                     </div>

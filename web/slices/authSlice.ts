@@ -3,7 +3,7 @@ import { LocalApi } from "@/lib/api/LocalApi";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { ErrorAsResult, SUCCESS } from "@/lib/api/Result";
 import { ParseToken, TokenData, UserData } from "@/lib/auth/Auth";
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
 /**
  * Checks if given token data is still valid
@@ -13,6 +13,7 @@ export const checkUserAuth = createAsyncThunk("auth/checkUserAuth", async (token
     try {
         const result = await api.withToken(getSimpleTokenRetriever(tokenData.id_token)).getUserAuth();
         if (result.status === SUCCESS) {
+            thunkApi.dispatch(authSlice.actions.setAuthToken(tokenData));
             return tokenData;
         }
         else
@@ -66,7 +67,7 @@ export const login = createAsyncThunk("auth/login", async (options: LoginOptions
     try {
         const result = await api.authenticate(options.username, options.password);
         if (result.status === SUCCESS) {
-            thunkApi.dispatch(setAuthCookie(result.data!));
+            thunkApi.dispatch(authSlice.actions.setAuthToken(result.data!));
             return result.data!;
         }
         else
@@ -86,36 +87,24 @@ const initialState: AuthState = {
     authCookieSet: false,
 };
 
-const authSlice = createSlice({
+export const authSlice = createSlice({
     name: "auth",
     initialState,
     reducers: {
-        increment: (state) => {
-            // state.accessToken = "123";
+        setAuthToken: (state, action: PayloadAction<TokenData>) => {
+            console.log("authSlice.setAuthToken: setting token");
+            const user = ParseToken(action.payload.id_token);
+            console.log("authSlice.setAuthToken: user", user);
+            state.token = action.payload;
+            state.user = user;
         },
     },
     extraReducers: (builder) => {
-        builder.addCase(checkUserAuth.fulfilled, (state, action) => {
-            console.log("checkUserAuth fulfilled", action.payload);
-
-            const user = ParseToken(action.payload.id_token);
-            state.token = action.payload;
-            state.user = user;
-        });
-
         builder.addCase(checkUserAuth.rejected, (state, action) => {
             console.log("checkUserAuth rejected", action.error);
 
             state.token = undefined;
             state.user = undefined;
-        });
-
-        builder.addCase(login.fulfilled, (state, action) => {
-            console.log("login fulfilled", action.payload);
-
-            const user = ParseToken(action.payload.id_token);
-            state.token = action.payload;
-            state.user = user;
         });
 
         builder.addCase(login.rejected, (state, action) => {

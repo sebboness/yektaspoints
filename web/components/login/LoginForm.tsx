@@ -1,23 +1,42 @@
 "use client";
 
-import React, { FormEvent, useState } from "react"
+import React, { useState } from "react"
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCompass } from "@fortawesome/free-solid-svg-icons";
+import { TokenData } from "@/lib/auth/Auth";
+import { MyPointsApi } from "@/lib/api/MyPointsApi";
+import { SUCCESS } from "@/lib/api/Result";
+import { useAppDispatch } from "@/store/hooks";
+import { authSlice } from "@/slices/authSlice";
 
 const formSchema = yup.object({
     username: yup.string().required().max(30),
     password: yup.string().required().max(256),
 });
 
-type FormBody = {
+export type LoginFormData = {
     username?: string;
     password?: string;
 }
 
-const LoginForm = () => {
+type Props = {}
+
+const LoginForm = (props: Props) => {
+
+    const dispatch = useAppDispatch();
+    const api = MyPointsApi.getInstance();
+
+    // api.callApi("GET", "health", {})
+    //     .then((res) => {
+    //         console.info("health res:", res);
+    //     })
+    //     .catch((err) => {
+    //         console.error("health err:", err);
+    //     });
+    
     // Loading when credentials are submitted
     const [loading, setLoading] = useState(false);
 
@@ -31,9 +50,20 @@ const LoginForm = () => {
         resolver: yupResolver(formSchema)
     });
 
-    const onSubmit = (data: FormBody) => {  
+    const onSubmit = async (data: LoginFormData) => {  
         setLoading(true);      
         console.log("on submit", data);
+
+        const result = await api.authenticate(data.username!, data.password!);
+        if (result.status === SUCCESS) {
+            console.log("api logged in", result.data);            
+            
+            dispatch(authSlice.actions.setAuthToken(result.data!));
+            return
+        }
+
+        console.log("api error", result);
+        setLoading(false);
     }
 
     return (

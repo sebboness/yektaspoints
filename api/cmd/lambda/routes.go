@@ -6,7 +6,7 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine) *gin.Engine {
-	r.Use(gin.Recovery())
+	r.Use(gin.Recovery()).Use(middleware.CORSMiddleware())
 
 	// Health
 	r.GET("/", lambdaCtrl.HealthCheckHandler)

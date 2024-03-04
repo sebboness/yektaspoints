@@ -45,6 +45,7 @@ export class Api {
             const opts = options || {};
             const headers: HeadersInit = {
                 "Content-Type": "json/application",
+                // "Origin": "http://localhost:3000",
             };
 
             let isAuthedReq = false;
@@ -87,12 +88,13 @@ export class Api {
                 })
                 .catch((err: any) => {
                     console.error("MyPointsAPi caught an error:", err);
+                    console.error("MyPointsAPi typeof error:", typeof err);
                     if (err && err.errors)
                         resolve(err); // Assume error object is a Result
                     else if (typeof err === "string" || err instanceof Array)
                         resolve(NewErrorResultT(err, "Caught an error"));
                     else
-                        resolve(NewErrorResultT(`Caught the following error: ${JSON.stringify(err)}`));
+                        resolve(NewErrorResultT(`Caught the following error: ${err}`));
                 });
         });
     }

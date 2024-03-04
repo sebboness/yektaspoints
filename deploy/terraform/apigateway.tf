@@ -91,13 +91,11 @@ resource "aws_api_gateway_method_response" "root_get" {
   resource_id = aws_api_gateway_resource.root_v1.id
   http_method = aws_api_gateway_method.root_get.http_method
   status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = true,
-    "method.response.header.Access-Control-Allow-Methods" = true,
-    "method.response.header.Access-Control-Allow-Origin"  = true
-  }
-
+  # response_parameters = {
+  #   "method.response.header.Access-Control-Allow-Headers" = true,
+  #   "method.response.header.Access-Control-Allow-Methods" = true,
+  #   "method.response.header.Access-Control-Allow-Origin"  = true
+  # }
 }
 
 resource "aws_api_gateway_integration_response" "root_int_resp" {
@@ -105,13 +103,11 @@ resource "aws_api_gateway_integration_response" "root_int_resp" {
   resource_id = aws_api_gateway_resource.root_v1.id
   http_method = aws_api_gateway_method.root_get.http_method
   status_code = aws_api_gateway_method_response.root_get.status_code
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'${local.corsAllowHeaders}'",
-    "method.response.header.Access-Control-Allow-Methods" = "'${local.corsAllowMethods}'",
-    "method.response.header.Access-Control-Allow-Origin"  = "'${local.corsAllowOrigins}'"
-  }
-
+  # response_parameters = {
+  #   "method.response.header.Access-Control-Allow-Headers" = "'${local.corsAllowHeaders}'",
+  #   "method.response.header.Access-Control-Allow-Methods" = "'${local.corsAllowMethods}'",
+  #   "method.response.header.Access-Control-Allow-Origin"  = "'${local.corsAllowOrigins}'"
+  # }
   depends_on = [
     aws_api_gateway_method.root_get,
     aws_api_gateway_integration.root_integration
@@ -126,6 +122,66 @@ module "apigw_root_options" {
   corsAllowHeaders = local.corsAllowHeaders
   corsAllowMethods = local.corsAllowMethods
   corsAllowOrigins = local.corsAllowOrigins
+  lambda_invoke_arn = aws_lambda_function.main.invoke_arn
+  depends_on = [
+    aws_api_gateway_resource.root_v1
+  ]
+}
+
+# options for /health
+module "apigw_health_options" {
+  source = "./apigw-options"
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.health.id
+  corsAllowHeaders = local.corsAllowHeaders
+  corsAllowMethods = local.corsAllowMethods
+  corsAllowOrigins = local.corsAllowOrigins
+  lambda_invoke_arn = aws_lambda_function.main.invoke_arn
+  depends_on = [
+    aws_api_gateway_resource.health
+  ]
+}
+
+# options for /auth/token
+module "apigw_auth_token_options" {
+  source = "./apigw-options"
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.auth_token.id
+  corsAllowHeaders = local.corsAllowHeaders
+  corsAllowMethods = local.corsAllowMethods
+  corsAllowOrigins = local.corsAllowOrigins
+  lambda_invoke_arn = aws_lambda_function.main.invoke_arn
+  depends_on = [
+    aws_api_gateway_resource.auth_token
+  ]
+}
+
+# options for /v1/user/register
+module "apigw_user_register_options" {
+  source = "./apigw-options"
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_register.id
+  corsAllowHeaders = local.corsAllowHeaders
+  corsAllowMethods = local.corsAllowMethods
+  corsAllowOrigins = local.corsAllowOrigins
+  lambda_invoke_arn = aws_lambda_function.main.invoke_arn
+  depends_on = [
+    aws_api_gateway_resource.user_register
+  ]
+}
+
+# options for /v1/user/register/confirm
+module "apigw_user_register_confirm_options" {
+  source = "./apigw-options"
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_register_confirm.id
+  corsAllowHeaders = local.corsAllowHeaders
+  corsAllowMethods = local.corsAllowMethods
+  corsAllowOrigins = local.corsAllowOrigins
+  lambda_invoke_arn = aws_lambda_function.main.invoke_arn
+  depends_on = [
+    aws_api_gateway_resource.user_register_confirm
+  ]
 }
 
 # /auth
@@ -176,11 +232,11 @@ resource "aws_api_gateway_method_response" "auth_token_post" {
   resource_id = aws_api_gateway_resource.auth_token.id
   http_method = aws_api_gateway_method.auth_token_post.http_method
   status_code = "200"
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = true,
-    "method.response.header.Access-Control-Allow-Methods" = true,
-    "method.response.header.Access-Control-Allow-Origin"  = true
-  }
+  # response_parameters = {
+  #   "method.response.header.Access-Control-Allow-Headers" = true,
+  #   "method.response.header.Access-Control-Allow-Methods" = true,
+  #   "method.response.header.Access-Control-Allow-Origin"  = true
+  # }
   depends_on = [
     aws_api_gateway_method.auth_token_post
   ]
@@ -191,11 +247,11 @@ resource "aws_api_gateway_integration_response" "auth_token_post" {
   resource_id = aws_api_gateway_resource.auth_token.id
   http_method = aws_api_gateway_method.auth_token_post.http_method
   status_code = aws_api_gateway_method_response.auth_token_post.status_code
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'${local.corsAllowHeaders}'",
-    "method.response.header.Access-Control-Allow-Methods" = "'${local.corsAllowMethods}'",
-    "method.response.header.Access-Control-Allow-Origin"  = "'${local.corsAllowOrigins}'"
-  }
+  # response_parameters = {
+  #   "method.response.header.Access-Control-Allow-Headers" = "'${local.corsAllowHeaders}'",
+  #   "method.response.header.Access-Control-Allow-Methods" = "'${local.corsAllowMethods}'",
+  #   "method.response.header.Access-Control-Allow-Origin"  = "'${local.corsAllowOrigins}'"
+  # }
   depends_on = [
     aws_api_gateway_method.auth_token_post,
     aws_api_gateway_method_response.auth_token_post
@@ -241,6 +297,11 @@ resource "aws_api_gateway_method_response" "health_get" {
   resource_id = aws_api_gateway_resource.health.id
   http_method = aws_api_gateway_method.health_get.http_method
   status_code = "200"
+  # response_parameters = {
+  #   "method.response.header.Access-Control-Allow-Headers" = true,
+  #   "method.response.header.Access-Control-Allow-Methods" = true,
+  #   "method.response.header.Access-Control-Allow-Origin"  = true
+  # }
   depends_on = [
     aws_api_gateway_method.health_get
   ]
@@ -251,6 +312,11 @@ resource "aws_api_gateway_integration_response" "health_get" {
   resource_id = aws_api_gateway_resource.health.id
   http_method = aws_api_gateway_method.health_get.http_method
   status_code = aws_api_gateway_method_response.health_get.status_code
+  # response_parameters = {
+  #   "method.response.header.Access-Control-Allow-Headers" = "'${local.corsAllowHeaders}'",
+  #   "method.response.header.Access-Control-Allow-Methods" = "'${local.corsAllowMethods}'",
+  #   "method.response.header.Access-Control-Allow-Origin"  = "'${local.corsAllowOrigins}'"
+  # }
   depends_on = [
     aws_api_gateway_method.health_get,
     aws_api_gateway_method_response.health_get
@@ -306,6 +372,11 @@ resource "aws_api_gateway_method_response" "post_user_register" {
   resource_id = aws_api_gateway_resource.user_register.id
   http_method = aws_api_gateway_method.post_user_register.http_method
   status_code = "200"
+  # response_parameters = {
+  #   "method.response.header.Access-Control-Allow-Headers" = true,
+  #   "method.response.header.Access-Control-Allow-Methods" = true,
+  #   "method.response.header.Access-Control-Allow-Origin"  = true
+  # }
   depends_on = [
     aws_api_gateway_method.post_user_register
   ]
@@ -316,6 +387,11 @@ resource "aws_api_gateway_integration_response" "post_user_register" {
   resource_id = aws_api_gateway_resource.user_register.id
   http_method = aws_api_gateway_method.post_user_register.http_method
   status_code = aws_api_gateway_method_response.post_user_register.status_code
+  # response_parameters = {
+  #   "method.response.header.Access-Control-Allow-Headers" = "'${local.corsAllowHeaders}'",
+  #   "method.response.header.Access-Control-Allow-Methods" = "'${local.corsAllowMethods}'",
+  #   "method.response.header.Access-Control-Allow-Origin"  = "'${local.corsAllowOrigins}'"
+  # }
   depends_on = [
     aws_api_gateway_method.post_user_register,
     aws_api_gateway_method_response.post_user_register
@@ -361,6 +437,11 @@ resource "aws_api_gateway_method_response" "post_user_register_confirm" {
   resource_id = aws_api_gateway_resource.user_register_confirm.id
   http_method = aws_api_gateway_method.post_user_register_confirm.http_method
   status_code = "200"
+  # response_parameters = {
+  #   "method.response.header.Access-Control-Allow-Headers" = true,
+  #   "method.response.header.Access-Control-Allow-Methods" = true,
+  #   "method.response.header.Access-Control-Allow-Origin"  = true
+  # }
   depends_on = [
     aws_api_gateway_method.post_user_register_confirm
   ]
@@ -371,6 +452,11 @@ resource "aws_api_gateway_integration_response" "post_user_register_confirm" {
   resource_id = aws_api_gateway_resource.user_register_confirm.id
   http_method = aws_api_gateway_method.post_user_register_confirm.http_method
   status_code = aws_api_gateway_method_response.post_user_register_confirm.status_code
+  # response_parameters = {
+  #   "method.response.header.Access-Control-Allow-Headers" = "'${local.corsAllowHeaders}'",
+  #   "method.response.header.Access-Control-Allow-Methods" = "'${local.corsAllowMethods}'",
+  #   "method.response.header.Access-Control-Allow-Origin"  = "'${local.corsAllowOrigins}'"
+  # }
   depends_on = [
     aws_api_gateway_method.post_user_register_confirm,
     aws_api_gateway_method_response.post_user_register_confirm
@@ -392,7 +478,7 @@ resource "aws_api_gateway_deployment" "deployment" {
     aws_api_gateway_integration.health_integration,
     aws_api_gateway_integration.user_register_integration,
     aws_api_gateway_integration.user_register_confirm_integration,
-    module.apigw_root_options,
+    # module.apigw_root_options,
   ]
 }
 
