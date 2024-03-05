@@ -1,4 +1,5 @@
 import { jwtDecode } from "jwt-decode";
+import { Roles } from "./Roles";
 
 export type TokenData = {
     access_token: string;
@@ -12,7 +13,7 @@ export type TokenData = {
 export type UserData = {
     email: string;
     name: string;
-    groups: string[];
+    groups: Roles[];
     user_id: string;
     username: string;
     verified: boolean;

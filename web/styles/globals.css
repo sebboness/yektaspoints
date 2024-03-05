@@ -53,7 +53,7 @@ body {
     )
     rgb(var(--background-end-rgb)); */
 
-  --bgs: 100px; /* control the size */
+  --bgs: 100px;
   --bgc1: #eee;
   --bgc2: #e8e8e8;
 

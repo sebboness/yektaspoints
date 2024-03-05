@@ -1,4 +1,3 @@
-// import { useEffect } from "react";
 // import { redirect } from "next/navigation";
 // import { getTokenFromCookie } from "@/lib/auth/Auth";
 // import { checkUserAuth } from "@/slices/authSlice";
@@ -6,6 +5,7 @@
 // import { LocalApi } from "@/lib/api/LocalApi";
 
 import { AuthChecker } from "./AuthChecker";
+import { AuthCheckerClient } from "./AuthCheckerClient";
 
 type Props = {
    children?: React.ReactNode;
@@ -77,7 +77,8 @@ export const AuthWrapper = ({ children }: Props) => {
     // }
 
     return <>
-        <AuthChecker />
         {children}
+        <AuthChecker />
+        <AuthCheckerClient />
     </>;
 };

@@ -1,3 +1,4 @@
+import moment from "moment";
 import { NewErrorResultT, ResultT } from "./Result";
 
 export type QueryParams = {[key: string]: string[]} | undefined;
@@ -26,7 +27,7 @@ export class Api {
     }
 
     public logName(): string {
-        return `API[${this.baseUri}]: `;
+        return `[${moment().toISOString()}] API[${this.baseUri}]: `;
     }
 
     private getCallUrl(baseUri: string, endpoint: string, queryParams: QueryParams): string {
@@ -59,6 +60,9 @@ export class Api {
                 headers["Authorization"] = this.tokenGetter.getTokenType() + " " + this.tokenGetter.getToken();
                 console.info(`${this.logName()}authorization header: ${headers["Authorization"]}`);
                 isAuthedReq = true;
+
+                // reset tokenGetter for each call
+                this.tokenGetter = undefined;
             }
 
             // Build call url

@@ -4,12 +4,20 @@ import { ParseToken } from '@/lib/auth/Auth';
 import authCookie from '@/lib/auth/AuthCookie';
 import { getSimpleTokenRetriever } from '@/slices/authSlice';
 import React from 'react'
-import { LocalApi } from '@/lib/api/LocalApi';
 import { redirect } from 'next/navigation';
+import { cookies, headers } from 'next/headers';
+import moment from 'moment';
+import { Roles } from '@/lib/auth/Roles';
+import _ from 'lodash';
+import { encodeHtmlEntities } from '@/lib/StringHelpers';
 
-const logName = () => "AuthChecker: ";
+const logName = () => `[${moment().toISOString()}] AuthChecker: `;
 
-export const AuthChecker = async () => {
+type Props = {
+    roles?: Roles[];
+}
+
+export const AuthChecker = async (props: Props) => {
 
     // console.log("cookies", cookies().get("mypoints_web_auth"));
     // const cookieToken = getTokenFromCookie();
@@ -17,6 +25,21 @@ export const AuthChecker = async () => {
     let idToken = "";
     let rtToken = "";
     let username = "";
+    let roles: Roles[] = [];
+
+    async function setCookieServerSide() {
+        "use server"
+
+        cookies().set({
+            name: "hey",
+            value: moment().toISOString(),
+            maxAge: 1000, 
+            httpOnly: true,
+            sameSite: "strict",
+            secure: false,
+            domain: "localhost",
+        });
+    };
 
     const tokenData = await authCookie.get();
     if (!tokenData) {
@@ -24,6 +47,15 @@ export const AuthChecker = async () => {
         redirect("/login");
     } else {
         console.info(`${logName()}tokenCookie has data`);
+
+        const userData = ParseToken(tokenData.id_token);
+        if (!userData) {
+            console.warn(`${logName()}failed to parse token to user data.`);
+            redirect("/access-denied?user");
+        }
+
+        roles = userData.groups;
+        username = userData.username;
         idToken = tokenData.id_token;
         rtToken = tokenData.refresh_token;
         
@@ -34,18 +66,14 @@ export const AuthChecker = async () => {
 
         if (authResp.status === FAILURE) {
             console.info(`${logName()}getUserAuth response`, JSON.stringify(authResp));
+            console.info(`${logName()}getUserAuth failed with ${userData.username} ${tokenData.id_token}`);
+            console.info(`${logName()}trying to refresh with ${userData.username} ${tokenData.refresh_token}`);
 
             // token has possibly expired, so try to refresh it.
-            const userData = ParseToken(tokenData.id_token);
             const refreshResp = await MyPointsApi.getInstance()
-                .refreshToken(userData?.username!, tokenData.refresh_token);
-
-            username = userData?.username!;
+                .refreshToken(userData.username, tokenData.refresh_token);
 
             if (refreshResp.data) {
-                console.info(`${logName()}successfully refreshed. Setting token cookie...`);
-                await LocalApi.getInstance().setAuthCookie(refreshResp.data);
-
                 idToken = refreshResp.data.id_token;
                 rtToken = refreshResp.data.refresh_token;
             } else {
@@ -55,7 +83,11 @@ export const AuthChecker = async () => {
                 redirect("/login");
             }
         }
+    }
 
+    if (props.roles && !_.find(props.roles, (x) => _.find(roles, (y) => y === x))) {
+        console.info(`${logName()}required roles [${props.roles}] not found in user roles [${roles}]`);
+        redirect("/access-denied?roles");
     }
 
     // const store = useAppStore();
@@ -83,7 +115,9 @@ export const AuthChecker = async () => {
     //     // console.info("auth data in state", store.getState().auth);
     // }
 
+    const b = Buffer.from(JSON.stringify(tokenData)).toString('hex');
+
     return (
-        <></>
+        <><pre style={{"display": "none"}} id="__tokendata__">{b}</pre></>
     )
 }
