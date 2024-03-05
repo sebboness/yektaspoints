@@ -34,6 +34,7 @@
     "indent": ["error", 4],
     "no-multi-spaces": ["error"],
     "semi": "off",
-    "@typescript-eslint/semi": "error"
+    "@typescript-eslint/semi": "error",
+    "@typescript-eslint/typedef": "off"
   }
 }

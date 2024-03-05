@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
-import { TokenData } from "./Auth";
 import { NextResponse } from "next/server";
-import moment from "moment";
+
+import { TokenData } from "./Auth";
 
 const tokenCookieName = "mypoints_web_auth";
 const refreshCookieName = "mypoints_web_rt";

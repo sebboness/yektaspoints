@@ -3,14 +3,17 @@ package models
 import "time"
 
 type User struct {
-	UserID    int       `json:"user_id" dynamodbav:"user_id"`
-	Name      string    `json:"name" dynamodbav:"name"`
-	Username  string    `json:"username" dynamodbav:"username"`
 	Email     string    `json:"email" dynamodbav:"email"`
-	ChildIds  []string  `json:"child_ids" dynamodbav:"child_ids"`
-	ParentIds []string  `json:"parent_ids" dynamodbav:"parent_ids"`
+	FamilyID  string    `json:"family_id" dynamodbav:"family_id"`
+	UserID    string    `json:"user_id" dynamodbav:"user_id"`
+	Username  string    `json:"username" dynamodbav:"username"`
+	Name      string    `json:"name" dynamodbav:"name"`
+	Roles     []string  `json:"roles" dynamodbav:"roles"`
 	CreatedOn time.Time `json:"created_on" dynamodbav:"created_on"`
 	UpdatedOn time.Time `json:"updated_on" dynamodbav:"updated_on"`
+
+	// Name used in app and displayed to children (i.e. "Mom")
+	ChildCallName string `json:"child_call_name" dynamodbav:"child_call_name"`
 }
 
 type UserRegisterResponse struct {

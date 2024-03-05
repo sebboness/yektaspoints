@@ -1,5 +1,5 @@
 import moment from "moment";
-import { NewErrorResultT, ResultT } from "./Result";
+import { NewErrorResultT, Result, ResultT } from "./Result";
 
 export type QueryParams = {[key: string]: string[]} | undefined;
 
@@ -34,7 +34,7 @@ export class Api {
         let queryString = "";
         if (queryParams) {
             const parts: Array<string> = [];
-            for (let [k, v] of Object.entries(queryParams)) {
+            for (const [k, v] of Object.entries(queryParams)) {
                 const key = encodeURIComponent(k);
                 const val = encodeURIComponent(v.join(","));
                 parts.push(`${key}=${val}`)
@@ -46,7 +46,7 @@ export class Api {
     }
 
     public callApi<T>(method: string, endpoint: string, options: CallOptions | undefined = undefined): Promise<ResultT<T>> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const opts = options || {};
             const headers: HeadersInit = {
                 "Content-Type": "json/application",
@@ -87,7 +87,7 @@ export class Api {
                 .then((resp) => {
                     console.debug(`${this.logName()}response status: [${resp.status}: ${resp.statusText}]`);
                     resp.json()
-                        .then((obj: any) => {
+                        .then((obj: ResultT<T> | undefined) => {
                             console.debug(`${this.logName()}response json decoded: ${JSON.stringify(obj)}`);
                             if (obj && obj.status) { // this means it's a formatted result object
                                 if (!obj.statusCode)
