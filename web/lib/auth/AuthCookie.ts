@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { TokenData } from "./Auth";
-import { compress, decompress } from "shrink-string";
 import { NextResponse } from "next/server";
 
 const tokenCookieName = "mypoints_web_auth";
@@ -46,10 +45,9 @@ class AuthCookie {
     }
 
     async set(domain: string, tokenData: TokenData): Promise<unknown> {
-        const rtCompressed = await compress(tokenData.refresh_token);
+        const refreshToken = tokenData.refresh_token;
         tokenData.refresh_token = "";
         const tokenJson = JSON.stringify(tokenData);
-        const tokenCompressed = await compress(tokenJson);
         const env = process.env["ENV"];
 
         // cookie settings
@@ -57,12 +55,12 @@ class AuthCookie {
         const secure = env == "local" ? false : true;
         const _domain = domain === "localhost" ? domain : "hexonite.net";
 
-        console.info(`Setting ${tokenCookieName} cookie on ${env}:${_domain} with value ${tokenCompressed}`);
-        console.info(`Setting ${refreshCookieName} cookie on ${env}:${_domain} with value ${rtCompressed}`);
+        console.info(`Setting ${tokenCookieName} cookie on ${env}:${_domain} with value ${tokenJson}`);
+        console.info(`Setting ${refreshCookieName} cookie on ${env}:${_domain} with value ${refreshToken}`);
 
         cookies().set({
             name: tokenCookieName,
-            value: tokenCompressed,
+            value: tokenJson,
             maxAge: maxAge, 
             httpOnly: true,
             sameSite: "strict",
@@ -73,7 +71,7 @@ class AuthCookie {
         // Set refresh token cookie
         cookies().set({
             name: refreshCookieName,
-            value: rtCompressed,
+            value: refreshToken,
             maxAge: maxAge, 
             httpOnly: true,
             sameSite: "strict",
@@ -85,10 +83,9 @@ class AuthCookie {
     }
 
     async setWithResponse(response: NextResponse, domain: string, tokenData: TokenData): Promise<NextResponse> {
-        const rtCompressed = await compress(tokenData.refresh_token);
+        const refreshToken = tokenData.refresh_token;
         tokenData.refresh_token = "";
         const tokenJson = JSON.stringify(tokenData);
-        const tokenCompressed = await compress(tokenJson);
         const env = process.env["ENV"];
 
         // cookie settings
@@ -96,13 +93,13 @@ class AuthCookie {
         const secure = env == "local" ? false : true;
         const _domain = domain === "localhost" ? domain : "hexonite.net";
 
-        console.info(`Setting ${tokenCookieName} cookie on ${env}:${_domain} with value ${tokenCompressed}`);
-        console.info(`Setting ${refreshCookieName} cookie on ${env}:${_domain} with value ${rtCompressed}`);
+        console.info(`Setting ${tokenCookieName} cookie on ${env}:${_domain} with value ${tokenJson}`);
+        console.info(`Setting ${refreshCookieName} cookie on ${env}:${_domain} with value ${refreshToken}`);
 
         // Set token data cookie (without refresh token value)
         response.cookies.set({
             name: tokenCookieName,
-            value: tokenCompressed,
+            value: tokenJson,
             maxAge: maxAge, 
             httpOnly: true,
             sameSite: "strict",
@@ -113,7 +110,7 @@ class AuthCookie {
         // Set refresh token cookie
         response.cookies.set({
             name: refreshCookieName,
-            value: rtCompressed,
+            value: refreshToken,
             maxAge: maxAge, 
             httpOnly: true,
             sameSite: "strict",
@@ -134,11 +131,14 @@ class AuthCookie {
         if (!tokenCookie || !refreshTokenCookie)
             return undefined;
 
-        const tokenJson = await decompress(tokenCookie.value);
-        const refreshToken = await decompress(refreshTokenCookie.value);
-
+        const tokenJson = tokenCookie.value;
         const tokenData = JSON.parse(tokenJson) as TokenData;
-        tokenData.refresh_token = refreshToken;
+        if (!tokenData.id_token) {
+            console.info("token cookie not a valid TokenData object: " + tokenJson);
+            return undefined;
+        }
+
+        tokenData.refresh_token = refreshTokenCookie.value;
 
         return tokenData;
     }

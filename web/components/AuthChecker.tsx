@@ -4,20 +4,28 @@ import { ParseToken } from '@/lib/auth/Auth';
 import authCookie from '@/lib/auth/AuthCookie';
 import { getSimpleTokenRetriever } from '@/slices/authSlice';
 import React from 'react'
-import { cookies } from 'next/headers';
 import { LocalApi } from '@/lib/api/LocalApi';
+import { redirect } from 'next/navigation';
+
+const logName = () => "AuthChecker: ";
 
 export const AuthChecker = async () => {
 
     // console.log("cookies", cookies().get("mypoints_web_auth"));
     // const cookieToken = getTokenFromCookie();
 
+    let idToken = "";
+    let rtToken = "";
+    let username = "";
+
     const tokenData = await authCookie.get();
-    console.info("tokenCookie", tokenData);
     if (!tokenData) {
-        console.warn("AuthChecker: no token cookie. issue redirect to login");
+        console.warn(`${logName()}no token cookie. issue redirect to login`);
+        redirect("/login");
     } else {
-        console.info("AuthChecker: tokenCookie has data");
+        console.info(`${logName()}tokenCookie has data`);
+        idToken = tokenData.id_token;
+        rtToken = tokenData.refresh_token;
         
         // now check against mypoints api if cookie is valid
         const authResp = await MyPointsApi.getInstance()
@@ -25,19 +33,26 @@ export const AuthChecker = async () => {
             .getUserAuth();
 
         if (authResp.status === FAILURE) {
-            console.info("AuthChecker: getUserAuth response", JSON.stringify(authResp));
+            console.info(`${logName()}getUserAuth response`, JSON.stringify(authResp));
 
             // token has possibly expired, so try to refresh it.
             const userData = ParseToken(tokenData.id_token);
             const refreshResp = await MyPointsApi.getInstance()
                 .refreshToken(userData?.username!, tokenData.refresh_token);
 
+            username = userData?.username!;
+
             if (refreshResp.data) {
-                console.info("AuthChecker: successfully refreshed. Setting token cookie...");
+                console.info(`${logName()}successfully refreshed. Setting token cookie...`);
                 await LocalApi.getInstance().setAuthCookie(refreshResp.data);
+
+                idToken = refreshResp.data.id_token;
+                rtToken = refreshResp.data.refresh_token;
             } else {
-                console.info("AuthChecker: refreshToken response", JSON.stringify(refreshResp));
-                console.info("AuthChecker: need to redirect to login page");
+                console.info(`${logName()}refreshToken response`, JSON.stringify(refreshResp));
+                console.info(`${logName()}need to redirect to login page`);
+
+                redirect("/login");
             }
         }
 

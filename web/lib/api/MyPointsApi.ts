@@ -16,8 +16,8 @@ export class MyPointsApi extends Api {
 
     constructor(env: string) {
         const baseUri = baseUris[env];
-        console.info(`MyPointsApi: Using ${env}:${baseUri} version of api`);
         super(baseUri);
+        console.info(`${this.logName()}Using ${env}:${baseUri} version of api`);
     }
 
     public static getInstance(): MyPointsApi {

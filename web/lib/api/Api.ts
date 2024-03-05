@@ -25,6 +25,10 @@ export class Api {
         this.baseUri = baseUri;
     }
 
+    public logName(): string {
+        return `API[${this.baseUri}]: `;
+    }
+
     private getCallUrl(baseUri: string, endpoint: string, queryParams: QueryParams): string {
         let queryString = "";
         if (queryParams) {
@@ -53,7 +57,7 @@ export class Api {
             // Attach auth token to headers if it is set
             if (this.tokenGetter) {
                 headers["Authorization"] = this.tokenGetter.getTokenType() + " " + this.tokenGetter.getToken();
-                console.log("MyPointsAPI authorization header: " + headers["Authorization"]);
+                console.info(`${this.logName()}authorization header: ${headers["Authorization"]}`);
                 isAuthedReq = true;
             }
 
@@ -70,17 +74,17 @@ export class Api {
             // Add payload
             if (opts.payload) {
                 reqOps.body = JSON.stringify(opts.payload);
-                console.info(`MyPointsAPI request payload: ${reqOps.body}`);
+                console.info(`${this.logName()}request payload: ${reqOps.body}`);
             }
 
-            console.info(`MyPointsAPI preparing${isAuthedReq ? " authorized" : ""} request: ${method} ${url}`);
+            console.info(`${this.logName()}preparing${isAuthedReq ? " authorized" : ""} request: ${method.toUpperCase()} ${url}`);
 
             fetch(url, reqOps)
                 .then((resp) => {
-                    console.log("MyPointsAPi response: ", resp);
+                    console.debug(`${this.logName()}response status: [${resp.status}: ${resp.statusText}]`);
                     resp.json()
                         .then((obj: any) => {
-                            console.log("response json decoded: ", obj);
+                            console.debug(`${this.logName()}response json decoded: ${JSON.stringify(obj)}`);
                             if (obj && obj.status) { // this means it's a formatted result object
                                 if (!obj.statusCode)
                                     obj.statusCode = resp.status;
@@ -92,8 +96,8 @@ export class Api {
                     
                 })
                 .catch((err: any) => {
-                    console.error("MyPointsAPi caught an error:", err);
-                    console.error("MyPointsAPi typeof error:", typeof err);
+                    console.error(`${this.logName()}caught an error:`, err);
+                    console.error(`${this.logName()}typeof error:`, typeof err);
                     if (err && err.errors)
                         resolve(err); // Assume error object is a Result
                     else if (typeof err === "string" || err instanceof Array)
