@@ -1,7 +1,11 @@
 import { MyPointsApi } from '@/lib/api/MyPointsApi';
+import { FAILURE } from '@/lib/api/Result';
+import { ParseToken } from '@/lib/auth/Auth';
 import authCookie from '@/lib/auth/AuthCookie';
 import { getSimpleTokenRetriever } from '@/slices/authSlice';
 import React from 'react'
+import { cookies } from 'next/headers';
+import { LocalApi } from '@/lib/api/LocalApi';
 
 export const AuthChecker = async () => {
 
@@ -11,16 +15,32 @@ export const AuthChecker = async () => {
     const tokenData = await authCookie.get();
     console.info("tokenCookie", tokenData);
     if (!tokenData) {
-        console.warn("no token cookie. issue redirect to login");
+        console.warn("AuthChecker: no token cookie. issue redirect to login");
     } else {
-        console.info("token data from cookie:", JSON.stringify(tokenData));
+        console.info("AuthChecker: tokenCookie has data");
+        
+        // now check against mypoints api if cookie is valid
         const authResp = await MyPointsApi.getInstance()
             .withToken(getSimpleTokenRetriever(tokenData.id_token))
             .getUserAuth();
 
-        console.info("check user auth response:", JSON.stringify(authResp));
+        if (authResp.status === FAILURE) {
+            console.info("AuthChecker: getUserAuth response", JSON.stringify(authResp));
 
-        // now check against mypoints api if cookie is valid
+            // token has possibly expired, so try to refresh it.
+            const userData = ParseToken(tokenData.id_token);
+            const refreshResp = await MyPointsApi.getInstance()
+                .refreshToken(userData?.username!, tokenData.refresh_token);
+
+            if (refreshResp.data) {
+                console.info("AuthChecker: successfully refreshed. Setting token cookie...");
+                await LocalApi.getInstance().setAuthCookie(refreshResp.data);
+            } else {
+                console.info("AuthChecker: refreshToken response", JSON.stringify(refreshResp));
+                console.info("AuthChecker: need to redirect to login page");
+            }
+        }
+
     }
 
     // const store = useAppStore();

@@ -13,9 +13,6 @@ export async function GET(req: NextRequest) {
         });
     }
 
-    // const cookieDecompressed = await decompress(cookie.value);
-    // const tokenData = JSON.parse(cookieDecompressed) as TokenData;
-
     return NextResponse.json(NewSuccessResult(tokenData), { status: 200 });
 }
 
@@ -28,25 +25,18 @@ export async function POST(req: NextRequest) {
         statusText: "Set cookie successfully",
     });
 
-    await authCookie.set(response, domain, body);
+    await authCookie.setWithResponse(response, domain, body);
 
     return response;
 }
 
 export async function DELETE(req: NextRequest) {
-    const response = NextResponse.json(NewSuccessResult(true), {
+    let response = NextResponse.json(NewSuccessResult(true), {
         status: 200,
         statusText: "Auth cookie deleted successfully",
     });
 
-    console.info(`Deleting ${TokenCookieName} cookie`);
-    response.cookies.set({
-        name: TokenCookieName,
-        value: "",
-        maxAge: -100,
-        httpOnly: true,
-        sameSite: "strict",
-    });
-
+    const domain = req.nextUrl.hostname;
+    authCookie.delete(response, domain);
     return response;
 }

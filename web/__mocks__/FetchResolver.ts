@@ -1,3 +1,5 @@
+import { HttpStatus } from "@/lib/HttpStatusCodes";
+
 test.skip('Workaround', () => {});
 
 type Method = "get" | "options" | "post" | "put" | "patch" | "delete";
@@ -7,66 +9,6 @@ export const DefaultStubOptions: StubOptions = {
         "Content-Type": "json/application",
     },
     credentials: "include",
-}
-
-// https://httpstat.us
-export enum Status {
-    OK = 200,
-    Created = 201,
-    Accepted = 202,
-    NonAuthoritativeInformation = 203,
-    NoContent = 204,
-    ResetContent = 205,
-    PartialContent = 206,
-    MultipleChoices = 300,
-    MovedPermanently = 301,
-    Found = 302,
-    SeeOther = 303,
-    NotModified = 304,
-    UseProxy = 305,
-    Unused = 306,
-    TemporaryRedirect = 307,
-    PermanentRedirect = 308,
-    BadRequest = 400,
-    Unauthorized = 401,
-    PaymentRequired = 402,
-    Forbidden = 403,
-    NotFound = 404,
-    MethodNotAllowed = 405,
-    NotAcceptable = 406,
-    ProxyAuthenticationRequired = 407,
-    RequestTimeout = 408,
-    Conflict = 409,
-    Gone = 410,
-    LengthRequired = 411,
-    PreconditionFailed = 412,
-    RequestEntityTooLarge = 413,
-    RequestURITooLong = 414,
-    UnsupportedMediaType = 415,
-    RequestedRangeNotSatisfiable = 416,
-    ExpectationFailed = 417,
-    Imateapot = 418,
-    MisdirectedRequest = 421,
-    UnprocessableEntity = 422,
-    Locked = 423,
-    TooEarly = 425,
-    UpgradeRequired = 426,
-    PreconditionRequired = 428,
-    TooManyRequests = 429,
-    RequestHeaderFieldsTooLarge = 431,
-    UnavailableForLegalReasons = 451,
-    InternalServerError = 500,
-    NotImplemented = 501,
-    BadGateway = 502,
-    ServiceUnavailable = 503,
-    GatewayTimeout = 504,
-    HTTPVersionNotSupported = 505,
-    VariantAlsoNegotiates = 506,
-    InsufficientStorage = 507,
-    NetworkAuthenticationRequired = 511,
-    Webserverisreturninganunknownerror = 520,
-    Connectiontimedout = 522,
-    Atimeoutoccurred = 524
 }
 
 export type StubOptions = {
@@ -118,7 +60,7 @@ export class FetchResolver {
         this.init();
     }
 
-    public stub(uri: string, method: Method, payload: any, response: any, status: Status, opts: StubOptions | undefined = undefined) {
+    public stub(uri: string, method: Method, payload: any, response: any, status: HttpStatus, opts: StubOptions | undefined = undefined) {
 
         const finalRequest: { input: RequestInfo | URL; init?: RequestInit } = {
             input: uri,

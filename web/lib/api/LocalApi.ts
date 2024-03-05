@@ -6,7 +6,7 @@ export class LocalApi extends Api {
     private static instance: LocalApi;
 
     constructor() {
-        super("");
+        super("http://localhost:3000");
     }
 
     public static getInstance(): LocalApi {

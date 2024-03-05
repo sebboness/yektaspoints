@@ -4,32 +4,35 @@ export const FAILURE = "FAILURE";
 export type Result = {
     status: "FAILURE" | "SUCCESS";
     errors: string[];
-    message: string | null;
+    message?: string | null;
+    statusCode?: number;
 };
 
 export type ResultT<T> = Result & {
     data: T | null;
 };
 
-export function NewErrorResult(err: string | Array<string>, msg: string | null = null): Result {
-    return NewErrorResultT<any>(err, msg);
+export function NewErrorResult(err: string | Array<string>, msg: string | null = null, statusCode: number | undefined = undefined): Result {
+    return NewErrorResultT<any>(err, msg, statusCode);
 };
 
-export function NewErrorResultT<T>(err: string | Array<string>, msg: string | null = null): ResultT<T> {
+export function NewErrorResultT<T>(err: string | Array<string>, msg: string | null = null, statusCode: number | undefined = undefined): ResultT<T> {
     return {
         status: FAILURE,
         errors: typeof err === "string" ? [err] : err,
         message: msg || null,
         data: null,
+        statusCode: statusCode,
     }
 };
 
-export function NewSuccessResult<T> (data: T, msg: string | null = null): ResultT<T> {
+export function NewSuccessResult<T> (data: T, msg: string | null = null, statusCode: number | undefined = undefined): ResultT<T> {
     return {
         status: SUCCESS,
         errors: [],
         message: msg || null,
         data: data,
+        statusCode: statusCode,
     }
 };
 

@@ -52,7 +52,8 @@ export class Api {
 
             // Attach auth token to headers if it is set
             if (this.tokenGetter) {
-                headers["Authentication"] = this.tokenGetter.getTokenType() + " " + this.tokenGetter.getToken();
+                headers["Authorization"] = this.tokenGetter.getTokenType() + " " + this.tokenGetter.getToken();
+                console.log("MyPointsAPI authorization header: " + headers["Authorization"]);
                 isAuthedReq = true;
             }
 
@@ -67,8 +68,10 @@ export class Api {
             };
 
             // Add payload
-            if (opts.payload)
+            if (opts.payload) {
                 reqOps.body = JSON.stringify(opts.payload);
+                console.info(`MyPointsAPI request payload: ${reqOps.body}`);
+            }
 
             console.info(`MyPointsAPI preparing${isAuthedReq ? " authorized" : ""} request: ${method} ${url}`);
 
@@ -79,10 +82,12 @@ export class Api {
                         .then((obj: any) => {
                             console.log("response json decoded: ", obj);
                             if (obj && obj.status) { // this means it's a formatted result object
+                                if (!obj.statusCode)
+                                    obj.statusCode = resp.status;
                                 resolve(obj);
                             }
                             else
-                                resolve(NewErrorResultT(`Unexpected response: ${JSON.stringify(obj)}`));
+                                resolve(NewErrorResultT(`Unexpected response: ${JSON.stringify(obj)}`, undefined, resp.status));
                         })
                     
                 })
