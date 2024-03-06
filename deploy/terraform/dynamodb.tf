@@ -57,3 +57,17 @@ resource "aws_dynamodb_table" "user" {
     hash_key = "user_id"
     range_key = "updated_on"
 }
+
+resource "aws_dynamodb_table" "family" {
+    name = "${local.app}-${local.env}-family"
+    billing_mode = "PROVISIONED"
+    read_capacity= "5"
+    write_capacity= "5"
+
+    attribute {
+        name = "family_id"
+        type = "S"
+    }
+
+    hash_key = "family_id"
+}

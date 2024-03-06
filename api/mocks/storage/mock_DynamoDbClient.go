@@ -22,6 +22,80 @@ func (_m *MockDynamoDbClient) EXPECT() *MockDynamoDbClient_Expecter {
 	return &MockDynamoDbClient_Expecter{mock: &_m.Mock}
 }
 
+// ExecuteStatement provides a mock function with given fields: ctx, params, optFns
+func (_m *MockDynamoDbClient) ExecuteStatement(ctx context.Context, params *dynamodb.ExecuteStatementInput, optFns ...func(*dynamodb.Options)) (*dynamodb.ExecuteStatementOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExecuteStatement")
+	}
+
+	var r0 *dynamodb.ExecuteStatementOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *dynamodb.ExecuteStatementInput, ...func(*dynamodb.Options)) (*dynamodb.ExecuteStatementOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *dynamodb.ExecuteStatementInput, ...func(*dynamodb.Options)) *dynamodb.ExecuteStatementOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dynamodb.ExecuteStatementOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *dynamodb.ExecuteStatementInput, ...func(*dynamodb.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockDynamoDbClient_ExecuteStatement_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExecuteStatement'
+type MockDynamoDbClient_ExecuteStatement_Call struct {
+	*mock.Call
+}
+
+// ExecuteStatement is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *dynamodb.ExecuteStatementInput
+//   - optFns ...func(*dynamodb.Options)
+func (_e *MockDynamoDbClient_Expecter) ExecuteStatement(ctx interface{}, params interface{}, optFns ...interface{}) *MockDynamoDbClient_ExecuteStatement_Call {
+	return &MockDynamoDbClient_ExecuteStatement_Call{Call: _e.mock.On("ExecuteStatement",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *MockDynamoDbClient_ExecuteStatement_Call) Run(run func(ctx context.Context, params *dynamodb.ExecuteStatementInput, optFns ...func(*dynamodb.Options))) *MockDynamoDbClient_ExecuteStatement_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*dynamodb.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*dynamodb.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*dynamodb.ExecuteStatementInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *MockDynamoDbClient_ExecuteStatement_Call) Return(_a0 *dynamodb.ExecuteStatementOutput, _a1 error) *MockDynamoDbClient_ExecuteStatement_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockDynamoDbClient_ExecuteStatement_Call) RunAndReturn(run func(context.Context, *dynamodb.ExecuteStatementInput, ...func(*dynamodb.Options)) (*dynamodb.ExecuteStatementOutput, error)) *MockDynamoDbClient_ExecuteStatement_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetItem provides a mock function with given fields: ctx, params, optFns
 func (_m *MockDynamoDbClient) GetItem(ctx context.Context, params *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
 	_va := make([]interface{}, len(optFns))

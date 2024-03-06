@@ -14,6 +14,7 @@ import (
 )
 
 type DynamoDbClient interface {
+	ExecuteStatement(ctx context.Context, params *dynamodb.ExecuteStatementInput, optFns ...func(*dynamodb.Options)) (*dynamodb.ExecuteStatementOutput, error)
 	GetItem(ctx context.Context, params *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error)
 	PutItem(ctx context.Context, params *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
 	Query(ctx context.Context, params *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error)
@@ -23,7 +24,7 @@ type DynamoDbClient interface {
 type DynamoDbStorage struct {
 	client      DynamoDbClient
 	tablePoints string
-	tableUsers  string
+	tableUser   string
 }
 
 type Config struct {
@@ -43,7 +44,7 @@ func NewDynamoDbStorage(cfg Config) (*DynamoDbStorage, error) {
 	return &DynamoDbStorage{
 		client:      dynamoClient,
 		tablePoints: fmt.Sprintf("mypoints-%s-points", strings.ToLower(cfg.Env)),
-		tableUsers:  fmt.Sprintf("mypoints-%s-users", strings.ToLower(cfg.Env)),
+		tableUser:   fmt.Sprintf("mypoints-%s-user", strings.ToLower(cfg.Env)),
 	}, nil
 }
 
