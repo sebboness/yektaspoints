@@ -30,7 +30,7 @@ func GetAwsError(err error) *ApiError {
 		innerErr = oe.Unwrap()
 	}
 
-	logger.WithFields(map[string]any{
+	logger.AddFields(map[string]any{
 		"aws_error":       innerErr.Error(),
 		"aws_operation":   op,
 		"aws_service":     svc,

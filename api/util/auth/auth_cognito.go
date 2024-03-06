@@ -56,7 +56,7 @@ func (c *CognitoController) Authenticate(ctx context.Context, username, password
 		},
 	})
 
-	logger.WithContext(ctx).WithField("resp", resp).Infof("initiate auth response")
+	logger.WithContext(ctx).AddField("resp", resp).Infof("initiate auth response")
 
 	if err != nil {
 		apiErr := apierr.GetAwsError(err)
@@ -109,7 +109,7 @@ func (c *CognitoController) AssignUserToRole(ctx context.Context, username, role
 		UserPoolId: aws.String(c.userPoolID),
 	})
 
-	logger.WithField("resp", resp).Infof("user confirm signup response")
+	logger.AddField("resp", resp).Infof("user confirm signup response")
 
 	if err != nil {
 		apiErr := apierr.GetAwsError(err)
@@ -128,7 +128,7 @@ func (c *CognitoController) ConfirmRegistration(ctx context.Context, username, c
 		SecretHash:       aws.String(c.computeSecretHash(username)),
 	})
 
-	logger.WithField("resp", resp).Infof("user confirm signup response")
+	logger.AddField("resp", resp).Infof("user confirm signup response")
 
 	if err != nil {
 		apiErr := apierr.GetAwsError(err)
@@ -197,7 +197,7 @@ func (c *CognitoController) Register(ctx context.Context, req UserRegisterReques
 		},
 	})
 
-	logger.WithField("resp", resp).Infof("user signup response")
+	logger.AddField("resp", resp).Infof("user signup response")
 
 	if err != nil {
 		apiErr := apierr.GetAwsError(err)
@@ -231,7 +231,7 @@ func (c *CognitoController) UpdatePassword(ctx context.Context, session, usernam
 		},
 	})
 
-	logger.WithContext(ctx).WithField("resp", resp).Infof("update password response")
+	logger.WithContext(ctx).AddField("resp", resp).Infof("update password response")
 
 	if err != nil {
 		apiErr := apierr.GetAwsError(err)

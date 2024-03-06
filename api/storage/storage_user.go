@@ -43,7 +43,7 @@ func (s *DynamoDbStorage) GetUserByID(ctx context.Context, userId string) (model
 	}
 
 	if len(resp.Items) == 0 {
-		logger.WithContext(ctx).WithFields(map[string]any{"userId": userId}).Warnf("item (userId:%s) not found", userId)
+		logger.WithContext(ctx).WithField("userId", userId).Warnf("item (userId:%s) not found", userId)
 		return user, apierr.New(apierr.NotFound).WithError(fmt.Sprintf("point (userId=%s)", userId))
 	}
 

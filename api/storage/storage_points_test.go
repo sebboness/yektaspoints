@@ -284,7 +284,7 @@ func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 
 		if err == nil {
 			for i, d := range res {
-				log.Get().WithField("data", d).Infof("[%v]points", i)
+				log.Get().AddField("data", d).Infof("[%v]points", i)
 			}
 			assert.NotEmpty(t, res)
 		}

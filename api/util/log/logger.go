@@ -20,8 +20,9 @@ var (
 )
 
 type Logger struct {
-	logger *logrus.Logger
-	ctx    context.Context
+	logger     *logrus.Logger
+	ctx        context.Context
+	tempFields map[string]any
 }
 
 func NewLogger(name string) *Logger {
@@ -34,7 +35,12 @@ func NewLoggerWithContext(name string, ctx context.Context) *Logger {
 	logger.SetLevel(logrus.InfoLevel)
 	logger.Out = os.Stdout
 
-	instance = &Logger{logger: logger, ctx: ctx}
+	instance = &Logger{
+		logger:     logger,
+		ctx:        ctx,
+		tempFields: map[string]any{},
+	}
+
 	instance.Infof("Initialized new logger")
 	return instance.WithAppName(getAppName()).WithName(name)
 }
@@ -58,12 +64,12 @@ func (l *Logger) WithContext(ctx context.Context) *Logger {
 
 // WithName sets the name for this logger
 func (l *Logger) WithAppName(value string) *Logger {
-	return l.WithField(fieldAppName, value)
+	return l.AddField(fieldAppName, value)
 }
 
 // WithName sets the name for this logger
 func (l *Logger) WithName(value string) *Logger {
-	return l.WithField(fieldName, value)
+	return l.AddField(fieldName, value)
 }
 
 func (l *Logger) WithLevel(level logrus.Level) *Logger {
@@ -71,34 +77,55 @@ func (l *Logger) WithLevel(level logrus.Level) *Logger {
 	return l
 }
 
-func (l *Logger) WithField(key string, value any) *Logger {
+// AddField adds the given key and value to the context to be output with the logger
+func (l *Logger) AddField(key string, value any) *Logger {
 	l.addLoggerFields(map[string]any{key: value})
 	return l
 }
 
-func (l *Logger) WithFields(fields map[string]any) *Logger {
+// AddFields adds the given fields to the context to be output with the logger
+func (l *Logger) AddFields(fields map[string]any) *Logger {
 	l.addLoggerFields(fields)
+	return l
+}
+
+// WithField uses a temporary map of fields that is cleared after each log output
+func (l *Logger) WithField(key string, value any) *Logger {
+	l.tempFields[key] = value
+	return l
+}
+
+// WithFields uses a temporary map of fields that is cleared after each log output
+func (l *Logger) WithFields(fields map[string]any) *Logger {
+	for k, v := range fields {
+		l.tempFields[k] = v
+	}
 	return l
 }
 
 func (l *Logger) Debugf(format string, args ...any) {
 	l.logger.WithFields(l.getLoggerFields()).Debugf(format, args...)
+	l.tempFields = map[string]any{}
 }
 
 func (l *Logger) Infof(format string, args ...any) {
 	l.logger.WithFields(l.getLoggerFields()).Infof(format, args...)
+	l.tempFields = map[string]any{}
 }
 
 func (l *Logger) Warnf(format string, args ...any) {
 	l.logger.WithFields(l.getLoggerFields()).Warnf(format, args...)
+	l.tempFields = map[string]any{}
 }
 
 func (l *Logger) Errorf(format string, args ...any) {
 	l.logger.WithFields(l.getLoggerFields()).Errorf(format, args...)
+	l.tempFields = map[string]any{}
 }
 
 func (l *Logger) Fatalf(format string, args ...any) {
 	l.logger.WithFields(l.getLoggerFields()).Fatalf(format, args...)
+	l.tempFields = map[string]any{}
 }
 
 func (l *Logger) addLoggerFields(fields map[string]any) {
@@ -119,7 +146,14 @@ func (l *Logger) addLoggerFields(fields map[string]any) {
 
 func (l *Logger) getLoggerFields() map[string]any {
 	if l.ctx != nil && l.ctx.Value(ctxFieldsKey) != nil {
-		return l.ctx.Value(ctxFieldsKey).(map[string]any)
+		addedFields := l.ctx.Value(ctxFieldsKey).(map[string]any)
+		if len(l.tempFields) > 0 {
+			for k, v := range l.tempFields {
+				addedFields[k] = v
+			}
+		}
+
+		return addedFields
 	}
 	return map[string]any{}
 }

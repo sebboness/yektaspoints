@@ -51,7 +51,7 @@ func Test_Logger_addLoggerFields(t *testing.T) {
 func Test_Logger_WithContext(t *testing.T) {
 	logger := NewLoggerWithContext("test", context.Background())
 
-	logger = logger.WithField("id", "xyz")
+	logger = logger.AddField("id", "xyz")
 
 	logger = logger.WithContext(context.Background())
 	loggerFields := logger.getLoggerFields()
@@ -63,7 +63,7 @@ func Test_Logger_WithContext(t *testing.T) {
 func Test_Logger_WithField(t *testing.T) {
 	logger := NewLoggerWithContext("test", context.Background())
 
-	logger = logger.WithField("id", "xyz")
+	logger = logger.AddField("id", "xyz")
 	loggerFields := logger.getLoggerFields()
 
 	assert.GreaterOrEqual(t, len(loggerFields), 1)
@@ -73,7 +73,7 @@ func Test_Logger_WithField(t *testing.T) {
 func Test_Logger_WithFields(t *testing.T) {
 	logger := NewLoggerWithContext("test", context.Background())
 
-	logger = logger.WithFields(map[string]any{"user_id": "123", "id": "456"})
+	logger = logger.AddFields(map[string]any{"user_id": "123", "id": "456"})
 	loggerFields := logger.getLoggerFields()
 
 	assert.GreaterOrEqual(t, len(loggerFields), 2)
@@ -83,12 +83,12 @@ func Test_Logger_WithFields(t *testing.T) {
 
 func Test_Logger_Log(t *testing.T) {
 	loggerFields := map[string]any{"user_id": "123"}
-	logger := NewLoggerWithContext("test", context.Background()).WithLevel(logrus.DebugLevel).WithFields(loggerFields)
+	logger := NewLoggerWithContext("test", context.Background()).WithLevel(logrus.DebugLevel).AddFields(loggerFields)
 
 	logger.Debugf("debug message %s:%s", "a", "b")
 	logger.Infof("info message %s:%s", "a", "b")
 	logger.Warnf("warn message %s:%s", "a", "b")
-	logger.WithField("test", 456).Errorf("error message %s:%s", "a", "b")
+	logger.AddField("test", 456).Errorf("error message %s:%s", "a", "b")
 
 	loggerFields = logger.getLoggerFields()
 	assert.GreaterOrEqual(t, len(loggerFields), 2)
