@@ -23,9 +23,9 @@ type getFamilyHandlerResponse struct {
 
 func (c *FamilyController) GetFamilyHandler(cgin *gin.Context) {
 
-	familyID, present := cgin.GetQuery("family_id")
-	if !present {
-		apiErr := apierr.New(fmt.Errorf("%w: family_id is a required query parameter", apierr.InvalidInput))
+	familyID, _ := cgin.GetQuery("family_id")
+	if familyID == "" {
+		apiErr := apierr.New(apierr.InvalidInput).WithError("family_id is a required query parameter")
 		cgin.JSON(apiErr.StatusCode(), handlers.ErrorResult(apiErr))
 		return
 	}
@@ -74,7 +74,7 @@ func (c *FamilyController) handleGetFamily(ctx context.Context, req *getFamilyHa
 
 	if !userIsPartOfFamily {
 		logger.Errorf("user is not part of family")
-		return resp, apierr.New(fmt.Errorf("%w: user is not part of family", apierr.AccessDenied))
+		return resp, apierr.New(apierr.AccessDenied).WithError("user is not part of family")
 	}
 
 	family, err := c.familyDB.GetFamilyMembersByUserIDs(ctx, req.FamilyID, userIds)

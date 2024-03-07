@@ -21,7 +21,8 @@ var errFail = errors.New("fail")
 
 func Test_Controller_GetFamilyHandler(t *testing.T) {
 	type state struct {
-		missingFamilyID bool
+		familyIdEmpty   bool
+		familyIdMissing bool
 		invalidUser     bool
 		err             error
 	}
@@ -37,8 +38,9 @@ func Test_Controller_GetFamilyHandler(t *testing.T) {
 
 	cases := []test{
 		{"happy path", state{}, want{"", 200}},
-		{"fail - missing family_id", state{missingFamilyID: true}, want{"invalid input", http.StatusBadRequest}},
-		{"fail - invalid user", state{invalidUser: true}, want{"access denied", http.StatusForbidden}},
+		{"fail - empty family_id", state{familyIdEmpty: true}, want{"invalid input: family_id is a required query parameter", http.StatusBadRequest}},
+		{"fail - missing family_id", state{familyIdMissing: true}, want{"invalid input: family_id is a required query parameter", http.StatusBadRequest}},
+		{"fail - invalid user", state{invalidUser: true}, want{"access denied: user is not part of family", http.StatusForbidden}},
 		{"fail - internal server error", state{err: errFail}, want{"fail", http.StatusInternalServerError}},
 	}
 
@@ -66,10 +68,10 @@ func Test_Controller_GetFamilyHandler(t *testing.T) {
 				familyUsers[0].UserID = "2"
 			}
 
-			if !c.state.missingFamilyID && !c.state.invalidUser {
+			if !c.state.familyIdMissing && !c.state.familyIdEmpty && !c.state.invalidUser {
 				familyDB.EXPECT().GetFamilyUsers(mock.Anything, mock.Anything).Return(familyUsers, nil).Once()
 				familyDB.EXPECT().GetFamilyMembersByUserIDs(mock.Anything, mock.Anything, mock.Anything).Return(family, c.state.err).Once()
-			} else if !c.state.missingFamilyID {
+			} else if !c.state.familyIdMissing && !c.state.familyIdEmpty {
 				familyDB.EXPECT().GetFamilyUsers(mock.Anything, mock.Anything).Return(familyUsers, nil).Once()
 			}
 
@@ -85,15 +87,17 @@ func Test_Controller_GetFamilyHandler(t *testing.T) {
 				},
 			}
 
-			if c.state.missingFamilyID {
+			if c.state.familyIdMissing {
 				evt.RequestContext.Authorizer = nil
 			}
 
 			ctx = handlers.PrepareAuthorizedContext(ctx, evt)
 
-			endpoint := "/v1/family"
-			if !c.state.missingFamilyID {
-				endpoint += "?family_id=456"
+			endpoint := "/v1/family?family_id=456"
+			if c.state.familyIdMissing {
+				endpoint = "/v1/family"
+			} else if c.state.familyIdEmpty {
+				endpoint = "/v1/family?family_id="
 			}
 
 			w := httptest.NewRecorder()

@@ -1,4 +1,4 @@
-package userauth
+package user
 
 import (
 	"context"
@@ -37,7 +37,7 @@ func Test_Controller_GetUserAuthHandler(t *testing.T) {
 
 			mockAuther := mocks.NewMockAuthController(t)
 
-			ctrl := UserAuthController{
+			ctrl := UserController{
 				auth: mockAuther,
 			}
 
@@ -67,7 +67,7 @@ func Test_Controller_GetUserAuthHandler(t *testing.T) {
 			cgin, _ := gin.CreateTestContext(w)
 			cgin.Request = httptest.NewRequest("GET", "/", nil).WithContext(ctx)
 
-			ctrl.GetUserAuthHandler(cgin)
+			ctrl.GetUserHandler(cgin)
 
 			assert.Equal(t, c.want.code, w.Code)
 			result := tests.AssertResult(t, w.Body)

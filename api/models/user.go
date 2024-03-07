@@ -8,11 +8,11 @@ import (
 )
 
 type User struct {
-	Email string `json:"email" dynamodbav:"email"`
-	// FamilyID     string    `json:"family_id" dynamodbav:"family_id"`
+	Email        string    `json:"email" dynamodbav:"email"`
+	FamilyIDs    []string  `json:"family_ids" dynamodbav:"family_ids"`
+	Name         string    `json:"name" dynamodbav:"name"`
 	UserID       string    `json:"user_id" dynamodbav:"user_id"`
 	Username     string    `json:"username" dynamodbav:"username"`
-	Name         string    `json:"name" dynamodbav:"name"`
 	Roles        []string  `json:"roles" dynamodbav:"roles"`
 	CreatedOnStr string    `json:"-" dynamodbav:"created_on"`
 	UpdatedOnStr string    `json:"-" dynamodbav:"updated_on,omitempty"`
