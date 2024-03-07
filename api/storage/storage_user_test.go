@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
+	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -86,6 +87,41 @@ func Test_IUserStorage_GetUserByID(t *testing.T) {
 			assert.Equal(t, []string{"parent"}, res.Roles)
 		}
 
+		mockDynamoClient.AssertExpectations(t)
+	}
+}
+
+func Test_IUserStorage_SaveUser(t *testing.T) {
+	type state struct {
+		errSaveItem error
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{}, want{}},
+		{"fail - save user", state{errSaveItem: errFail}, want{"fail"}},
+	}
+
+	for _, c := range cases {
+
+		output := &dynamodb.PutItemOutput{}
+
+		mockDynamoClient := mocks.NewMockDynamoDbClient(t)
+		mockDynamoClient.EXPECT().PutItem(mock.Anything, mock.Anything, mock.Anything).Return(output, c.state.errSaveItem)
+
+		s := DynamoDbStorage{
+			client: mockDynamoClient,
+		}
+
+		err := s.SaveUser(context.Background(), models.User{})
+		tests.AssertError(t, err, c.want.err)
 		mockDynamoClient.AssertExpectations(t)
 	}
 }

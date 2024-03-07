@@ -8,8 +8,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
+	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util/auth"
 	apierr "github.com/sebboness/yektaspoints/util/error"
+	"github.com/sebboness/yektaspoints/util/log"
 )
 
 type userRegisterRequest struct {
@@ -58,6 +60,9 @@ func (c *UserController) handleUserRegister(ctx context.Context, req *userRegist
 		return resp, err
 	}
 
+	logger := log.Get().AddField("username", req.Username)
+
+	// register user with cognito
 	result, err := c.auth.Register(ctx, auth.UserRegisterRequest{
 		Username: req.Username,
 		Password: req.Password,
@@ -66,7 +71,26 @@ func (c *UserController) handleUserRegister(ctx context.Context, req *userRegist
 	})
 
 	if err != nil {
+		logger.WithContext(ctx).WithField("error", err.Error()).Errorf("failed to register user '%s'", req.Username)
 		return resp, fmt.Errorf("failed to register user '%s': %w", req.Username, err)
+	}
+
+	// also add a separate user record in dynamodb
+	user := models.User{
+		UserID:    result.Username,
+		Username:  req.Username,
+		Email:     req.Email,
+		Name:      req.Name,
+		FamilyIDs: []string{},
+		Roles:     []string{},
+	}
+
+	if err := c.userDB.SaveUser(ctx, user); err != nil {
+		logger.WithContext(ctx).WithFields(map[string]any{
+			"user_id": result.Username,
+			"error":   err.Error(),
+		}).Errorf("failed to store new user '%s'", req.Username)
+		return resp, fmt.Errorf("failed to save new user '%s': %w", req.Username, err)
 	}
 
 	resp.UserRegisterResult = result

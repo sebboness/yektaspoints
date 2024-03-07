@@ -14,6 +14,7 @@ import (
 
 type IUserStorage interface {
 	GetUserByID(ctx context.Context, userId string) (models.User, error)
+	SaveUser(ctx context.Context, user models.User) error
 }
 
 func (s *DynamoDbStorage) GetUserByID(ctx context.Context, userId string) (models.User, error) {
@@ -52,4 +53,24 @@ func (s *DynamoDbStorage) GetUserByID(ctx context.Context, userId string) (model
 	user.ParseTimes()
 
 	return user, nil
+}
+
+func (s *DynamoDbStorage) SaveUser(ctx context.Context, user models.User) error {
+
+	item, err := attributevalue.MarshalMap(user)
+	if err != nil {
+		return fmt.Errorf("failed to marshal map from point: %w", err)
+	}
+
+	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(s.tableUser),
+		Item:      item,
+	})
+
+	if err != nil {
+		apiErr := apierr.GetAwsError(err)
+		return apiErr
+	}
+
+	return nil
 }

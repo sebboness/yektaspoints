@@ -79,6 +79,53 @@ func (_c *MockIUserStorage_GetUserByID_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
+// SaveUser provides a mock function with given fields: ctx, user
+func (_m *MockIUserStorage) SaveUser(ctx context.Context, user models.User) error {
+	ret := _m.Called(ctx, user)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveUser")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, models.User) error); ok {
+		r0 = rf(ctx, user)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockIUserStorage_SaveUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveUser'
+type MockIUserStorage_SaveUser_Call struct {
+	*mock.Call
+}
+
+// SaveUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - user models.User
+func (_e *MockIUserStorage_Expecter) SaveUser(ctx interface{}, user interface{}) *MockIUserStorage_SaveUser_Call {
+	return &MockIUserStorage_SaveUser_Call{Call: _e.mock.On("SaveUser", ctx, user)}
+}
+
+func (_c *MockIUserStorage_SaveUser_Call) Run(run func(ctx context.Context, user models.User)) *MockIUserStorage_SaveUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.User))
+	})
+	return _c
+}
+
+func (_c *MockIUserStorage_SaveUser_Call) Return(_a0 error) *MockIUserStorage_SaveUser_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockIUserStorage_SaveUser_Call) RunAndReturn(run func(context.Context, models.User) error) *MockIUserStorage_SaveUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockIUserStorage creates a new instance of MockIUserStorage. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockIUserStorage(t interface {

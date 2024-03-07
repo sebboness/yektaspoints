@@ -9,7 +9,8 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	mocks "github.com/sebboness/yektaspoints/mocks/auth"
+	authmocks "github.com/sebboness/yektaspoints/mocks/auth"
+	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 
 	"github.com/sebboness/yektaspoints/util/auth"
 	apierr "github.com/sebboness/yektaspoints/util/error"
@@ -23,7 +24,7 @@ var errFail = errors.New("fail")
 func Test_UserRegisterHandler(t *testing.T) {
 	type state struct {
 		invalidBody bool
-		errAuth     error
+		errSave     error
 	}
 	type want struct {
 		err  string
@@ -38,8 +39,8 @@ func Test_UserRegisterHandler(t *testing.T) {
 	cases := []test{
 		{"happy path", state{}, want{"", 201}},
 		{"fail - invalid body", state{invalidBody: true}, want{"failed to unmarshal json body", 400}},
-		{"fail - validation error", state{errAuth: apierr.New(apierr.InvalidInput)}, want{"invalid input", 400}},
-		{"fail - internal server error", state{errAuth: errors.New("fail")}, want{"fail", 500}},
+		{"fail - validation error", state{errSave: apierr.New(apierr.InvalidInput)}, want{"invalid input", 400}},
+		{"fail - internal server error", state{errSave: errors.New("fail")}, want{"fail", 500}},
 	}
 
 	for _, c := range cases {
@@ -56,18 +57,21 @@ func Test_UserRegisterHandler(t *testing.T) {
 			evtBody, _ := json.Marshal(req)
 			evtBodyStr := string(evtBody)
 
-			mockAuther := mocks.NewMockAuthController(t)
+			mockAuther := authmocks.NewMockAuthController(t)
+			mockUserDB := mocks.NewMockIUserStorage(t)
 
 			authRes := auth.UserRegisterResult{Username: "john"}
 
 			if !c.state.invalidBody {
-				mockAuther.EXPECT().Register(mock.Anything, mock.Anything).Return(authRes, c.state.errAuth).Once()
+				mockAuther.EXPECT().Register(mock.Anything, mock.Anything).Return(authRes, nil).Once()
+				mockUserDB.EXPECT().SaveUser(mock.Anything, mock.Anything).Return(c.state.errSave).Once()
 			} else {
 				evtBodyStr = `{"user_id":`
 			}
 
 			ctrl := UserController{
-				auth: mockAuther,
+				auth:   mockAuther,
+				userDB: mockUserDB,
 			}
 
 			w := httptest.NewRecorder()
@@ -81,6 +85,7 @@ func Test_UserRegisterHandler(t *testing.T) {
 			tests.AssertResultError(t, result, c.want.err)
 
 			mockAuther.AssertExpectations(t)
+			mockUserDB.AssertExpectations(t)
 		})
 	}
 }
@@ -89,6 +94,7 @@ func Test_handleUserRegister(t *testing.T) {
 	type state struct {
 		hasValidationErr bool
 		regErr           error
+		saveErr          error
 	}
 	type want struct {
 		err string
@@ -103,16 +109,19 @@ func Test_handleUserRegister(t *testing.T) {
 		{"happy path - password flow", state{}, want{}},
 		{"fail - invalid input", state{hasValidationErr: true}, want{"failed to validate request"}},
 		{"fail - register error", state{regErr: errFail}, want{"failed to register user 'john'"}},
+		{"fail - save error", state{saveErr: errFail}, want{"failed to save new user 'john'"}},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
 			ctx := context.Background()
-			mockAuther := mocks.NewMockAuthController(t)
+			mockAuther := authmocks.NewMockAuthController(t)
+			mockUserDB := mocks.NewMockIUserStorage(t)
 
 			ctrl := UserController{
-				auth: mockAuther,
+				auth:   mockAuther,
+				userDB: mockUserDB,
 			}
 
 			regResult := auth.UserRegisterResult{Username: "john"}
@@ -122,6 +131,9 @@ func Test_handleUserRegister(t *testing.T) {
 
 			if !c.state.hasValidationErr {
 				mockAuther.EXPECT().Register(mock.Anything, mock.Anything).Return(regResult, c.state.regErr).Once()
+			}
+			if !c.state.hasValidationErr && c.state.regErr == nil {
+				mockUserDB.EXPECT().SaveUser(mock.Anything, mock.Anything).Return(c.state.saveErr).Once()
 			}
 
 			req := &userRegisterRequest{
@@ -144,6 +156,7 @@ func Test_handleUserRegister(t *testing.T) {
 			}
 
 			mockAuther.AssertExpectations(t)
+			mockUserDB.AssertExpectations(t)
 		})
 	}
 }

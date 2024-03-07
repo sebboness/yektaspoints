@@ -123,7 +123,7 @@ func Test_Controller_GetFamilyHandler(t *testing.T) {
 	}
 }
 
-func Test_handleUserRegister(t *testing.T) {
+func Test_Controller_handleGetFamily(t *testing.T) {
 	type state struct {
 		isInvalidUser  bool
 		getFamErr      error

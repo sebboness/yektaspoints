@@ -18,26 +18,6 @@ type IPointsStorage interface {
 	SavePoint(ctx context.Context, point models.Point) error
 }
 
-func (s *DynamoDbStorage) SavePoint(ctx context.Context, point models.Point) error {
-
-	item, err := attributevalue.MarshalMap(point)
-	if err != nil {
-		return fmt.Errorf("failed to marshal map from point: %w", err)
-	}
-
-	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
-		TableName: aws.String(s.tablePoints),
-		Item:      item,
-	})
-
-	if err != nil {
-		apiErr := apierr.GetAwsError(err)
-		return apiErr
-	}
-
-	return nil
-}
-
 func (s *DynamoDbStorage) GetPointByID(ctx context.Context, userId, id string) (models.Point, error) {
 	point := models.Point{}
 
@@ -146,4 +126,24 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 	}
 
 	return points, nil
+}
+
+func (s *DynamoDbStorage) SavePoint(ctx context.Context, point models.Point) error {
+
+	item, err := attributevalue.MarshalMap(point)
+	if err != nil {
+		return fmt.Errorf("failed to marshal map from point: %w", err)
+	}
+
+	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(s.tablePoints),
+		Item:      item,
+	})
+
+	if err != nil {
+		apiErr := apierr.GetAwsError(err)
+		return apiErr
+	}
+
+	return nil
 }

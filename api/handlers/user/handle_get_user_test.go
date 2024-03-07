@@ -8,14 +8,18 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
-	mocks "github.com/sebboness/yektaspoints/mocks/auth"
+	mocks "github.com/sebboness/yektaspoints/mocks/storage"
+	"github.com/sebboness/yektaspoints/models"
+	apierr "github.com/sebboness/yektaspoints/util/error"
 	"github.com/sebboness/yektaspoints/util/tests"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-func Test_Controller_GetUserAuthHandler(t *testing.T) {
+func Test_Controller_GetUserHandler(t *testing.T) {
 	type state struct {
-		hasNoAuth bool
+		hasNoAuth  bool
+		getUserErr error
 	}
 	type want struct {
 		err  string
@@ -30,15 +34,17 @@ func Test_Controller_GetUserAuthHandler(t *testing.T) {
 	cases := []test{
 		{"happy path", state{}, want{"", 200}},
 		{"fail - unauthorized", state{hasNoAuth: true}, want{"unauthorized", 401}},
+		{"fail - not found", state{getUserErr: apierr.New(apierr.NotFound)}, want{"not found", 404}},
+		{"fail - internal server error", state{getUserErr: errFail}, want{"failed to get user: fail", 500}},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			mockAuther := mocks.NewMockAuthController(t)
+			mockUserDB := mocks.NewMockIUserStorage(t)
 
 			ctrl := UserController{
-				auth: mockAuther,
+				userDB: mockUserDB,
 			}
 
 			ctx := context.Background()
@@ -51,7 +57,7 @@ func Test_Controller_GetUserAuthHandler(t *testing.T) {
 							"email":            "john@info.co",
 							"email_verified":   "true",
 							"name":             "John",
-							"sub":              "123",
+							"sub":              "1",
 						},
 					},
 				},
@@ -59,6 +65,8 @@ func Test_Controller_GetUserAuthHandler(t *testing.T) {
 
 			if c.state.hasNoAuth {
 				evt.RequestContext.Authorizer = nil
+			} else {
+				mockUserDB.EXPECT().GetUserByID(mock.Anything, mock.Anything).Return(models.User{UserID: "1"}, c.state.getUserErr).Once()
 			}
 
 			ctx = handlers.PrepareAuthorizedContext(ctx, evt)
@@ -76,11 +84,57 @@ func Test_Controller_GetUserAuthHandler(t *testing.T) {
 			if c.want.code == 200 {
 				assert.NotNil(t, result.Data)
 				if result.Data != nil {
-					assert.Equal(t, "john", result.Data.(map[string]any)["username"])
+					assert.Equal(t, "1", result.Data.(map[string]any)["user_id"])
 				}
 			}
 
-			mockAuther.AssertExpectations(t)
+			mockUserDB.AssertExpectations(t)
+		})
+	}
+}
+
+func Test_Controller_handleGetUser(t *testing.T) {
+	type state struct {
+		getUserErr error
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{}, want{}},
+		{"fail - get user error", state{getUserErr: errFail}, want{"failed to get user"}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+
+			ctx := context.Background()
+			mockUserDB := mocks.NewMockIUserStorage(t)
+
+			ctrl := UserController{
+				userDB: mockUserDB,
+			}
+
+			user := models.User{
+				UserID: "1",
+			}
+
+			mockUserDB.EXPECT().GetUserByID(mock.Anything, mock.Anything).Return(user, c.state.getUserErr).Once()
+
+			res, err := ctrl.handleGetUser(ctx, "1")
+
+			tests.AssertError(t, err, c.want.err)
+			if c.want.err == "" {
+				assert.Equal(t, "1", res.UserID)
+			}
+
+			mockUserDB.AssertExpectations(t)
 		})
 	}
 }
