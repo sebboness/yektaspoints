@@ -3,6 +3,7 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -45,6 +46,6 @@ func AssertResultError(t *testing.T, res result.Result, wantErr string) {
 				break
 			}
 		}
-		assert.True(t, hasErr, "expected result to contain error "+wantErr)
+		assert.True(t, hasErr, fmt.Sprintf("expected result errors to contain [%s], but found only [%s]", wantErr, strings.Join(res.Errors, "; ")))
 	}
 }

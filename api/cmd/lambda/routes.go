@@ -24,6 +24,9 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 	{
 		r.GET("/v1/health", lambdaCtrl.HealthCheckHandler)
 
+		// family
+		r.GET("/v1/family", familyCtrl.GetFamilyHandler)
+
 		// Points
 		r.GET("/v1/points", lambdaCtrl.GetUserPointsHandler)
 		r.GET("/v1/points/:point_id", lambdaCtrl.GetUserPointsHandler)

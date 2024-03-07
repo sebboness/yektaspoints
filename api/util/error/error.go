@@ -14,6 +14,7 @@ var (
 	Unauthorized        = errors.New("unauthorized")
 	NotFound            = errors.New("resource not found")
 	InternalServerError = errors.New("internal server error")
+	AccessDenied        = errors.New("access denied")
 )
 
 type ApiError struct {
@@ -126,6 +127,8 @@ func (e *ApiError) determineStatusCode() int {
 		return http.StatusUnauthorized
 	} else if e.Is(NotFound) {
 		return http.StatusNotFound
+	} else if e.Is(AccessDenied) {
+		return http.StatusForbidden
 	} else if e.Is(InternalServerError) {
 		return http.StatusInternalServerError
 	} else if e.Err != nil || len(e.errors) > 0 {

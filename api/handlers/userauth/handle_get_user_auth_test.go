@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_UserRegisterHandler(t *testing.T) {
+func Test_Controller_GetUserAuthHandler(t *testing.T) {
 	type state struct {
 		hasNoAuth bool
 	}
@@ -29,7 +29,7 @@ func Test_UserRegisterHandler(t *testing.T) {
 
 	cases := []test{
 		{"happy path", state{}, want{"", 200}},
-		// {"fail - unauthorized", state{hasNoAuth: true}, want{"unauthorized", 401}},
+		{"fail - unauthorized", state{hasNoAuth: true}, want{"unauthorized", 401}},
 	}
 
 	for _, c := range cases {

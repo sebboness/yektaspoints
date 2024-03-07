@@ -8,8 +8,8 @@ import (
 )
 
 type User struct {
-	Email        string    `json:"email" dynamodbav:"email"`
-	FamilyID     string    `json:"family_id" dynamodbav:"family_id"`
+	Email string `json:"email" dynamodbav:"email"`
+	// FamilyID     string    `json:"family_id" dynamodbav:"family_id"`
 	UserID       string    `json:"user_id" dynamodbav:"user_id"`
 	Username     string    `json:"username" dynamodbav:"username"`
 	Name         string    `json:"name" dynamodbav:"name"`

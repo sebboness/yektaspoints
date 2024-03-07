@@ -27,7 +27,17 @@ resource "aws_iam_policy" "policy" {
           {
               "Effect": "Allow",
               "Action": [
-                  "dynamodb:*",
+                  "dynamodb:BatchGetItem",
+                  "dynamodb:BatchWriteItem",
+                  "dynamodb:DeleteItem",
+                  "dynamodb:GetItem",
+                  "dynamodb:PartiQLDelete",
+                  "dynamodb:PartiQLInsert",
+                  "dynamodb:PartiQLSelect",
+                  "dynamodb:PartiQLUpdate",
+                  "dynamodb:PutItem",
+                  "dynamodb:Query",
+                  "dynamodb:UpdateItem",
                   "logs:*",
                   "s3:*"
               ],

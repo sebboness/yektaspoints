@@ -38,30 +38,10 @@ resource "aws_dynamodb_table" "user" {
     range_key = "updated_on"
 }
 
-resource "aws_dynamodb_table" "user" {
-    name = "${local.app}-${local.env}-user"
+resource "aws_dynamodb_table" "family-user" {
+    name = "${local.app}-${local.env}-family-user"
     billing_mode = "PROVISIONED"
     read_capacity= "10"
-    write_capacity= "5"
-
-    attribute {
-        name = "user_id"
-        type = "S"
-    }
-
-    attribute {
-        name = "updated_on"
-        type = "S"
-    }
-
-    hash_key = "user_id"
-    range_key = "updated_on"
-}
-
-resource "aws_dynamodb_table" "family" {
-    name = "${local.app}-${local.env}-family"
-    billing_mode = "PROVISIONED"
-    read_capacity= "5"
     write_capacity= "5"
 
     attribute {
@@ -69,5 +49,11 @@ resource "aws_dynamodb_table" "family" {
         type = "S"
     }
 
+    attribute {
+        name = "user_id"
+        type = "S"
+    }
+
     hash_key = "family_id"
+    range_key = "user_id"
 }

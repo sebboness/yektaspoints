@@ -22,9 +22,10 @@ type DynamoDbClient interface {
 }
 
 type DynamoDbStorage struct {
-	client      DynamoDbClient
-	tablePoints string
-	tableUser   string
+	client          DynamoDbClient
+	tableFamilyUser string
+	tablePoints     string
+	tableUser       string
 }
 
 type Config struct {
@@ -42,9 +43,10 @@ func NewDynamoDbStorage(cfg Config) (*DynamoDbStorage, error) {
 	dynamoClient := dynamodb.NewFromConfig(sdkConfig)
 
 	return &DynamoDbStorage{
-		client:      dynamoClient,
-		tablePoints: fmt.Sprintf("mypoints-%s-points", strings.ToLower(cfg.Env)),
-		tableUser:   fmt.Sprintf("mypoints-%s-user", strings.ToLower(cfg.Env)),
+		client:          dynamoClient,
+		tablePoints:     fmt.Sprintf("mypoints-%s-points", strings.ToLower(cfg.Env)),
+		tableUser:       fmt.Sprintf("mypoints-%s-user", strings.ToLower(cfg.Env)),
+		tableFamilyUser: fmt.Sprintf("mypoints-%s-family-user", strings.ToLower(cfg.Env)),
 	}, nil
 }
 

@@ -30,20 +30,14 @@ type AuthorizerInfo struct {
 func PrepareAuthorizedContext(ctx context.Context, req events.APIGatewayProxyRequest) context.Context {
 	authorizer := AuthorizerInfo{}
 
-	authInfoJson, _ := json.Marshal(req.RequestContext.Authorizer)
-	logger.Infof("PrepareAuthorizedContext authorizer: " + string(authInfoJson))
-
 	if len(req.RequestContext.Authorizer) > 0 {
-		logger.Infof("PrepareAuthorizedContext A")
 		if claimsObj, ok := req.RequestContext.Authorizer["claims"]; ok {
-			logger.Infof("PrepareAuthorizedContext C")
 			if claims, ok := claimsObj.(map[string]interface{}); ok {
-				logger.Infof("PrepareAuthorizedContext D")
 				authorizer.Claims = claims
 			}
 		}
 	} else {
-		logger.Infof("PrepareAuthorizedContext B")
+		// logger.Infof("PrepareAuthorizedContext B")
 	}
 
 	return context.WithValue(ctx, ctxKeyAuthInfo, authorizer)

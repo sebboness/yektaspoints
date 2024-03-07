@@ -6,7 +6,9 @@ packages:
       dir: "mocks/storage"
     interfaces:
       DynamoDbClient:
+      IFamilyStorage:
       IPointsStorage:
+      IUserStorage:
   github.com/sebboness/yektaspoints/util/auth:
     config:
       dir: "mocks/auth"
