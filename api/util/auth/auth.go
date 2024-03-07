@@ -51,7 +51,7 @@ type UserRegisterResult struct {
 	IsConfirmed        bool   `json:"is_confirmed"`
 	ConfirmationType   string `json:"confirmation_type"`
 	ConfirmationSentTo string `json:"confirmation_sent_to"`
-	Username           string `json:"username"`
+	UserID             string `json:"user_id"`
 }
 
 var logger = log.Get()

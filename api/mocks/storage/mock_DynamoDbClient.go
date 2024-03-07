@@ -318,8 +318,8 @@ func (_c *MockDynamoDbClient_Query_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
-// Scan provides a mock function with given fields: ctx, params, optFns
-func (_m *MockDynamoDbClient) Scan(ctx context.Context, params *dynamodb.ScanInput, optFns ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error) {
+// UpdateItem provides a mock function with given fields: ctx, params, optFns
+func (_m *MockDynamoDbClient) UpdateItem(ctx context.Context, params *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
 	_va := make([]interface{}, len(optFns))
 	for _i := range optFns {
 		_va[_i] = optFns[_i]
@@ -330,23 +330,23 @@ func (_m *MockDynamoDbClient) Scan(ctx context.Context, params *dynamodb.ScanInp
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Scan")
+		panic("no return value specified for UpdateItem")
 	}
 
-	var r0 *dynamodb.ScanOutput
+	var r0 *dynamodb.UpdateItemOutput
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *dynamodb.ScanInput, ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *dynamodb.UpdateItemInput, ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error)); ok {
 		return rf(ctx, params, optFns...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *dynamodb.ScanInput, ...func(*dynamodb.Options)) *dynamodb.ScanOutput); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *dynamodb.UpdateItemInput, ...func(*dynamodb.Options)) *dynamodb.UpdateItemOutput); ok {
 		r0 = rf(ctx, params, optFns...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dynamodb.ScanOutput)
+			r0 = ret.Get(0).(*dynamodb.UpdateItemOutput)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *dynamodb.ScanInput, ...func(*dynamodb.Options)) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *dynamodb.UpdateItemInput, ...func(*dynamodb.Options)) error); ok {
 		r1 = rf(ctx, params, optFns...)
 	} else {
 		r1 = ret.Error(1)
@@ -355,21 +355,21 @@ func (_m *MockDynamoDbClient) Scan(ctx context.Context, params *dynamodb.ScanInp
 	return r0, r1
 }
 
-// MockDynamoDbClient_Scan_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Scan'
-type MockDynamoDbClient_Scan_Call struct {
+// MockDynamoDbClient_UpdateItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateItem'
+type MockDynamoDbClient_UpdateItem_Call struct {
 	*mock.Call
 }
 
-// Scan is a helper method to define mock.On call
+// UpdateItem is a helper method to define mock.On call
 //   - ctx context.Context
-//   - params *dynamodb.ScanInput
+//   - params *dynamodb.UpdateItemInput
 //   - optFns ...func(*dynamodb.Options)
-func (_e *MockDynamoDbClient_Expecter) Scan(ctx interface{}, params interface{}, optFns ...interface{}) *MockDynamoDbClient_Scan_Call {
-	return &MockDynamoDbClient_Scan_Call{Call: _e.mock.On("Scan",
+func (_e *MockDynamoDbClient_Expecter) UpdateItem(ctx interface{}, params interface{}, optFns ...interface{}) *MockDynamoDbClient_UpdateItem_Call {
+	return &MockDynamoDbClient_UpdateItem_Call{Call: _e.mock.On("UpdateItem",
 		append([]interface{}{ctx, params}, optFns...)...)}
 }
 
-func (_c *MockDynamoDbClient_Scan_Call) Run(run func(ctx context.Context, params *dynamodb.ScanInput, optFns ...func(*dynamodb.Options))) *MockDynamoDbClient_Scan_Call {
+func (_c *MockDynamoDbClient_UpdateItem_Call) Run(run func(ctx context.Context, params *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options))) *MockDynamoDbClient_UpdateItem_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		variadicArgs := make([]func(*dynamodb.Options), len(args)-2)
 		for i, a := range args[2:] {
@@ -377,17 +377,17 @@ func (_c *MockDynamoDbClient_Scan_Call) Run(run func(ctx context.Context, params
 				variadicArgs[i] = a.(func(*dynamodb.Options))
 			}
 		}
-		run(args[0].(context.Context), args[1].(*dynamodb.ScanInput), variadicArgs...)
+		run(args[0].(context.Context), args[1].(*dynamodb.UpdateItemInput), variadicArgs...)
 	})
 	return _c
 }
 
-func (_c *MockDynamoDbClient_Scan_Call) Return(_a0 *dynamodb.ScanOutput, _a1 error) *MockDynamoDbClient_Scan_Call {
+func (_c *MockDynamoDbClient_UpdateItem_Call) Return(_a0 *dynamodb.UpdateItemOutput, _a1 error) *MockDynamoDbClient_UpdateItem_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockDynamoDbClient_Scan_Call) RunAndReturn(run func(context.Context, *dynamodb.ScanInput, ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error)) *MockDynamoDbClient_Scan_Call {
+func (_c *MockDynamoDbClient_UpdateItem_Call) RunAndReturn(run func(context.Context, *dynamodb.UpdateItemInput, ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error)) *MockDynamoDbClient_UpdateItem_Call {
 	_c.Call.Return(run)
 	return _c
 }

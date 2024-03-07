@@ -56,9 +56,13 @@ func (c *CognitoController) Authenticate(ctx context.Context, username, password
 		},
 	})
 
-	logger.WithContext(ctx).AddField("resp", resp).Infof("initiate auth response")
-
 	if err != nil {
+		logger.WithContext(ctx).WithFields(map[string]any{
+			"resp":     resp,
+			"username": username,
+			"error":    err.Error(),
+		}).Errorf("initiate auth response")
+
 		apiErr := apierr.GetAwsError(err)
 		return result, apiErr
 	}
@@ -109,9 +113,14 @@ func (c *CognitoController) AssignUserToRole(ctx context.Context, username, role
 		UserPoolId: aws.String(c.userPoolID),
 	})
 
-	logger.AddField("resp", resp).Infof("user confirm signup response")
-
 	if err != nil {
+		logger.WithFields(map[string]any{
+			"error":    err.Error(),
+			"resp":     resp,
+			"role":     role,
+			"username": username,
+		}).Infof("failed to assign user to role")
+
 		apiErr := apierr.GetAwsError(err)
 		return apiErr
 	}
@@ -128,9 +137,13 @@ func (c *CognitoController) ConfirmRegistration(ctx context.Context, username, c
 		SecretHash:       aws.String(c.computeSecretHash(username)),
 	})
 
-	logger.AddField("resp", resp).Infof("user confirm signup response")
-
 	if err != nil {
+		logger.WithFields(map[string]any{
+			"error":    err.Error(),
+			"resp":     resp,
+			"username": username,
+		}).Infof("failed to confirm user registration")
+
 		apiErr := apierr.GetAwsError(err)
 		return apiErr
 	}
@@ -144,13 +157,19 @@ func (c *CognitoController) RefreshToken(ctx context.Context, username, refreshT
 		ClientId: &c.cognitoClientID,
 		AuthFlow: types.AuthFlowTypeRefreshToken,
 		AuthParameters: map[string]string{
-			// "DEVICE_KEY": "", // TODO does this need to be set?
+			// "DEVICE_KEY": "", // TODO does this need to be set? 2024-03-07 A: Only if we start tracking user's devices
 			"REFRESH_TOKEN": refreshToken,
 			"SECRET_HASH":   c.computeSecretHash(username),
 		},
 	})
 
 	if err != nil {
+		logger.WithFields(map[string]any{
+			"error":    err.Error(),
+			"resp":     resp,
+			"username": username,
+		}).Infof("failed to refresh token")
+
 		apiErr := apierr.GetAwsError(err)
 		return AuthResult{}, apiErr
 	}
@@ -197,15 +216,19 @@ func (c *CognitoController) Register(ctx context.Context, req UserRegisterReques
 		},
 	})
 
-	logger.AddField("resp", resp).Infof("user signup response")
-
 	if err != nil {
+		logger.WithFields(map[string]any{
+			"error":    err.Error(),
+			"resp":     resp,
+			"username": req.Username,
+		}).Infof("failed to register user")
+
 		apiErr := apierr.GetAwsError(err)
 		return result, apiErr
 	}
 
 	result.IsConfirmed = resp.UserConfirmed
-	result.Username = *resp.UserSub
+	result.UserID = *resp.UserSub
 	result.ConfirmationType = string(resp.CodeDeliveryDetails.DeliveryMedium)
 	result.ConfirmationSentTo = *resp.CodeDeliveryDetails.Destination
 
@@ -231,9 +254,13 @@ func (c *CognitoController) UpdatePassword(ctx context.Context, session, usernam
 		},
 	})
 
-	logger.WithContext(ctx).AddField("resp", resp).Infof("update password response")
-
 	if err != nil {
+		logger.WithContext(ctx).WithFields(map[string]any{
+			"error":    err.Error(),
+			"resp":     resp,
+			"username": username,
+		}).Infof("failed to update user password")
+
 		apiErr := apierr.GetAwsError(err)
 		return apiErr
 	}

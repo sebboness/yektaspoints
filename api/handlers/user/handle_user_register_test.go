@@ -60,7 +60,7 @@ func Test_UserRegisterHandler(t *testing.T) {
 			mockAuther := authmocks.NewMockAuthController(t)
 			mockUserDB := mocks.NewMockIUserStorage(t)
 
-			authRes := auth.UserRegisterResult{Username: "john"}
+			authRes := auth.UserRegisterResult{UserID: "john"}
 
 			if !c.state.invalidBody {
 				mockAuther.EXPECT().Register(mock.Anything, mock.Anything).Return(authRes, nil).Once()
@@ -124,7 +124,7 @@ func Test_handleUserRegister(t *testing.T) {
 				userDB: mockUserDB,
 			}
 
-			regResult := auth.UserRegisterResult{Username: "john"}
+			regResult := auth.UserRegisterResult{UserID: "john"}
 			if c.state.regErr != nil {
 				regResult = auth.UserRegisterResult{}
 			}
@@ -152,7 +152,7 @@ func Test_handleUserRegister(t *testing.T) {
 
 			tests.AssertError(t, err, c.want.err)
 			if err == nil {
-				assert.Equal(t, req.Username, res.Username)
+				assert.Equal(t, req.Username, res.UserID)
 			}
 
 			mockAuther.AssertExpectations(t)

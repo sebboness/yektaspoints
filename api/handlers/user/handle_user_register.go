@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/mail"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
 	"github.com/sebboness/yektaspoints/models"
+	"github.com/sebboness/yektaspoints/util"
 	"github.com/sebboness/yektaspoints/util/auth"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 	"github.com/sebboness/yektaspoints/util/log"
@@ -77,17 +79,20 @@ func (c *UserController) handleUserRegister(ctx context.Context, req *userRegist
 
 	// also add a separate user record in dynamodb
 	user := models.User{
-		UserID:    result.Username,
-		Username:  req.Username,
-		Email:     req.Email,
-		Name:      req.Name,
-		FamilyIDs: []string{},
-		Roles:     []string{},
+		UserID:       result.UserID,
+		Username:     req.Username,
+		Email:        req.Email,
+		Name:         req.Name,
+		Status:       models.UserStatusUnverified,
+		CreatedOnStr: util.ToFormattedUTC(time.Now()),
+		UpdatedOnStr: util.ToFormattedUTC(time.Now()),
+		FamilyIDs:    []string{},
+		Roles:        []string{},
 	}
 
 	if err := c.userDB.SaveUser(ctx, user); err != nil {
 		logger.WithContext(ctx).WithFields(map[string]any{
-			"user_id": result.Username,
+			"user_id": result.UserID,
 			"error":   err.Error(),
 		}).Errorf("failed to store new user '%s'", req.Username)
 		return resp, fmt.Errorf("failed to save new user '%s': %w", req.Username, err)

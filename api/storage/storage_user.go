@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/sebboness/yektaspoints/models"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 )
@@ -15,6 +16,7 @@ import (
 type IUserStorage interface {
 	GetUserByID(ctx context.Context, userId string) (models.User, error)
 	SaveUser(ctx context.Context, user models.User) error
+	UpdateUserStatus(ctx context.Context, userId string, status models.UserStatus) error
 }
 
 func (s *DynamoDbStorage) GetUserByID(ctx context.Context, userId string) (models.User, error) {
@@ -65,6 +67,73 @@ func (s *DynamoDbStorage) SaveUser(ctx context.Context, user models.User) error 
 	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: aws.String(s.tableUser),
 		Item:      item,
+	})
+
+	if err != nil {
+		apiErr := apierr.GetAwsError(err)
+		return apiErr
+	}
+
+	return nil
+}
+
+type UpdateUserFamilyRequest struct {
+	UserID   string
+	FamilyID string
+	Add      bool
+}
+
+// TODO need to finish this when ready to implement (-_o)
+func (s *DynamoDbStorage) UpdateUserFamily(ctx context.Context, req UpdateUserFamilyRequest) error {
+
+	familyIds := []string{}
+
+	update := expression.Set(expression.Name("family_ids"), expression.Value(familyIds))
+	expr, err := expression.NewBuilder().WithUpdate(update).Build()
+	if err != nil {
+		return fmt.Errorf("failed to build expression: %w", err)
+	}
+
+	keyEx, err := attributevalue.Marshal(req.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to marshal key: %w", err)
+	}
+
+	_, err = s.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName:                 aws.String(s.tableUser),
+		Key:                       map[string]types.AttributeValue{"user_id": keyEx},
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		UpdateExpression:          expr.Update(),
+	})
+
+	if err != nil {
+		apiErr := apierr.GetAwsError(err)
+		return apiErr
+	}
+
+	return nil
+}
+
+func (s *DynamoDbStorage) UpdateUserStatus(ctx context.Context, userId string, status models.UserStatus) error {
+
+	update := expression.Set(expression.Name("status"), expression.Value(status))
+	expr, err := expression.NewBuilder().WithUpdate(update).Build()
+	if err != nil {
+		return fmt.Errorf("failed to build expression: %w", err)
+	}
+
+	keyEx, err := attributevalue.Marshal(userId)
+	if err != nil {
+		return fmt.Errorf("failed to marshal key: %w", err)
+	}
+
+	_, err = s.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName:                 aws.String(s.tableUser),
+		Key:                       map[string]types.AttributeValue{"user_id": keyEx},
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		UpdateExpression:          expr.Update(),
 	})
 
 	if err != nil {

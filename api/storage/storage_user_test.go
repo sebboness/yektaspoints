@@ -126,10 +126,80 @@ func Test_IUserStorage_SaveUser(t *testing.T) {
 	}
 }
 
+func Test_IUserStorage_UpdateUserFamily(t *testing.T) {
+	type state struct {
+		errUpdate error
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{}, want{}},
+		{"fail - update family", state{errUpdate: errFail}, want{"fail"}},
+	}
+
+	for _, c := range cases {
+
+		output := &dynamodb.UpdateItemOutput{}
+
+		mockDynamoClient := mocks.NewMockDynamoDbClient(t)
+		mockDynamoClient.EXPECT().UpdateItem(mock.Anything, mock.Anything, mock.Anything).Return(output, c.state.errUpdate)
+
+		s := DynamoDbStorage{
+			client: mockDynamoClient,
+		}
+
+		err := s.UpdateUserFamily(context.Background(), UpdateUserFamilyRequest{})
+		tests.AssertError(t, err, c.want.err)
+		mockDynamoClient.AssertExpectations(t)
+	}
+}
+
+func Test_IUserStorage_UpdateUserStatus(t *testing.T) {
+	type state struct {
+		errUpdate error
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{}, want{}},
+		{"fail - update status", state{errUpdate: errFail}, want{"fail"}},
+	}
+
+	for _, c := range cases {
+
+		output := &dynamodb.UpdateItemOutput{}
+
+		mockDynamoClient := mocks.NewMockDynamoDbClient(t)
+		mockDynamoClient.EXPECT().UpdateItem(mock.Anything, mock.Anything, mock.Anything).Return(output, c.state.errUpdate)
+
+		s := DynamoDbStorage{
+			client: mockDynamoClient,
+		}
+
+		err := s.UpdateUserStatus(context.Background(), "1", models.UserStatusDeleted)
+		tests.AssertError(t, err, c.want.err)
+		mockDynamoClient.AssertExpectations(t)
+	}
+}
+
 // Tests against real db
 
-func TestReal_IUserStorage_GetUserByID(t *testing.T) {
-	t.Skip("Skip real test")
+func TestReal_IUserStorage_UpdateUserStatus(t *testing.T) {
+	// t.Skip("Skip real test")
 
 	type state struct {
 		userId string
@@ -151,11 +221,7 @@ func TestReal_IUserStorage_GetUserByID(t *testing.T) {
 		s, err := NewDynamoDbStorage(Config{Env: "dev"})
 		assert.Nil(t, err)
 
-		res, err := s.GetUserByID(context.Background(), c.state.userId)
+		err = s.UpdateUserStatus(context.Background(), c.state.userId, models.UserStatusActive)
 		tests.AssertError(t, err, c.want.err)
-
-		if c.want.err == "" {
-			assert.Equal(t, c.state.userId, res.UserID)
-		}
 	}
 }
