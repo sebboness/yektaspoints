@@ -42,6 +42,7 @@ resource "aws_iam_policy" "policy" {
                   "s3:*"
               ],
               "Resource": [
+                "arn:aws:dynamodb:*:*:table/${local.app}-${local.env}-family-user",
                 "arn:aws:dynamodb:*:*:table/${local.app}-${local.env}-points",
                 "arn:aws:dynamodb:*:*:table/${local.app}-${local.env}-user",
                 "arn:aws:logs:*:*:*",
