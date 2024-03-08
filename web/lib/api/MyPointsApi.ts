@@ -52,7 +52,7 @@ export class MyPointsApi extends Api {
         });
     }
 
-    public getUserAuth(): Promise<ResultT<UserData>> {
-        return this.get("v1/user/auth");
+    public getUser(): Promise<ResultT<UserData>> {
+        return this.get("v1/user");
     }
 }

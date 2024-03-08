@@ -12,7 +12,7 @@ import { NewErrorResult, NewSuccessResult } from "@/lib/api/Result";
 //         expect(refreshResult.status).toEqual("SUCCESS");
 
 //         if (refreshResult.status === "SUCCESS") {
-//             const getUser = await api.getUserAuth()
+//             const getUser = await api.getUser()
 //             expect(getUser.status).toEqual("SUCCESS");
 //         }
 //     }

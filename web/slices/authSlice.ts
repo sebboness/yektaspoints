@@ -11,7 +11,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 export const checkUserAuth = createAsyncThunk("auth/checkUserAuth", async (tokenData: TokenData, thunkApi) => {
     const api = MyPointsApi.getInstance();
     try {
-        const result = await api.withToken(getSimpleTokenRetriever(tokenData.id_token)).getUserAuth();
+        const result = await api.withToken(getSimpleTokenRetriever(tokenData.id_token)).getUser();
         if (result.status === SUCCESS) {
             thunkApi.dispatch(AuthSlice.actions.setAuthToken(tokenData));
             return tokenData;
@@ -91,12 +91,14 @@ export const AuthSlice = createSlice({
     name: "auth",
     initialState,
     reducers: {
-        setAuthToken: (state, action: PayloadAction<TokenData>) => {
-            console.log("authSlice.setAuthToken: setting token");
-            const user = ParseToken(action.payload.id_token);
-            console.log("authSlice.setAuthToken: user", user);
+        setAuthToken: (state, action: PayloadAction<TokenData | undefined>) => {
+            console.log("authSlice.setAuthToken: token", action.payload);
             state.token = action.payload;
-            state.user = user;
+        },
+
+        setUserData: (state, action: PayloadAction<UserData | undefined>) => {
+            console.log("authSlice.setUserData: user", action.payload);
+            state.user = action.payload;
         },
     },
     extraReducers: (builder) => {

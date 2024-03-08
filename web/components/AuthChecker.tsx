@@ -1,6 +1,6 @@
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { FAILURE } from "@/lib/api/Result";
-import { ParseToken } from "@/lib/auth/Auth";
+import { ParseToken, TokenDataElId, UserData, UserDataElId } from "@/lib/auth/Auth";
 import authCookie from "@/lib/auth/AuthCookie";
 import { Roles } from "@/lib/auth/Roles";
 import { getSimpleTokenRetriever } from "@/slices/authSlice";
@@ -18,6 +18,7 @@ type Props = {
 export const AuthChecker = async (props: Props) => {
 
     let roles: Roles[] = [];
+    let userData: UserData | undefined = undefined;
 
     const tokenData = await authCookie.get();
     if (!tokenData) {
@@ -26,20 +27,20 @@ export const AuthChecker = async (props: Props) => {
     } else {
         console.log(`${logName()}tokenCookie has data`);
 
-        const userData = ParseToken(tokenData.id_token);
+        userData = ParseToken(tokenData.id_token);
         if (!userData) {
             console.warn(`${logName()}failed to parse token to user data.`);
             redirect("/access-denied?user");
         }
 
-        roles = userData.groups;
+        roles = userData.roles;
 
         // now check against mypoints api if cookie is valid
-        const authResp = await MyPointsApi.getInstance()
+        let authResp = await MyPointsApi.getInstance()
             .withToken(getSimpleTokenRetriever(tokenData.id_token))
-            .getUserAuth();
+            .getUser();
 
-        if (authResp.status === FAILURE) {
+        if (authResp.status === FAILURE || !authResp.data) {
             console.log(`${logName()}getUserAuth response`, JSON.stringify(authResp));
             console.log(`${logName()}getUserAuth failed with ${userData.username} ${tokenData.id_token}`);
             console.log(`${logName()}trying to refresh with ${userData.username} ${tokenData.refresh_token}`);
@@ -51,10 +52,23 @@ export const AuthChecker = async (props: Props) => {
             if (!refreshResp.data) {
                 console.log(`${logName()}refreshToken response`, JSON.stringify(refreshResp));
                 console.log(`${logName()}need to redirect to login page`);
+                redirect("/login");
+            }
 
+            // Now that we refreshed, let's get user data again
+            authResp = await MyPointsApi.getInstance()
+                .withToken(getSimpleTokenRetriever(refreshResp.data.id_token))
+                .getUser();
+
+            if (!authResp.data) {
+                // failed again, so redirect to login
+                console.log(`${logName()}authResp response`, JSON.stringify(refreshResp));
+                console.log(`${logName()}need to redirect to login page`);
                 redirect("/login");
             }
         }
+
+        userData = authResp.data;
     }
 
     if (props.roles && !_.find(props.roles, (x) => _.find(roles, (y) => y === x))) {
@@ -63,8 +77,12 @@ export const AuthChecker = async (props: Props) => {
     }
 
     const tokenHexed = Buffer.from(JSON.stringify(tokenData)).toString("hex");
+    const userHexed = Buffer.from(JSON.stringify(userData)).toString("hex");
 
     return (
-        <><pre style={{"display": "none"}} id="__tokendata__">{tokenHexed}</pre></>
+        <>
+            <><input type="hidden" id={TokenDataElId} value={tokenHexed} /></>
+            <><input type="hidden" id={UserDataElId} value={userHexed} /></>
+        </>
     );
 };

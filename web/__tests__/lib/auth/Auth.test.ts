@@ -7,7 +7,7 @@ describe("Decode JWT token", () => {
         expect(user).toBeDefined();
         expect(user?.email).toEqual("john@info.co");
         expect(user?.name).toEqual("John");
-        expect(user?.groups).toEqual(["admin","parent"]);
+        expect(user?.roles).toEqual(["admin","parent"]);
         expect(user?.user_id).toEqual("123");
         expect(user?.username).toEqual("john");
         expect(user?.verified).toEqual(true);

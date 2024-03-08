@@ -26,6 +26,12 @@ func WithAuthorizedUser() gin.HandlerFunc {
 			return
 		}
 
+		if !authInfo.IsEmailVerified() {
+			// reject request
+			c.AbortWithStatusJSON(http.StatusUnauthorized, result.ErrorResult(fmt.Errorf("unverified user")))
+			return
+		}
+
 		c.Next()
 	}
 }

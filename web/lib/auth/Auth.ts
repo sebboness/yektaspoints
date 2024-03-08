@@ -1,6 +1,9 @@
 import { jwtDecode } from "jwt-decode";
 import { Roles } from "./Roles";
 
+export const TokenDataElId = "__mp.td__";
+export const UserDataElId = "__mp.ud__";
+
 export type TokenData = {
     access_token: string;
     id_token: string;
@@ -12,8 +15,9 @@ export type TokenData = {
 
 export type UserData = {
     email: string;
+    family_ids: string[];
     name: string;
-    groups: Roles[];
+    roles: Roles[];
     user_id: string;
     username: string;
     verified: boolean;
@@ -32,8 +36,9 @@ export const ParseToken = (token: string): UserData | undefined => {
         const data = jwtDecode(token) as JwtData;
         return {
             email: data["email"],
+            family_ids: [],
             name: data["name"],
-            groups: data["cognito:groups"] || [],
+            roles: data["cognito:groups"] || [],
             user_id: data["sub"],
             username: data["cognito:username"],
             verified: data["email_verified"],
