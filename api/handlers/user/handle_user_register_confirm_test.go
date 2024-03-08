@@ -8,8 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
-	mocks "github.com/sebboness/yektaspoints/mocks/auth"
+	"github.com/sebboness/yektaspoints/handlers"
+	authmocks "github.com/sebboness/yektaspoints/mocks/auth"
+	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 
 	apierr "github.com/sebboness/yektaspoints/util/error"
 	"github.com/sebboness/yektaspoints/util/tests"
@@ -20,7 +23,7 @@ import (
 func Test_UserRegisterConfirmHandler(t *testing.T) {
 	type state struct {
 		invalidBody bool
-		errAuth     error
+		updateErr   error
 	}
 	type want struct {
 		err  string
@@ -35,36 +38,54 @@ func Test_UserRegisterConfirmHandler(t *testing.T) {
 	cases := []test{
 		{"happy path", state{}, want{"", 200}},
 		{"fail - invalid body", state{invalidBody: true}, want{"failed to unmarshal json body", 400}},
-		{"fail - validation error", state{errAuth: apierr.New(apierr.InvalidInput)}, want{"invalid input", 400}},
-		{"fail - internal server error", state{errAuth: errors.New("fail")}, want{"fail", 500}},
+		{"fail - validation error", state{updateErr: apierr.New(apierr.InvalidInput)}, want{"invalid input", 400}},
+		{"fail - internal server error", state{updateErr: errors.New("fail")}, want{"fail", 500}},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
+			ctx := context.Background()
+
+			evt := events.APIGatewayProxyRequest{
+				RequestContext: events.APIGatewayProxyRequestContext{
+					Authorizer: map[string]interface{}{
+						"claims": map[string]interface{}{
+							"sub": "1",
+						},
+					},
+				},
+			}
+
+			ctx = handlers.PrepareAuthorizedContext(ctx, evt)
+
 			req := &userRegisterConfirmRequest{
-				Username: "john",
 				Code:     "123456",
+				UserID:   "1",
+				Username: "john",
 			}
 
 			evtBody, _ := json.Marshal(req)
 			evtBodyStr := string(evtBody)
 
-			mockAuther := mocks.NewMockAuthController(t)
+			mockAuther := authmocks.NewMockAuthController(t)
+			mockUserDB := mocks.NewMockIUserStorage(t)
 
 			if !c.state.invalidBody {
-				mockAuther.EXPECT().ConfirmRegistration(mock.Anything, mock.Anything, mock.Anything).Return(c.state.errAuth).Once()
+				mockAuther.EXPECT().ConfirmRegistration(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+				mockUserDB.EXPECT().UpdateUserStatus(mock.Anything, mock.Anything, mock.Anything).Return(c.state.updateErr).Once()
 			} else {
 				evtBodyStr = `{"":`
 			}
 
 			ctrl := UserController{
-				auth: mockAuther,
+				auth:   mockAuther,
+				userDB: mockUserDB,
 			}
 
 			w := httptest.NewRecorder()
 			cgin, _ := gin.CreateTestContext(w)
-			cgin.Request = httptest.NewRequest("GET", "/", bytes.NewReader([]byte(evtBodyStr)))
+			cgin.Request = httptest.NewRequest("GET", "/", bytes.NewReader([]byte(evtBodyStr))).WithContext(ctx)
 
 			ctrl.UserRegisterConfirmHandler(cgin)
 
@@ -73,6 +94,7 @@ func Test_UserRegisterConfirmHandler(t *testing.T) {
 			tests.AssertResultError(t, result, c.want.err)
 
 			mockAuther.AssertExpectations(t)
+			mockUserDB.AssertExpectations(t)
 		})
 	}
 }
@@ -81,6 +103,7 @@ func Test_handleUserRegisterConfirm(t *testing.T) {
 	type state struct {
 		hasValidationErr bool
 		regErr           error
+		updateErr        error
 	}
 	type want struct {
 		err string
@@ -95,25 +118,32 @@ func Test_handleUserRegisterConfirm(t *testing.T) {
 		{"happy path - password flow", state{}, want{}},
 		{"fail - invalid input", state{hasValidationErr: true}, want{"failed to validate request"}},
 		{"fail - register error", state{regErr: errFail}, want{"failed to confirm user registration for 'john'"}},
+		{"fail - update error", state{updateErr: errFail}, want{"failed to update user status to active for 'john'"}},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
 			ctx := context.Background()
-			mockAuther := mocks.NewMockAuthController(t)
+			mockAuther := authmocks.NewMockAuthController(t)
+			mockUserDB := mocks.NewMockIUserStorage(t)
 
 			ctrl := UserController{
-				auth: mockAuther,
+				auth:   mockAuther,
+				userDB: mockUserDB,
 			}
 
 			if !c.state.hasValidationErr {
 				mockAuther.EXPECT().ConfirmRegistration(mock.Anything, mock.Anything, mock.Anything).Return(c.state.regErr).Once()
 			}
+			if !c.state.hasValidationErr && c.state.regErr == nil {
+				mockUserDB.EXPECT().UpdateUserStatus(mock.Anything, mock.Anything, mock.Anything).Return(c.state.updateErr).Once()
+			}
 
 			req := &userRegisterConfirmRequest{
-				Username: "john",
 				Code:     "123456",
+				UserID:   "1",
+				Username: "john",
 			}
 
 			if c.state.hasValidationErr {
@@ -123,15 +153,18 @@ func Test_handleUserRegisterConfirm(t *testing.T) {
 			err := ctrl.handleUserRegisterConfirm(ctx, req)
 
 			tests.AssertError(t, err, c.want.err)
+
 			mockAuther.AssertExpectations(t)
+			mockUserDB.AssertExpectations(t)
 		})
 	}
 }
 
 func Test_validateUserRegisterConfirm(t *testing.T) {
 	type state struct {
-		code  string
-		uname string
+		code   string
+		uname  string
+		userId string
 	}
 	type want struct {
 		err string
@@ -143,16 +176,18 @@ func Test_validateUserRegisterConfirm(t *testing.T) {
 	}
 
 	cases := []test{
-		{"happy path", state{uname: "john", code: "John"}, want{}},
-		{"missing username", state{uname: "", code: "John"}, want{"missing username"}},
-		{"missing code", state{uname: "john", code: ""}, want{"missing code"}},
+		{"happy path", state{uname: "john", userId: "1", code: "John"}, want{}},
+		{"missing user_id", state{uname: "1", userId: "", code: "John"}, want{"missing user_id"}},
+		{"missing username", state{uname: "", userId: "1", code: "John"}, want{"missing username"}},
+		{"missing code", state{uname: "john", userId: "1", code: ""}, want{"missing code"}},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			req := &userRegisterConfirmRequest{
-				Username: c.state.uname,
 				Code:     c.state.code,
+				UserID:   c.state.userId,
+				Username: c.state.uname,
 			}
 
 			err := validateUserRegisterConfirm(req)

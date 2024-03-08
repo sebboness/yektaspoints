@@ -5,17 +5,17 @@ resource "aws_dynamodb_table" "points" {
     write_capacity= "5"
 
     attribute {
-        name = "user_id"
+        name = "id"
         type = "S"
     }
 
     attribute {
-        name = "updated_on"
+        name = "user_id"
         type = "S"
     }
 
-    hash_key = "user_id"
-    range_key = "updated_on"
+    hash_key = "id"
+    range_key = "user_id"
 }
 
 resource "aws_dynamodb_table" "user" {
@@ -29,13 +29,7 @@ resource "aws_dynamodb_table" "user" {
         type = "S"
     }
 
-    attribute {
-        name = "updated_on"
-        type = "S"
-    }
-
     hash_key = "user_id"
-    range_key = "updated_on"
 }
 
 resource "aws_dynamodb_table" "family-user" {

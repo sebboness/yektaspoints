@@ -199,7 +199,7 @@ func Test_IUserStorage_UpdateUserStatus(t *testing.T) {
 // Tests against real db
 
 func TestReal_IUserStorage_UpdateUserStatus(t *testing.T) {
-	// t.Skip("Skip real test")
+	t.Skip("Skip real test")
 
 	type state struct {
 		userId string
