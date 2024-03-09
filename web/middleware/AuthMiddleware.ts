@@ -107,12 +107,16 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
             : [];
 
         // Set token data cookie
-        if (tokenData)
+        if (tokenData) {
             authCookie.setTokenData(req.cookies, req.nextUrl.hostname, tokenData);
+            authCookie.setTokenData(response.cookies, req.nextUrl.hostname, tokenData);
+        }
 
         // Set user data cookie and check
-        if (userData)
+        if (userData) {
             authCookie.setUserData(req.cookies, req.nextUrl.hostname, userData);
+            authCookie.setUserData(response.cookies, req.nextUrl.hostname, userData);
+        }
 
         // Check specific user roles for routes
         if (parentsBasePath.some((p) => path.startsWith(p)) && !roles.some((r) => r === Roles.Parent)) {    

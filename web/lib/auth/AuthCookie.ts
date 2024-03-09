@@ -36,6 +36,7 @@ class AuthCookie {
             sameSite: "strict",
             secure: secure,
             domain: _domain,
+            path: "/",
         });
 
         // Unset refresh token cookie
@@ -47,6 +48,7 @@ class AuthCookie {
             sameSite: "strict",
             secure: secure,
             domain: _domain,
+            path: "/",
         });
 
         // Unset user cookie
@@ -58,6 +60,7 @@ class AuthCookie {
             sameSite: "strict",
             secure: secure,
             domain: _domain,
+            path: "/",
         });
 
         return response;
@@ -85,6 +88,7 @@ class AuthCookie {
             sameSite: "strict",
             secure: secure,
             domain: _domain,
+            path: "/",
         });
 
         // Set refresh token cookie
@@ -96,6 +100,7 @@ class AuthCookie {
             sameSite: "strict",
             secure: secure,
             domain: _domain,
+            path: "/",
         });
 
         return;
@@ -124,6 +129,7 @@ class AuthCookie {
             sameSite: "strict",
             secure: secure,
             domain: _domain,
+            path: "/",
         });
 
         // Set refresh token cookie
@@ -135,6 +141,7 @@ class AuthCookie {
             sameSite: "strict",
             secure: secure,
             domain: _domain,
+            path: "/",
         });
     }
 
@@ -158,6 +165,7 @@ class AuthCookie {
             sameSite: "strict",
             secure: secure,
             domain: _domain,
+            path: "/",
         });
     }
 
