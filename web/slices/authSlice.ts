@@ -2,8 +2,11 @@ import { TokenGetter } from "@/lib/api/Api";
 import { LocalApi } from "@/lib/api/LocalApi";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { ErrorAsResult, SUCCESS } from "@/lib/api/Result";
-import { ParseToken, TokenData, UserData } from "@/lib/auth/Auth";
+import { TokenData, UserData } from "@/lib/auth/Auth";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import moment from "moment";
+
+const logName = () => `[${moment().toISOString()}] authSlice: `;
 
 /**
  * Checks if given token data is still valid
@@ -92,24 +95,24 @@ export const AuthSlice = createSlice({
     initialState,
     reducers: {
         setAuthToken: (state, action: PayloadAction<TokenData | undefined>) => {
-            console.log("authSlice.setAuthToken: token", action.payload);
+            console.log(`${logName()}setAuthToken: token`, action.payload);
             state.token = action.payload;
         },
 
         setUserData: (state, action: PayloadAction<UserData | undefined>) => {
-            console.log("authSlice.setUserData: user", action.payload);
+            console.log(`${logName()}setUserData: user`, action.payload);
             state.user = action.payload;
         },
     },
     extraReducers: (builder) => {
         builder.addCase(checkUserAuth.rejected, (state, action) => {
-            console.log("checkUserAuth rejected", action.error);
+            console.log(`${logName()}checkUserAuth rejected`, action.error);
             state.token = undefined;
             state.user = undefined;
         });
 
         builder.addCase(login.rejected, (state, action) => {
-            console.log("login rejected", action.error);
+            console.log(`${logName()}login rejected`, action.error);
             state.token = undefined;
             state.user = undefined;
         });
@@ -118,7 +121,7 @@ export const AuthSlice = createSlice({
             state.authCookieSet = action.payload;
         });
         builder.addCase(setAuthCookie.rejected, (state, action) => {
-            console.log("setAuthCookie rejected", action.error);
+            console.log(`${logName()}setAuthCookie rejected`, action.error);
             state.authCookieSet = false;
         });
     },

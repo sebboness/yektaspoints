@@ -1,5 +1,6 @@
-import moment from "moment";
 import { NewErrorResultT, Result, ResultT } from "./Result";
+
+import moment from "moment";
 
 export type QueryParams = {[key: string]: string[]} | undefined;
 
@@ -58,7 +59,7 @@ export class Api {
             // Attach auth token to headers if it is set
             if (this.tokenGetter) {
                 headers["Authorization"] = this.tokenGetter.getTokenType() + " " + this.tokenGetter.getToken();
-                console.info(`${this.logName()}authorization header: ${headers["Authorization"]}`);
+                console.info(`${this.logName()}authorization header`); //: ${headers["Authorization"]}`);
                 isAuthedReq = true;
 
                 // reset tokenGetter for each call
@@ -78,7 +79,7 @@ export class Api {
             // Add payload
             if (opts.payload) {
                 reqOps.body = JSON.stringify(opts.payload);
-                console.info(`${this.logName()}request payload: ${reqOps.body}`);
+                console.debug(`${this.logName()}request has payload`); //: ${reqOps.body}`);
             }
 
             console.info(`${this.logName()}preparing${isAuthedReq ? " authorized" : ""} request: ${method.toUpperCase()} ${url}`);
@@ -88,7 +89,7 @@ export class Api {
                     console.debug(`${this.logName()}response status: [${resp.status}: ${resp.statusText}]`);
                     resp.json()
                         .then((obj: ResultT<T> | undefined) => {
-                            console.debug(`${this.logName()}response json decoded: ${JSON.stringify(obj)}`);
+                            // console.debug(`${this.logName()}response json decoded: ${JSON.stringify(obj)}`);
                             if (obj && obj.status) { // this means it's a formatted result object
                                 if (!obj.statusCode)
                                     obj.statusCode = resp.status;

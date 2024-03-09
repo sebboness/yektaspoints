@@ -1,11 +1,11 @@
 import { NewErrorResult, NewSuccessResult } from "@/lib/api/Result";
-import { TokenData } from "@/lib/auth/Auth";
-import authCookie from "@/lib/auth/AuthCookie";
 import { NextRequest, NextResponse } from "next/server";
 
+import { TokenData } from "@/lib/auth/Auth";
+import authCookie from "@/lib/auth/AuthCookie";
 
 export async function GET(req: NextRequest) {
-    const tokenData = await authCookie.get();
+    const tokenData = await authCookie.getTokenData(req.cookies);
     if (!tokenData) {
         return NextResponse.json(NewErrorResult("not set"), {
             status: 404,
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         statusText: "Set cookie successfully",
     });
 
-    await authCookie.setWithResponse(response, domain, body);
+    await authCookie.setTokenData(response.cookies, domain, body);
 
     return response;
 }
@@ -37,6 +37,6 @@ export async function DELETE(req: NextRequest) {
     });
 
     const domain = req.nextUrl.hostname;
-    authCookie.delete(response, domain);
+    authCookie.deleteAll(response, domain);
     return response;
 }

@@ -1,34 +1,35 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAppSelector  } from "@/store/hooks";
 import { Roles } from "@/lib/auth/Roles";
 import { useRouter } from "next/navigation";
 
 const Greeter = () => {
 
-    const { push } = useRouter();
+    // const { push } = useRouter();
     const user = useAppSelector ((state) => state.auth.user);
+    // const [displayTxt, setDisplayTxt] = useState("No user")
 
-    if (!user) {
-        return (<p>No user</p>);
-    } else if (!user.roles) {
-        return (<p>No roles</p>);
-    } else if (user.roles.findIndex((x) => x === Roles.Parent)) {
-        push("/mykids");
-        return;
-    } else if (user.roles.findIndex((x) => x === Roles.Child)) {
-        push("/mypoints");
-        return;
-    } else if (user.roles.findIndex((x) => x === Roles.Admin)) {
-        push("/admin");
-        return;
-    }
+    // useEffect(() => {
+
+    //     if (!user) {
+    //         setDisplayTxt("No user");
+    //     } else if (!user.roles) {
+    //         setDisplayTxt("User has no roles");
+    //     } else if (user.roles.findIndex((x) => x === Roles.Parent)) {
+    //         push("/mykids");
+    //     } else if (user.roles.findIndex((x) => x === Roles.Child)) {
+    //         push("/mypoints");
+    //     } else if (user.roles.findIndex((x) => x === Roles.Admin)) {
+    //         push("/admin");
+    //     }
+
+    // }, [user]);
 
     return (<>
-        <p>Hello! I am {user.name}</p>
-        <p>My family IDs: {user.family_ids}</p>
-        <p>My roles: {user.roles}</p>
+        {/* <p>{displayTxt}</p> */}
+        <p>{JSON.stringify(user)}</p>
     </>);
 }
 

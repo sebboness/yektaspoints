@@ -1,0 +1,179 @@
+import { NextRequest, NextResponse } from "next/server";
+import { ParseToken, TokenData, UserData } from "@/lib/auth/Auth";
+
+import { FAILURE } from "@/lib/api/Result";
+import { MyPointsApi } from "@/lib/api/MyPointsApi";
+import { Roles } from "@/lib/auth/Roles";
+import authCookie from "@/lib/auth/AuthCookie";
+import { cookies } from "next/headers";
+import { getSimpleTokenRetriever } from "@/slices/authSlice";
+import moment from "moment";
+import { xRedirectToHeader } from "./config";
+
+const ln = () => `[${moment().toISOString()}] AuthMiddleware: `;
+const parentsBasePath = ["/family"];
+const childrenBasePath = ["/points"];  
+// const loggedOutPath = ["/", "/login", "/register"];
+
+export default async function AuthMiddleware(req: NextRequest): Promise<NextResponse> {
+    // Your logic for authentication goes here
+
+    const path = req.nextUrl.pathname;
+    // console.log(`${ln()}basePath: ${req.nextUrl.basePath}`);
+    // console.log(`${ln()}href: ${req.nextUrl.href}`);
+    // console.log(`${ln()}pathname: ${req.nextUrl.pathname}`);
+    // console.log(`${ln()}origin:   ${req.nextUrl.hostname}`);
+    
+    if (
+        !parentsBasePath.some((p) => path.startsWith(p)) &&
+        !childrenBasePath.some((p) => path.startsWith(p)) //&&
+        // !loggedOutPath.some((path) => pathname == path)
+    ) {
+        // No match on logged-in paths, so pass it on
+        console.log(`${ln()}no match on path ${path}: ${req.nextUrl.href}`);
+        return NextResponse.next();
+    } else {
+        console.log(`${ln()}path match on ${path}: ${req.nextUrl.href}`);
+        let userData: UserData | undefined;
+        let tokenData: TokenData | undefined;
+
+        // Check cookies
+        tokenData = await authCookie.getTokenData(cookies());
+        if (!tokenData) {
+            // No auth cookie set, so redirect to login page
+            console.warn(`${ln()}no token cookie. issue redirect to login`);
+        } else {
+            // Cookie present, so lets parse the token and grab the user data
+            console.log(`${ln()}tokenCookie has data`);
+
+            userData = ParseToken(tokenData.id_token);
+            if (!userData) {
+                // Couldn't parse token from cookie, so redirect to login page
+                console.warn(`${ln()}failed to parse token user data.`);
+            } else {
+                // User data is parsed, and now let's check token against auth API
+                const username = userData.username;
+
+                let getUserResp = await MyPointsApi.getInstance()
+                    .withToken(getSimpleTokenRetriever(tokenData.id_token))
+                    .getUser();
+
+                if (getUserResp.status === FAILURE || !getUserResp.data) {
+                    // Token has possibly expired, so try to refresh it.
+                    console.log(`${ln()}getUser response`, JSON.stringify(getUserResp));
+                    console.log(`${ln()}getUser failed for ${username}`); // with token ${tokenData.id_token}`);
+                    console.log(`${ln()}trying to refresh for ${username}`); // with refresh token ${tokenData.refresh_token}`);
+
+                    // invalidate user data
+                    userData = undefined;
+
+                    const refreshResp = await MyPointsApi.getInstance()
+                        .refreshToken(username, tokenData.refresh_token);
+
+                    if (!refreshResp.data) {
+                        // Refresh token failed, so redirect to login page
+                        console.log(`${ln()}refreshToken response`);
+                        console.log(`${ln()}need to redirect to login page`);
+
+                        // invalidate token
+                        tokenData = undefined;
+                    } else {
+                        // Now that we refreshed the auth token, let's get user data again
+                        getUserResp = await MyPointsApi.getInstance()
+                            .withToken(getSimpleTokenRetriever(refreshResp.data.id_token))
+                            .getUser();
+
+                        if (!getUserResp.data) {
+                            // This shouldn't happen, but getting authed user data failed, so redirect to login page
+                            // and log an error with this
+                            console.warn(`${ln()}getUser response`, JSON.stringify(getUserResp));
+                            console.warn(`${ln()}need to redirect to login page`);
+                        } else {
+                            // All good!
+                            console.log(`${ln()}token and user data all good!`);
+                            userData = getUserResp.data;
+                            tokenData = refreshResp.data;
+                        }
+                    }
+                } else {
+                    userData = getUserResp.data;
+                }
+            }
+        }
+
+        const response = NextResponse.next();
+        const roles: Roles[] = userData
+            ? (userData.roles || [])
+            : [];
+
+        // Set token data cookie
+        if (tokenData)
+            authCookie.setTokenData(req.cookies, req.nextUrl.hostname, tokenData);
+
+        // Set user data cookie and check
+        if (userData)
+            authCookie.setUserData(req.cookies, req.nextUrl.hostname, userData);
+
+        // Check specific user roles for routes
+        if (parentsBasePath.some((p) => path.startsWith(p)) && !roles.some((r) => r === Roles.Parent)) {    
+            // No parent role
+            console.log(`${ln()}trying to access page for parents, but has no parent role [${roles}]`);
+            response.headers.set(xRedirectToHeader, "/access-denied");
+        } else if (childrenBasePath.some((p) => path.startsWith(p)) && !roles.some((r) => r === Roles.Child)) {                
+            // No child role
+            console.log(`${ln()}trying to access page for children, but has no child role [${roles}]`);
+            response.headers.set(xRedirectToHeader, "/access-denied");
+        } else if (!userData) {
+            // No user data => not logged in
+            console.log(`${ln()}no user data, not logged in`);
+            response.headers.set(xRedirectToHeader, "/login");
+        }
+        
+        console.log(`${ln()}redirect to? ${response.headers.has(xRedirectToHeader) ? response.headers.get(xRedirectToHeader) : ""}`);        
+
+        return response;
+    }
+
+        // Call API endpoint to fetch user role
+    //     try {
+    //         const userResponse = await fetch("/api/user",{
+    //                 method: 'GET',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                     Cookie: cookies().toString() //I used cookie for authentication
+    //                 },
+    //             }); 
+    //         const userData = await userResponse.json();
+        
+    //         // Assuming the user role is present in user.data.type
+    //         const userRole = userData.data.type;
+        
+    //         // Your logic based on user role
+    //         if (userRole === "admin" && parentsBasePath.some((path) => pathname.startsWith(path))) {
+                
+    //             //Here we can setup the direct url under "Redirect" key in header
+    //             //If you wish you can add other key also
+    //             header.set(xRedirectToHeader, "/staff")
+
+    //         } else if (userRole === "staff" && childrenBasePath.some((path) => pathname.startsWith(path))) {
+                
+    //             //Here we can setup the direct url under "Redirect" key in header
+    //             //If you wish you can add other key also
+    //             header.set(xRedirectToHeader, "/admin")
+
+    //         }
+
+    //         //Now here we can call the next response with header
+    //         return NextResponse.next({
+    //             request: {
+    //                 headers: header,
+    //             }
+    //         })
+    //     } catch (error) {
+    //         console.error("Error fetching user data:", error);
+    //         NextResponse.error();
+    //         return NextResponse.next();
+    //     }
+    // }
+    // return NextResponse.next();
+}
