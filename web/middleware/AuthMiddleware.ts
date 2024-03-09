@@ -108,14 +108,12 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
 
         // Set token data cookie
         if (tokenData) {
-            authCookie.setTokenData(req.cookies, req.nextUrl.hostname, tokenData);
-            authCookie.setTokenData(response.cookies, req.nextUrl.hostname, tokenData);
+            authCookie.setTokenData(response, req.nextUrl.hostname, tokenData);
         }
 
         // Set user data cookie and check
         if (userData) {
-            authCookie.setUserData(req.cookies, req.nextUrl.hostname, userData);
-            authCookie.setUserData(response.cookies, req.nextUrl.hostname, userData);
+            authCookie.setUserData(response, req.nextUrl.hostname, userData);
         }
 
         // Check specific user roles for routes

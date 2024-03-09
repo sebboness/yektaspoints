@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { middleware as activatedMiddleware, xRedirectToHeader } from "@/middleware/config";
 
+import { HttpStatus } from "./lib/HttpStatusCodes";
+import { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import moment from "moment";
 
 const ln = () => `[${moment().toISOString()}] middleware: `;
 
 export async function middleware(req: NextRequest) {
     // Initialize a NextResponse object
-    const nextResponse = NextResponse.next();
+    let res = NextResponse.next();
 
     // Map through activated middleware functions
     const middlewareFunctions = activatedMiddleware.map(fn => fn(req));
 
     // Array to store middleware headers
     const middlewareHeader = [];
+    const middlewareCookies: ResponseCookie[] = [];
 
     // Loop through middleware functions
     for (const middleware of middlewareFunctions) {
@@ -25,11 +28,21 @@ export async function middleware(req: NextRequest) {
         if (!result.ok) {
             return result;
         }
-        // Push middleware headers to the array
+
+        // Push middleware headers and cookies to the header array
         middlewareHeader.push(result.headers);
+
+        // Push new cookies into the cookie array
+        result.cookies.getAll().forEach((c) => {
+            console.log(`${ln()}checking cookie ${c.name}`);
+            if (!middlewareCookies.some((mc) => mc.name === c.name)) {
+                console.log(`${ln()}pushing cookie ${c.name}`);
+                middlewareCookies.push(c);
+            }
+        });
     }
 
-    //First we are going to define a redirectTo variable
+    // First we are going to define a redirectTo variable
     let redirectTo = null;
 
     // Check each header in middlewareHeader
@@ -50,12 +63,17 @@ export async function middleware(req: NextRequest) {
 
     // If a redirection is required based on the middleware headers
     if (redirectTo) {
-        // Perform the redirection
-        return NextResponse.redirect(new URL(redirectTo, req.url), {
-            status: 307, // Use the appropriate HTTP status code for the redirect
+        res = NextResponse.redirect(new URL(redirectTo, req.url), {
+            status: HttpStatus.TemporaryRedirect, // Use the appropriate HTTP status code for the redirect
         });
     }
 
+    // Set response cookies
+    middlewareCookies.forEach((c) => {
+        console.log(`${ln()}setting cookie ${c.name}`);
+        res.cookies.set(c);
+    });
+
     // If no redirection is needed, proceed to the next middleware or route handler
-    return nextResponse;
+    return res;
 }

@@ -106,7 +106,7 @@ class AuthCookie {
         return;
     }
 
-    async setTokenData(cookies: ResponseCookies | RequestCookies, domain: string, tokenData: TokenData) {
+    async setTokenData(res: NextResponse, domain: string, tokenData: TokenData) {
         const refreshToken = tokenData.refresh_token;
         tokenData.refresh_token = "";
         const tokenJson = JSON.stringify(tokenData);
@@ -121,7 +121,7 @@ class AuthCookie {
         console.info(`${ln()}setTokenData ${RefreshCookieName} cookie on ${env}:${_domain}`); // with value ${refreshToken}`);
 
         // Set token data cookie (without refresh token value)
-        cookies.set({
+        res.cookies.set({
             name: TokenCookieName,
             value: tokenJson,
             maxAge: maxAge, 
@@ -133,7 +133,7 @@ class AuthCookie {
         });
 
         // Set refresh token cookie
-        cookies.set({
+        res.cookies.set({
             name: RefreshCookieName,
             value: refreshToken,
             maxAge: maxAge, 
@@ -145,7 +145,7 @@ class AuthCookie {
         });
     }
 
-    async setUserData(cookies: ResponseCookies | RequestCookies, domain: string, userData: UserData) {
+    async setUserData(res: NextResponse, domain: string, userData: UserData) {
         const userJson = JSON.stringify(userData);
         const env = process.env["ENV"];
 
@@ -157,7 +157,7 @@ class AuthCookie {
         console.info(`${ln()}setUserData ${UserCookieName} cookie on ${env}:${_domain} with value ${userJson}`);
 
         // Set user data cookie
-        cookies.set({
+        res.cookies.set({
             name: UserCookieName,
             value: userJson,
             maxAge: maxAge, 
