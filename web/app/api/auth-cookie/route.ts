@@ -1,38 +1,54 @@
 import { NewErrorResult, NewSuccessResult } from "@/lib/api/Result";
 import { NextRequest, NextResponse } from "next/server";
 
-import { TokenData } from "@/lib/auth/Auth";
+import { AuthCookieBody } from "@/lib/auth/Auth";
+import { HttpStatus } from "@/lib/HttpStatusCodes";
 import authCookie from "@/lib/auth/AuthCookie";
 
 export async function GET(req: NextRequest) {
-    const tokenData = await authCookie.getTokenData(req.cookies);
+    const tokenData = authCookie.getTokenData(req.cookies);
+    const userData = authCookie.getUserData(req.cookies);
+    
     if (!tokenData) {
-        return NextResponse.json(NewErrorResult("not set"), {
-            status: 404,
-            statusText: "Auth cookie not set",
+        return NextResponse.json(NewErrorResult("token cookie not set"), {
+            status: HttpStatus.NotFound,
+            statusText: "Token cookie not set",
         });
     }
 
-    return NextResponse.json(NewSuccessResult(tokenData), { status: 200 });
+    if (!userData) {
+        return NextResponse.json(NewErrorResult("user cookie not set"), {
+            status: HttpStatus.NotFound,
+            statusText: "User cookie not set",
+        });
+    }
+
+    const body: AuthCookieBody = {
+        token: tokenData,
+        user: userData,
+    }
+
+    return NextResponse.json(NewSuccessResult(body), { status: 200 });
 }
 
 export async function POST(req: NextRequest) {
-    const body = await req.json<TokenData>();
+    const body = await req.json<AuthCookieBody>();
     const domain = req.nextUrl.hostname;
 
     const response = NextResponse.json(NewSuccessResult(true), {
-        status: 201,
+        status: HttpStatus.Created,
         statusText: "Set cookie successfully",
     });
 
-    await authCookie.setTokenData(response.cookies, domain, body);
+    authCookie.setTokenData(response, domain, body.token);
+    authCookie.setUserData(response, domain, body.user);
 
     return response;
 }
 
 export async function DELETE(req: NextRequest) {
     let response = NextResponse.json(NewSuccessResult(true), {
-        status: 200,
+        status: HttpStatus.OK,
         statusText: "Auth cookie deleted successfully",
     });
 

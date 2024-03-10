@@ -1,5 +1,5 @@
-import { jwtDecode } from "jwt-decode";
 import { Roles } from "./Roles";
+import { jwtDecode } from "jwt-decode";
 
 export const TokenDataElId = "__mp.td__";
 export const UserDataElId = "__mp.ud__";
@@ -23,6 +23,11 @@ export type UserData = {
     verified: boolean;
     exp: number;
 };
+
+export type AuthCookieBody = {
+    token: TokenData;
+    user: UserData;
+}
 
 type JwtData = {[key: string]: any};
 

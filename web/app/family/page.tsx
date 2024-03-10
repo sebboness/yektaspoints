@@ -1,26 +1,21 @@
-import React from "react";
-import Image from "next/image";
-import {
-    ArrowDownRightIcon,
-    ArrowUpRightIcon,
-    CircleStackIcon,
-    ClockIcon,
-    CurrencyDollarIcon,
-    HandThumbUpIcon,
-    LightBulbIcon,
-} from "@heroicons/react/24/solid";
 import { AuthWrapper } from "@/components/AuthWrapper";
+import CardSingleBody from "@/components/common/CardSingleBody";
+import KidsList from "@/components/family/KidsList";
+import React from "react";
 
-export default async function Home() {
+export default async function Family() {
 
     return (
-        <AuthWrapper>
-            {/* Top navbar */}
-            {/* TK TK */}
-        
+        <AuthWrapper>        
             <section>
-                <p>My kids</p>
+                <div className="w-screen gap-8 grid grid-cols-1 p-12">
+                    <div className="container mx-auto">
+                        <CardSingleBody>
+                            <KidsList />
+                        </CardSingleBody>
+                    </div>                    
+                </div>
             </section>
         </AuthWrapper>
-        );
+    );
 }

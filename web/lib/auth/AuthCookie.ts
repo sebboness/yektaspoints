@@ -16,7 +16,7 @@ class AuthCookie {
     constructor() {
     }
 
-    deleteAll(response: NextResponse, domain: string): NextResponse {
+    deleteAll(res: NextResponse, domain: string): NextResponse {
         const env = process.env["ENV"];
 
         // cookie settings
@@ -28,7 +28,7 @@ class AuthCookie {
         console.info(`${ln()}deleteAll ${UserCookieName} cookie on ${env}:${_domain}`);
 
         // Unset token data cookie
-        response.cookies.set({
+        res.cookies.set({
             name: TokenCookieName,
             value: "",
             maxAge: -1, 
@@ -40,7 +40,7 @@ class AuthCookie {
         });
 
         // Unset refresh token cookie
-        response.cookies.set({
+        res.cookies.set({
             name: RefreshCookieName,
             value: "",
             maxAge: -1, 
@@ -52,7 +52,7 @@ class AuthCookie {
         });
 
         // Unset user cookie
-        response.cookies.set({
+        res.cookies.set({
             name: UserCookieName,
             value: "",
             maxAge: -1, 
@@ -63,50 +63,10 @@ class AuthCookie {
             path: "/",
         });
 
-        return response;
+        return res;
     }
 
-    async set(domain: string, tokenData: TokenData): Promise<unknown> {
-        const refreshToken = tokenData.refresh_token;
-        tokenData.refresh_token = "";
-        const tokenJson = JSON.stringify(tokenData);
-        const env = process.env["ENV"];
-
-        // cookie settings
-        const maxAge = 60*60*24*30;// 30 days
-        const secure = env == "local" ? false : true;
-        const _domain = domain === "localhost" ? domain : "hexonite.net";
-
-        console.info(`${ln()}set ${TokenCookieName} cookie on ${env}:${_domain}`); // with value ${tokenJson}`);
-        console.info(`${ln()}set ${RefreshCookieName} cookie on ${env}:${_domain}`); // with value ${refreshToken}`);
-
-        cookies().set({
-            name: TokenCookieName,
-            value: tokenJson,
-            maxAge: maxAge, 
-            httpOnly: true,
-            sameSite: "strict",
-            secure: secure,
-            domain: _domain,
-            path: "/",
-        });
-
-        // Set refresh token cookie
-        cookies().set({
-            name: RefreshCookieName,
-            value: refreshToken,
-            maxAge: maxAge, 
-            httpOnly: true,
-            sameSite: "strict",
-            secure: secure,
-            domain: _domain,
-            path: "/",
-        });
-
-        return;
-    }
-
-    async setTokenData(res: NextResponse, domain: string, tokenData: TokenData) {
+    setTokenData(res: NextResponse, domain: string, tokenData: TokenData) {
         const refreshToken = tokenData.refresh_token;
         tokenData.refresh_token = "";
         const tokenJson = JSON.stringify(tokenData);
@@ -145,7 +105,7 @@ class AuthCookie {
         });
     }
 
-    async setUserData(res: NextResponse, domain: string, userData: UserData) {
+    setUserData(res: NextResponse, domain: string, userData: UserData) {
         const userJson = JSON.stringify(userData);
         const env = process.env["ENV"];
 

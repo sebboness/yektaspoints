@@ -39,7 +39,14 @@ export async function middleware(req: NextRequest) {
                 console.log(`${ln()}pushing cookie ${c.name}`);
                 middlewareCookies.push(c);
             }
-        });
+        });        
+
+        const redirect = result.headers.get(xRedirectToHeader);
+        if (redirect) {
+            // redirect is present, so let's quit the middleware loop
+            console.log(`${ln()}redirect found in middleware. quitting loop`);
+            break;
+        }
     }
 
     // First we are going to define a redirectTo variable
@@ -50,10 +57,10 @@ export async function middleware(req: NextRequest) {
         // Look for the 'x-middleware-request-redirect' header
         const redirect = header.get(xRedirectToHeader);
 
-        console.log(`${ln()}redirect set? ${redirect}`)
         
         if (redirect) {
             // If a redirect is found, store the value and break the loop
+            console.log(`${ln()}redirect set to ${redirect}`)
             redirectTo = redirect;
             return true; // Break the loop
         }

@@ -1,30 +1,13 @@
-import { TokenGetter } from "@/lib/api/Api";
+import { AuthCookieBody, TokenData, UserData } from "@/lib/auth/Auth";
+import { ErrorAsResult, SUCCESS } from "@/lib/api/Result";
+import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+
 import { LocalApi } from "@/lib/api/LocalApi";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
-import { ErrorAsResult, SUCCESS } from "@/lib/api/Result";
-import { TokenData, UserData } from "@/lib/auth/Auth";
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { TokenGetter } from "@/lib/api/Api";
 import moment from "moment";
 
 const logName = () => `[${moment().toISOString()}] authSlice: `;
-
-/**
- * Checks if given token data is still valid
- */
-export const checkUserAuth = createAsyncThunk("auth/checkUserAuth", async (tokenData: TokenData, thunkApi) => {
-    const api = MyPointsApi.getInstance();
-    try {
-        const result = await api.withToken(getSimpleTokenRetriever(tokenData.id_token)).getUser();
-        if (result.status === SUCCESS) {
-            thunkApi.dispatch(AuthSlice.actions.setAuthToken(tokenData));
-            return tokenData;
-        }
-        else
-            throw result; // this means we should try to refresh
-    } catch (err: any) {
-        throw ErrorAsResult(err);
-    }
-});
 
 /**
  * Clears auth cookie
@@ -36,11 +19,11 @@ const clearAuthCookie = createAsyncThunk("auth/clearAuthCookie", async (params, 
 })
 
 /**
- * Sets auth cookie
+ * Sets auth cookie for token and user
  */
-export const setAuthCookie = createAsyncThunk("auth/setAuthCookie", async (tokenData: TokenData, thunkApi) => {
+export const setAuthCookie = createAsyncThunk("auth/setAuthCookie", async (authCookie: AuthCookieBody, thunkApi) => {
     const api = LocalApi.getInstance();
-    const resp = await api.setAuthCookie(tokenData);
+    const resp = await api.setAuthCookie(authCookie);
     return resp.status === SUCCESS;
 })
 
@@ -58,11 +41,6 @@ export const getSimpleTokenRetriever = (token: string): TokenGetter => {
 type LoginOptions = {
     username: string;
     password: string;
-}
-
-type RefreshOptions = {
-    username: string;
-    refresh_token: string;
 }
 
 export const login = createAsyncThunk("auth/login", async (options: LoginOptions, thunkApi) => {
@@ -105,12 +83,6 @@ export const AuthSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        builder.addCase(checkUserAuth.rejected, (state, action) => {
-            console.log(`${logName()}checkUserAuth rejected`, action.error);
-            state.token = undefined;
-            state.user = undefined;
-        });
-
         builder.addCase(login.rejected, (state, action) => {
             console.log(`${logName()}login rejected`, action.error);
             state.token = undefined;

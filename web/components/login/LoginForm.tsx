@@ -1,16 +1,20 @@
 "use client";
 
+import * as yup from "yup";
+
+import { AuthSlice, getSimpleTokenRetriever, setAuthCookie } from "@/slices/authSlice";
 import React, { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { MyPointsApi } from "@/lib/api/MyPointsApi";
+import { faCompass } from "@fortawesome/free-solid-svg-icons";
+import moment from "moment";
+import { useAppDispatch } from "@/store/hooks";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCompass } from "@fortawesome/free-solid-svg-icons";
-import { TokenData } from "@/lib/auth/Auth";
-import { MyPointsApi } from "@/lib/api/MyPointsApi";
-import { SUCCESS } from "@/lib/api/Result";
-import { useAppDispatch } from "@/store/hooks";
-import authSlice, { AuthSlice, setAuthCookie } from "@/slices/authSlice";
+
+const ln = () => `[${moment().toISOString()}] LoginForm: `;
 
 const formSchema = yup.object({
     username: yup.string().required().max(30),
@@ -26,16 +30,12 @@ type Props = {}
 
 const LoginForm = (props: Props) => {
 
+    // router/nav stuff
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    
     const dispatch = useAppDispatch();
     const api = MyPointsApi.getInstance();
-
-    // api.callApi("GET", "health", {})
-    //     .then((res) => {
-    //         console.info("health res:", res);
-    //     })
-    //     .catch((err) => {
-    //         console.error("health err:", err);
-    //     });
     
     // Loading when credentials are submitted
     const [loading, setLoading] = useState(false);
@@ -53,18 +53,40 @@ const LoginForm = (props: Props) => {
 
     const onSubmit = async (data: LoginFormData) => {  
         setLoading(true);      
-        console.log("on submit", data);
+        console.log(`${ln()}logging in...`);
 
-        const result = await api.authenticate(data.username!, data.password!);
-        if (result.status === SUCCESS) {
-            console.log("api logged in", result.data);            
-            dispatch(AuthSlice.actions.setAuthToken(result.data!));
-            dispatch(setAuthCookie(result.data!));
-            return
+        const authResult = await api.authenticate(data.username!, data.password!);
+        if (authResult.data) {
+            console.log(`${ln()}api logged in. get user...`);
+            setPreparing(true);
+            
+            const userResult = await api
+                .withToken(getSimpleTokenRetriever(authResult.data.id_token))
+                .getUser();
+
+            if (userResult.data) {
+                console.log(`${ln()}got user a-ok`, userResult.data);  
+
+                dispatch(AuthSlice.actions.setAuthToken(authResult.data));
+                dispatch(setAuthCookie({
+                    token: authResult.data,
+                    user: userResult.data,
+                }));
+
+                // redirect to where the user came from (defaults to home page)
+                const returnUrl = searchParams.has("return_url")
+                    ? (searchParams.get("return_url") || "/")
+                    : "/";
+
+                router.push(returnUrl);
+                
+                return;
+            }
         }
 
-        console.log("api error", result);
+        console.log(`${ln()}login error`, authResult);
         setLoading(false);
+        setPreparing(false);
     }
 
     return (
