@@ -284,7 +284,7 @@ func TestReal_DynamoDbStorage_GetPointByID(t *testing.T) {
 }
 
 func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
-	// t.Skip("Skip real test")
+	t.Skip("Skip real test")
 
 	type state struct {
 		userId string

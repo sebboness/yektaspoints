@@ -1,4 +1,4 @@
-package handlers
+package points
 
 import (
 	"bytes"
@@ -10,13 +10,12 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sebboness/yektaspoints/handlers"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
-
-var errFail = errors.New("fail")
 
 func Test_Controller_RequestPointsHandler(t *testing.T) {
 	type state struct {
@@ -60,16 +59,16 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 				evtBodyStr = `{"user_id":`
 			}
 
-			ctrl := LambdaController{
+			ctrl := PointsController{
 				pointsDB: mockPointsDB,
 			}
 
-			ctx := PrepareAuthorizedContext(context.Background(), mockApiGWEvent)
+			ctx := handlers.PrepareAuthorizedContext(context.Background(), handlers.MockApiGWEvent)
 
 			w := httptest.NewRecorder()
 			cgin, _ := gin.CreateTestContext(w)
 			cgin.Request = httptest.NewRequest("POST", "/points", bytes.NewReader([]byte(evtBodyStr))).WithContext(ctx)
-			PrepareAuthorizedContext(ctx, mockApiGWEvent)
+			handlers.PrepareAuthorizedContext(ctx, handlers.MockApiGWEvent)
 
 			ctrl.RequestPointsHandler(cgin)
 
@@ -127,7 +126,7 @@ func Test_Controller_handleRequestPoints(t *testing.T) {
 				mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Times(saveCalled)
 			}
 
-			ctrl := LambdaController{
+			ctrl := PointsController{
 				pointsDB: mockPointsDB,
 			}
 

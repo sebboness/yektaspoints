@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
 	"github.com/sebboness/yektaspoints/handlers/family"
+	"github.com/sebboness/yektaspoints/handlers/points"
 	userHandlers "github.com/sebboness/yektaspoints/handlers/user"
 	"github.com/sebboness/yektaspoints/handlers/userauth"
 	"github.com/sebboness/yektaspoints/util/env"
@@ -18,6 +19,7 @@ import (
 var authCtrl *userauth.UserAuthController
 var familyCtrl *family.FamilyController
 var lambdaCtrl *handlers.LambdaController
+var pointsCtrl *points.PointsController
 var userCtrl *userHandlers.UserController
 
 var ginLambda *ginadapter.GinLambda
@@ -72,6 +74,16 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 		}
 
 		lambdaCtrl = _c
+	}
+
+	if pointsCtrl == nil {
+		logger.Infof("initializing new points controller")
+		_c, err := points.NewPointsController(ctx, _env)
+		if err != nil {
+			logger.Fatalf("failed to initialize points controller: %v", err)
+		}
+
+		pointsCtrl = _c
 	}
 
 	// initialize user controller
