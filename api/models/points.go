@@ -46,9 +46,11 @@ type PointRequest struct {
 }
 
 type QueryPointsFilter struct {
-	CreatedOn DateFilter
-	Statuses  []PointStatus
-	Types     []PointRequestType
+	CreatedOn  DateFilter
+	UpdatedOn  DateFilter
+	Statuses   []PointStatus
+	Types      []PointRequestType
+	Attributes []string // Which attributes to project in the query
 }
 
 type PointSummary struct {

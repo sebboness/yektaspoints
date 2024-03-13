@@ -4,7 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/sebboness/yektaspoints/models"
+	"github.com/sebboness/yektaspoints/util/tests"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_dateFilterExpression(t *testing.T) {
@@ -63,6 +66,38 @@ func Test_valueInListExpression(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			_ = valueInListExpression("type_id", c.state.slice)
+		})
+	}
+}
+
+func Test_selectAttributesExpression(t *testing.T) {
+	type state struct {
+		names []string
+	}
+	type want struct {
+		err string
+		len int
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"none", state{[]string{}}, want{"unset parameter: ProjectionBuilder", 0}},
+		{"one", state{[]string{"a"}}, want{"", 1}},
+		{"many", state{[]string{"a", "b", "c", "d"}}, want{"", 4}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			projEx := selectAttributesExpression(c.state.names)
+			expr, err := expression.NewBuilder().WithProjection(projEx).Build()
+
+			tests.AssertError(t, err, c.want.err)
+			assert.NotNil(t, expr)
+			assert.Len(t, expr.Names(), c.want.len)
 		})
 	}
 }

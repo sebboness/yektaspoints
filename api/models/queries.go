@@ -7,7 +7,7 @@ type DateFilter struct {
 	To   *time.Time
 }
 
-// IsSet returns true if both from and to dates are nil (not set); True otherwise
+// IsSet returns true if either from or to dates are not nil (not set); False otherwise
 func (f DateFilter) IsSet() bool {
 	return !(f.From == nil && f.To == nil)
 }

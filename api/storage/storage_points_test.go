@@ -12,7 +12,6 @@ import (
 	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util"
 	"github.com/sebboness/yektaspoints/util/env"
-	"github.com/sebboness/yektaspoints/util/log"
 	"github.com/sebboness/yektaspoints/util/tests"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
@@ -143,9 +142,21 @@ func Test_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 			client: mockDynamoClient,
 		}
 
+		to := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+		from := time.Date(2030, 12, 31, 11, 59, 59, 0, time.UTC)
+
 		filter := models.QueryPointsFilter{
-			Statuses: []models.PointStatus{models.PointStatusSettled},
-			Types:    []models.PointRequestType{models.PointRequestTypeAdd},
+			CreatedOn: models.DateFilter{
+				To:   &to,
+				From: &from,
+			},
+			UpdatedOn: models.DateFilter{
+				To:   &to,
+				From: &from,
+			},
+			Statuses:   []models.PointStatus{models.PointStatusSettled},
+			Types:      []models.PointRequestType{models.PointRequestTypeAdd},
+			Attributes: []string{"id", "user_id", "status", "updated_on"},
 		}
 
 		res, err := s.GetPointsByUserID(context.Background(), "456", filter)
@@ -295,11 +306,38 @@ func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 		s, err := NewDynamoDbStorage(Config{Env: "dev"})
 		assert.Nil(t, err)
 
-		from := time.Date(2024, 3, 14, 0, 0, 0, 0, time.UTC)
-		to := time.Date(2024, 3, 18, 59, 59, 0, 0, time.UTC)
+		from := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
+		to := time.Date(2024, 3, 31, 59, 59, 0, 0, time.UTC)
 
 		filter := models.QueryPointsFilter{
-			CreatedOn: models.DateFilter{
+			UpdatedOn: models.DateFilter{
+				From: &from,
+				To:   &to,
+			},
+			Statuses: []models.PointStatus{models.PointStatusWaiting},
+		}
+
+		// simulate getting most recent points with waiting status
+		resWaitingPoints, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
+		tests.AssertError(t, err, c.want.err)
+		assert.NotEmpty(t, resWaitingPoints)
+
+		filter = models.QueryPointsFilter{
+			UpdatedOn: models.DateFilter{
+				From: &from,
+				To:   &to,
+			},
+			Statuses: []models.PointStatus{models.PointStatusSettled},
+			Types:    []models.PointRequestType{models.PointRequestTypeAdd, models.PointRequestTypeSubtract},
+		}
+
+		// simulate getting most recent points
+		resRecentPoints, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
+		tests.AssertError(t, err, c.want.err)
+		assert.NotEmpty(t, resRecentPoints)
+
+		filter = models.QueryPointsFilter{
+			UpdatedOn: models.DateFilter{
 				From: &from,
 				To:   &to,
 			},
@@ -307,15 +345,10 @@ func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 			Types:    []models.PointRequestType{models.PointRequestTypeCashout},
 		}
 
-		res, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
+		// simulate getting most recent points
+		resRecentCashouts, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
 		tests.AssertError(t, err, c.want.err)
-
-		if err == nil {
-			for i, d := range res {
-				log.Get().AddField("data", d).Infof("[%v]points", i)
-			}
-			assert.NotEmpty(t, res)
-		}
+		assert.NotEmpty(t, resRecentCashouts)
 	}
 }
 

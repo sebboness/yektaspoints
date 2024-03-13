@@ -60,15 +60,22 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 	points := []models.Point{}
 
 	keyEx := expression.Key("user_id").Equal(expression.Value(userId))
-	exprBuilder := expression.NewBuilder().WithKeyCondition(keyEx)
 	var filterExpr expression.ConditionBuilder
 
-	// Date filters
+	// created_on filter
 	if filters.CreatedOn.IsSet() {
 		filterExpr = dateFilterExpression("created_on", filters.CreatedOn)
 	}
 
-	// Statuses
+	// updated_on filter
+	if filters.UpdatedOn.IsSet() {
+		updatedOnFilterExpr := dateFilterKeyExpression("updated_on", filters.UpdatedOn)
+		keyEx = expression.KeyAnd(keyEx, updatedOnFilterExpr)
+	}
+
+	exprBuilder := expression.NewBuilder().WithKeyCondition(keyEx)
+
+	// status filter
 	if len(filters.Statuses) > 0 {
 		statusFilter := valueInListExpression("status", filters.Statuses)
 		if filterExpr.IsSet() {
@@ -78,7 +85,7 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 		}
 	}
 
-	// Types
+	// type filter
 	if len(filters.Types) > 0 {
 		typeFilter := valueInListExpression("request.type", filters.Types)
 		if filterExpr.IsSet() {
@@ -90,6 +97,10 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 
 	if filterExpr.IsSet() {
 		exprBuilder = exprBuilder.WithFilter(filterExpr)
+	}
+
+	if len(filters.Attributes) > 0 {
+		exprBuilder.WithProjection(selectAttributesExpression(filters.Attributes))
 	}
 
 	expr, err := exprBuilder.Build()
@@ -106,6 +117,7 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 		KeyConditionExpression:    expr.KeyCondition(),
 		FilterExpression:          expr.Filter(),
 		ScanIndexForward:          aws.Bool(false), // order by updated_on descending (latest first)
+		ProjectionExpression:      expr.Projection(),
 	})
 
 	// fetch items from each page

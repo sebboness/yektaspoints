@@ -74,6 +74,27 @@ func dateFilterExpression(name string, f models.DateFilter) expression.Condition
 	return filterEx
 }
 
+// dateFilterExpression builds a date filter expression based on the given date filter.
+// If both from and to dates are given, returns a "Between" filter.
+// If only from date is given, returns a "greater than or equal to" filter.
+// If only to date is given, returns a "less than or equal to" filter.
+func dateFilterKeyExpression(name string, f models.DateFilter) expression.KeyConditionBuilder {
+
+	filterEx := expression.KeyConditionBuilder{}
+	nameExpr := expression.Key(name)
+
+	if f.From != nil && f.To != nil {
+		filterEx = nameExpr.Between(
+			expression.Value(util.ToFormatted(*f.From)), expression.Value(util.ToFormatted(*f.To)))
+	} else if f.From != nil {
+		filterEx = nameExpr.GreaterThanEqual(expression.Value(util.ToFormatted(*f.From)))
+	} else if f.To != nil {
+		filterEx = nameExpr.LessThanEqual(expression.Value(util.ToFormatted(*f.To)))
+	}
+
+	return filterEx
+}
+
 func valueInListExpression[K comparable](name string, values []K) expression.ConditionBuilder {
 	if len(values) == 0 {
 		return expression.ConditionBuilder{}
@@ -94,4 +115,17 @@ func valueInListExpression[K comparable](name string, values []K) expression.Con
 	}
 
 	return filterEx
+}
+
+func selectAttributesExpression(attribs []string) expression.ProjectionBuilder {
+	if len(attribs) == 0 {
+		return expression.ProjectionBuilder{}
+	}
+
+	projEx := expression.ProjectionBuilder{}
+	for _, n := range attribs {
+		projEx = projEx.AddNames(expression.Name(n))
+	}
+
+	return projEx
 }
