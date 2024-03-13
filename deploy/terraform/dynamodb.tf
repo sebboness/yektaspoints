@@ -1,8 +1,13 @@
 resource "aws_dynamodb_table" "points" {
     name = "${local.app}-${local.env}-points"
-    billing_mode = "PROVISIONED"
-    read_capacity= "10"
-    write_capacity= "5"
+    billing_mode = "PAY_PER_REQUEST"
+    # read_capacity= "10"
+    # write_capacity= "5"
+
+    attribute {
+        name = "user_id"
+        type = "S"
+    }
 
     attribute {
         name = "id"
@@ -10,12 +15,18 @@ resource "aws_dynamodb_table" "points" {
     }
 
     attribute {
-        name = "user_id"
+        name = "updated_on"
         type = "S"
     }
 
-    hash_key = "id"
-    range_key = "user_id"
+    hash_key = "user_id"
+    range_key = "id"
+
+    local_secondary_index {
+        name               = "updated_on-index"
+        range_key          = "updated_on"
+        projection_type    = "ALL"
+    }
 }
 
 resource "aws_dynamodb_table" "user" {

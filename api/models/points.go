@@ -6,47 +6,76 @@ import (
 	"github.com/sebboness/yektaspoints/util"
 )
 
-type PointType string
+type PointRequestType string
 
-const PointTypeAdd PointType = "ADD"
-const PointTypeSubtract PointType = "SUBTRACT"
-const PointTypeCashout PointType = "CASHOUT"
-const PointTypeWallet PointType = "WALLET"
+const PointRequestTypeAdd PointRequestType = "ADD"
+const PointRequestTypeSubtract PointRequestType = "SUBTRACT"
+const PointRequestTypeCashout PointRequestType = "CASHOUT"
 
-type PointStatus int
+type PointRequestDecision string
 
-const PointStatusRequested = 0
-const PointStatusApproved = 1
-const PointStatusDenied = -1
+const PointRequestDecisionApprove PointRequestDecision = "APPROVE"
+const PointRequestDecisionDeny PointRequestDecision = "DENY"
+
+type PointStatus string
+
+const PointStatusWaiting = "WAITING"
+const PointStatusSettled = "SETTLED"
 
 type Point struct {
-	ID              string      `json:"id" dynamodbav:"id"`
-	UserID          string      `json:"userId" dynamodbav:"user_id"`
-	DecidedByUserID string      `json:"decidedByUserId" dynamodbav:"decided_by_user_id,omitempty"`
-	StatusID        PointStatus `json:"statusId" dynamodbav:"status_id"`
-	Points          int         `json:"points" dynamodbav:"points"`
-	BalancePoints   int         `json:"balance_points" dynamodbav:"balance_points"`
-	Balance         int         `json:"balance" dynamodbav:"balance"`
-	Reason          string      `json:"reason" dynamodbav:"reason,omitempty"`
-	Notes           string      `json:"notes" dynamodbav:"notes,omitempty"`
-	Type            PointType   `json:"type" dynamodbav:"type"`
-	RequestedOnStr  string      `json:"-" dynamodbav:"requested_on"`
-	DecidedOnStr    string      `json:"-" dynamodbav:"decided_on,omitempty"`
-	RequestedOn     time.Time   `json:"requestedOn" dynamodbav:"-"`
-	DecidedOn       time.Time   `json:"decidedOn" dynamodbav:"-"`
+	ID           string       `json:"id" dynamodbav:"id"`
+	UserID       string       `json:"user_id" dynamodbav:"user_id"`
+	Status       PointStatus  `json:"status" dynamodbav:"status"`
+	Points       int          `json:"points" dynamodbav:"points"`
+	Balance      *int         `json:"balance" dynamodbav:"balance,omitempty"`
+	CreatedOnStr string       `json:"-" dynamodbav:"created_on"`
+	UpdatedOnStr string       `json:"-" dynamodbav:"updated_on"`
+	CreatedOn    time.Time    `json:"created_on" dynamodbav:"-"`
+	UpdatedOn    time.Time    `json:"updated_on" dynamodbav:"-"`
+	Request      PointRequest `json:"request" dynamodbav:"request"`
+}
+
+type PointRequest struct {
+	DecidedByUserID string               `json:"decided_by_user_id" dynamodbav:"decided_by_user_id,omitempty"`
+	DecidedOnStr    string               `json:"-" dynamodbav:"decided_on,omitempty"`
+	DecidedOn       time.Time            `json:"decided_on" dynamodbav:"-"`
+	Decision        PointRequestDecision `json:"decision" dynamodbav:"decision,omitempty"`
+	ParentNotes     string               `json:"parent_notes" dynamodbav:"parent_notes,omitempty"`
+	Reason          string               `json:"reason" dynamodbav:"reason,omitempty"`
+	Type            PointRequestType     `json:"type" dynamodbav:"type"`
 }
 
 type QueryPointsFilter struct {
-	RequestedOn DateFilter
-	Statuses    []PointStatus
-	Types       []PointType
+	CreatedOn DateFilter
+	Statuses  []PointStatus
+	Types     []PointRequestType
 }
 
-func (p Point) ParseTimes() {
-	if p.RequestedOnStr != "" {
-		p.RequestedOn = util.ParseTime_RFC3339Nano(p.RequestedOnStr)
+type PointSummary struct {
+	ID              string           `json:"id"`
+	UserID          string           `json:"user_id"`
+	ParentNotes     string           `json:"parent_notes"`
+	Reason          string           `json:"reason"`
+	UpdatedOn       time.Time        `json:"updated_on"`
+	Type            PointRequestType `json:"type"`
+	DecidedByUserID string           `json:"decided_by_user_id"`
+}
+
+type UserPoints struct {
+	Balance        int            `json:"balance"`
+	RecentCashouts []PointSummary `json:"recent_cashouts"`
+	RecentRequests []PointSummary `json:"recent_requests"`
+	RecentPoints   []PointSummary `json:"recent_points"`
+}
+
+func (p *Point) ParseTimes() {
+	if p.CreatedOnStr != "" {
+		p.CreatedOn = util.ParseTime_RFC3339Nano(p.CreatedOnStr)
 	}
-	if p.DecidedOnStr != "" {
-		p.DecidedOn = util.ParseTime_RFC3339Nano(p.DecidedOnStr)
+	if p.UpdatedOnStr != "" {
+		p.UpdatedOn = util.ParseTime_RFC3339Nano(p.UpdatedOnStr)
+	}
+	if p.Request.DecidedOnStr != "" {
+		p.Request.DecidedOn = util.ParseTime_RFC3339Nano(p.Request.DecidedOnStr)
 	}
 }

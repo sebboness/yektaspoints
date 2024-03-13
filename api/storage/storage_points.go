@@ -64,13 +64,13 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 	var filterExpr expression.ConditionBuilder
 
 	// Date filters
-	if filters.RequestedOn.IsSet() {
-		filterExpr = dateFilterExpression("requested_on", filters.RequestedOn)
+	if filters.CreatedOn.IsSet() {
+		filterExpr = dateFilterExpression("created_on", filters.CreatedOn)
 	}
 
 	// Statuses
 	if len(filters.Statuses) > 0 {
-		statusFilter := valueInListExpression("status_id", filters.Statuses)
+		statusFilter := valueInListExpression("status", filters.Statuses)
 		if filterExpr.IsSet() {
 			filterExpr = filterExpr.And(statusFilter)
 		} else {
@@ -80,7 +80,7 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 
 	// Types
 	if len(filters.Types) > 0 {
-		typeFilter := valueInListExpression("type", filters.Types)
+		typeFilter := valueInListExpression("request.type", filters.Types)
 		if filterExpr.IsSet() {
 			filterExpr = filterExpr.And(typeFilter)
 		} else {
@@ -100,10 +100,12 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 	// setup query paginator
 	queryPaginator := dynamodb.NewQueryPaginator(s.client, &dynamodb.QueryInput{
 		TableName:                 aws.String(s.tablePoints),
+		IndexName:                 aws.String("updated_on-index"),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		KeyConditionExpression:    expr.KeyCondition(),
 		FilterExpression:          expr.Filter(),
+		ScanIndexForward:          aws.Bool(false), // order by updated_on descending (latest first)
 	})
 
 	// fetch items from each page
@@ -115,12 +117,15 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 			apiErr := apierr.GetAwsError(err)
 			return points, fmt.Errorf("failed to query next points page: %w", apiErr)
 		} else {
-			var point []models.Point
-			err = attributevalue.UnmarshalListOfMaps(resp.Items, &point)
+			var queriedPoints []models.Point
+			err = attributevalue.UnmarshalListOfMaps(resp.Items, &queriedPoints)
 			if err != nil {
 				return points, fmt.Errorf("failed to unmarshal points from query response: %w", err)
 			} else {
-				points = append(points, point...)
+				for _, p := range queriedPoints {
+					p.ParseTimes()
+					points = append(points, p)
+				}
 			}
 		}
 	}
@@ -129,6 +134,10 @@ func (s *DynamoDbStorage) GetPointsByUserID(ctx context.Context, userId string, 
 }
 
 func (s *DynamoDbStorage) SavePoint(ctx context.Context, point models.Point) error {
+
+	if err := s.validateNewPoint(point); err != nil {
+		return err
+	}
 
 	item, err := attributevalue.MarshalMap(point)
 	if err != nil {
@@ -143,6 +152,28 @@ func (s *DynamoDbStorage) SavePoint(ctx context.Context, point models.Point) err
 	if err != nil {
 		apiErr := apierr.GetAwsError(err)
 		return apiErr
+	}
+
+	return nil
+}
+
+func (s *DynamoDbStorage) validateNewPoint(point models.Point) error {
+	apierr := apierr.New(fmt.Errorf("%w: failed to validate request", apierr.InvalidInput))
+
+	if point.UserID == "" {
+		apierr.AppendError("missing user_id")
+	}
+
+	if point.ID == "" {
+		apierr.AppendError("missing id")
+	}
+
+	if point.UpdatedOnStr == "" {
+		apierr.AppendError("missing updated_on")
+	}
+
+	if len(apierr.Errors()) > 0 {
+		return apierr
 	}
 
 	return nil

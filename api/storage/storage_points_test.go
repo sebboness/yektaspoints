@@ -95,7 +95,6 @@ func Test_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 	type state struct {
 		errQuery      error
 		failUnmarshal bool
-		itemNotFound  bool
 	}
 	type want struct {
 		err string
@@ -145,8 +144,8 @@ func Test_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 		}
 
 		filter := models.QueryPointsFilter{
-			Statuses: []models.PointStatus{models.PointStatusApproved},
-			Types:    []models.PointType{models.PointTypeAdd},
+			Statuses: []models.PointStatus{models.PointStatusSettled},
+			Types:    []models.PointRequestType{models.PointRequestTypeAdd},
 		}
 
 		res, err := s.GetPointsByUserID(context.Background(), "456", filter)
@@ -168,7 +167,10 @@ func Test_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 
 func Test_DynamoDbStorage_SavePoint(t *testing.T) {
 	type state struct {
-		errSaveItem error
+		missingID        bool
+		missingUserID    bool
+		missingUpdatedOn bool
+		errSaveItem      error
 	}
 	type want struct {
 		err string
@@ -181,6 +183,9 @@ func Test_DynamoDbStorage_SavePoint(t *testing.T) {
 
 	cases := []test{
 		{"happy path", state{}, want{}},
+		{"fail - validation error - missing id", state{missingID: true}, want{"missing id"}},
+		{"fail - validation error - missing user_id", state{missingUserID: true}, want{"missing user_id"}},
+		{"fail - validation error - missing updated_on", state{missingUpdatedOn: true}, want{"missing updated_on"}},
 		{"fail - save point", state{errSaveItem: errFail}, want{"fail"}},
 	}
 
@@ -189,13 +194,37 @@ func Test_DynamoDbStorage_SavePoint(t *testing.T) {
 		output := &dynamodb.PutItemOutput{}
 
 		mockDynamoClient := mocks.NewMockDynamoDbClient(t)
-		mockDynamoClient.EXPECT().PutItem(mock.Anything, mock.Anything, mock.Anything).Return(output, c.state.errSaveItem)
 
 		s := DynamoDbStorage{
 			client: mockDynamoClient,
 		}
 
-		err := s.SavePoint(context.Background(), models.Point{})
+		point := models.Point{
+			UserID:       "a",
+			ID:           "1",
+			UpdatedOnStr: util.ToFormatted(time.Now()),
+		}
+
+		hasValidationErr := false
+
+		if c.state.missingID {
+			point.ID = ""
+			hasValidationErr = true
+		}
+		if c.state.missingUserID {
+			point.UserID = ""
+			hasValidationErr = true
+		}
+		if c.state.missingUpdatedOn {
+			point.UpdatedOnStr = ""
+			hasValidationErr = true
+		}
+
+		if !hasValidationErr {
+			mockDynamoClient.EXPECT().PutItem(mock.Anything, mock.Anything, mock.Anything).Return(output, c.state.errSaveItem)
+		}
+
+		err := s.SavePoint(context.Background(), point)
 		tests.AssertError(t, err, c.want.err)
 		mockDynamoClient.AssertExpectations(t)
 	}
@@ -238,14 +267,13 @@ func TestReal_DynamoDbStorage_GetPointByID(t *testing.T) {
 			assert.Equal(t, c.state.userId, res.UserID)
 			assert.Equal(t, 5, res.Points)
 			assert.Equal(t, 5, res.Balance)
-			assert.Equal(t, 50, res.BalancePoints)
-			assert.Equal(t, models.PointTypeAdd, res.Type)
+			assert.Equal(t, models.PointRequestTypeAdd, res.Request.Type)
 		}
 	}
 }
 
 func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
-	t.Skip("Skip real test")
+	// t.Skip("Skip real test")
 
 	type state struct {
 		userId string
@@ -260,23 +288,23 @@ func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 	}
 
 	cases := []test{
-		{"happy path", state{userId: "d31b6627-cf66-4013-9e35-a46f0cb2e884"}, want{}},
+		{"happy path", state{userId: "98a1c330-4051-701a-57c1-e8debd152f2b"}, want{}},
 	}
 
 	for _, c := range cases {
-		s, err := NewDynamoDbStorage(Config{Env: env.GetEnv("ENV")})
+		s, err := NewDynamoDbStorage(Config{Env: "dev"})
 		assert.Nil(t, err)
 
-		from := time.Date(2024, 2, 8, 0, 0, 0, 0, time.UTC)
-		to := time.Date(2024, 2, 11, 59, 59, 0, 0, time.UTC)
+		from := time.Date(2024, 3, 14, 0, 0, 0, 0, time.UTC)
+		to := time.Date(2024, 3, 18, 59, 59, 0, 0, time.UTC)
 
 		filter := models.QueryPointsFilter{
-			RequestedOn: models.DateFilter{
+			CreatedOn: models.DateFilter{
 				From: &from,
 				To:   &to,
 			},
-			Statuses: []models.PointStatus{models.PointStatusApproved},
-			Types:    []models.PointType{models.PointTypeCashout},
+			Statuses: []models.PointStatus{models.PointStatusSettled},
+			Types:    []models.PointRequestType{models.PointRequestTypeCashout},
 		}
 
 		res, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
@@ -310,19 +338,23 @@ func TestReal_DynamoDbStorage_SavePoint(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		s, err := NewDynamoDbStorage(Config{Env: env.GetEnv("ENV")})
+		s, err := NewDynamoDbStorage(Config{Env: "dev"})
 		assert.Nil(t, err)
 
+		points := int(8)
+
 		p := models.Point{
-			ID:             ksuid.New().String(),
-			UserID:         "d31b6627-cf66-4013-9e35-a46f0cb2e884",
-			RequestedOnStr: util.ToFormattedUTC(time.Now()),
-			Points:         3,
-			BalancePoints:  8,
-			Balance:        8,
-			StatusID:       models.PointStatusRequested,
-			Type:           models.PointTypeAdd,
-			Reason:         "I cleaned up my room",
+			ID:           ksuid.New().String(),
+			UserID:       "d31b6627-cf66-4013-9e35-a46f0cb2e884",
+			CreatedOnStr: util.ToFormattedUTC(time.Now()),
+			UpdatedOnStr: util.ToFormattedUTC(time.Now()),
+			Points:       3,
+			Balance:      &points,
+			Status:       models.PointStatusWaiting,
+			Request: models.PointRequest{
+				Type:   models.PointRequestTypeAdd,
+				Reason: "I cleaned up my room",
+			},
 		}
 
 		err = s.SavePoint(context.Background(), p)

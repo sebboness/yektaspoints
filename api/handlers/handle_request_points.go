@@ -60,14 +60,19 @@ func (c *LambdaController) handleRequestPoints(ctx context.Context, req *pointsH
 		return resp, err
 	}
 
+	now := util.ToFormattedUTC(time.Now())
+
 	point := models.Point{
-		ID:             ksuid.New().String(),
-		UserID:         req.UserID,
-		Points:         req.Points,
-		Reason:         req.Reason,
-		StatusID:       models.PointStatusRequested,
-		Type:           models.PointTypeAdd,
-		RequestedOnStr: util.ToFormattedUTC(time.Now()),
+		ID:     ksuid.New().String(),
+		UserID: req.UserID,
+		Points: req.Points,
+		Status: models.PointStatusWaiting,
+		Request: models.PointRequest{
+			Type:   models.PointRequestTypeAdd,
+			Reason: req.Reason,
+		},
+		CreatedOnStr: now,
+		UpdatedOnStr: now,
 	}
 
 	err := c.pointsDB.SavePoint(ctx, point)

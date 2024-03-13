@@ -109,35 +109,36 @@ func Test_Controller_handleRequestPoints(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req := &pointsHandlerRequest{
+				UserID: "123",
+				Points: 1,
+				Reason: "I worked hard",
+			}
 
-		req := &pointsHandlerRequest{
-			UserID: "123",
-			Points: 1,
-			Reason: "I worked hard",
-		}
+			if c.state.validationError {
+				req.Points = -1
+			}
 
-		if c.state.validationError {
-			req.Points = -1
-		}
+			mockPointsDB := mocks.NewMockIPointsStorage(t)
 
-		mockPointsDB := mocks.NewMockIPointsStorage(t)
+			saveCalled := map[bool]int{true: 0, false: 1}[c.state.validationError]
+			if saveCalled > 0 {
+				mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Times(saveCalled)
+			}
 
-		saveCalled := map[bool]int{true: 0, false: 1}[c.state.validationError]
-		if saveCalled > 0 {
-			mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Times(saveCalled)
-		}
+			ctrl := LambdaController{
+				pointsDB: mockPointsDB,
+			}
 
-		ctrl := LambdaController{
-			pointsDB: mockPointsDB,
-		}
+			ctx := context.Background()
+			_, err := ctrl.handleRequestPoints(ctx, req)
+			if err != nil {
+				assert.Contains(t, err.Error(), c.want.err)
+			}
 
-		ctx := context.Background()
-		_, err := ctrl.handleRequestPoints(ctx, req)
-		if err != nil {
-			assert.Contains(t, err.Error(), c.want.err)
-		}
-
-		mockPointsDB.AssertExpectations(t)
+			mockPointsDB.AssertExpectations(t)
+		})
 	}
 }
 
@@ -168,32 +169,33 @@ func Test_validateRequestPoints(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req := &pointsHandlerRequest{
+				UserID: "123",
+				Points: 1,
+				Reason: "I worked hard",
+			}
 
-		req := &pointsHandlerRequest{
-			UserID: "123",
-			Points: 1,
-			Reason: "I worked hard",
-		}
+			if c.state.pointsAreZero {
+				req.Points = 0
+			}
+			if c.state.pointsAreNegative {
+				req.Points = -1
+			}
+			if c.state.missingReason {
+				req.Reason = ""
+			}
+			if c.state.tooShortReason {
+				req.Reason = "hello"
+			}
+			if c.state.invalidUserId {
+				req.UserID = ""
+			}
 
-		if c.state.pointsAreZero {
-			req.Points = 0
-		}
-		if c.state.pointsAreNegative {
-			req.Points = -1
-		}
-		if c.state.missingReason {
-			req.Reason = ""
-		}
-		if c.state.tooShortReason {
-			req.Reason = "hello"
-		}
-		if c.state.invalidUserId {
-			req.UserID = ""
-		}
-
-		err := validateRequestPoints(req)
-		if err != nil {
-			assert.Contains(t, err.Error(), c.want.err)
-		}
+			err := validateRequestPoints(req)
+			if err != nil {
+				assert.Contains(t, err.Error(), c.want.err)
+			}
+		})
 	}
 }
