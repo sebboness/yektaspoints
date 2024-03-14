@@ -345,7 +345,7 @@ func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 			Types:    []models.PointRequestType{models.PointRequestTypeCashout},
 		}
 
-		// simulate getting most recent points
+		// simulate getting most recent cashouts
 		resRecentCashouts, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
 		tests.AssertError(t, err, c.want.err)
 		assert.NotEmpty(t, resRecentCashouts)

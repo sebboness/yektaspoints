@@ -54,13 +54,14 @@ type QueryPointsFilter struct {
 }
 
 type PointSummary struct {
-	ID              string           `json:"id"`
-	UserID          string           `json:"user_id"`
-	ParentNotes     string           `json:"parent_notes"`
-	Reason          string           `json:"reason"`
-	UpdatedOn       time.Time        `json:"updated_on"`
-	Type            PointRequestType `json:"type"`
-	DecidedByUserID string           `json:"decided_by_user_id"`
+	ID              string               `json:"id"`
+	UserID          string               `json:"user_id"`
+	ParentNotes     string               `json:"parent_notes"`
+	Reason          string               `json:"reason"`
+	UpdatedOn       time.Time            `json:"updated_on"`
+	Type            PointRequestType     `json:"type"`
+	DecidedByUserID string               `json:"decided_by_user_id"`
+	Decision        PointRequestDecision `json:"decision" dynamodbav:"decision,omitempty"`
 }
 
 type UserPoints struct {
@@ -80,4 +81,25 @@ func (p *Point) ParseTimes() {
 	if p.Request.DecidedOnStr != "" {
 		p.Request.DecidedOn = util.ParseTime_RFC3339Nano(p.Request.DecidedOnStr)
 	}
+}
+
+func (p *Point) ToPointSummary() PointSummary {
+	return PointSummary{
+		ID:              p.ID,
+		UserID:          p.UserID,
+		ParentNotes:     p.Request.ParentNotes,
+		Reason:          p.Request.Reason,
+		UpdatedOn:       p.UpdatedOn,
+		Type:            p.Request.Type,
+		DecidedByUserID: p.Request.DecidedByUserID,
+		Decision:        p.Request.Decision,
+	}
+}
+
+func ToPointSummaries(points []Point) []PointSummary {
+	summaries := make([]PointSummary, len(points))
+	for idx, p := range points {
+		summaries[idx] = p.ToPointSummary()
+	}
+	return summaries
 }
