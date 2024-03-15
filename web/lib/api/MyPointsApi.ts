@@ -1,5 +1,7 @@
-import { TokenData, UserData } from "../auth/Auth";
 import { Api, TokenGetter } from "./Api";
+import { Point, UserPoints } from "../models/Points";
+import { TokenData, UserData } from "../auth/Auth";
+
 import { ResultT } from "./Result";
 
 // Define base URIs for different environments
@@ -32,6 +34,10 @@ export class MyPointsApi extends Api {
         return this;
     }
 
+    ////
+    // Auth
+    ////
+
     public authenticate(username: string, password: string): Promise<ResultT<TokenData>> {
         return this.post("auth/token", {
             payload: {
@@ -52,7 +58,23 @@ export class MyPointsApi extends Api {
         });
     }
 
+    ////
+    // User
+    ////
+
     public getUser(): Promise<ResultT<UserData>> {
         return this.get("v1/user");
+    }
+
+    ////
+    // Points
+    ////
+    
+    public getPointsByUser(userID: string): Promise<ResultT<Point[]>> {
+        return this.get(`v1/points/user/${userID}`);
+    }
+
+    public getPointSummaryByUser(userID: string): Promise<ResultT<UserPoints>> {
+        return this.get(`v1/points/summary/${userID}`);
     }
 }

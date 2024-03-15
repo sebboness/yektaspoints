@@ -1,11 +1,13 @@
-import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "@/slices/authSlice";
 import { TokenGetter } from "@/lib/api/Api";
+import authReducer from "@/slices/authSlice";
+import { configureStore } from "@reduxjs/toolkit";
+import pointsReducer from "@/slices/pointsSlice";
 
 export function makeStore() {
     return configureStore({
         reducer: {
             auth: authReducer,
+            points: pointsReducer,
         },
     })
 }
@@ -29,6 +31,6 @@ export const getTokenRetriever = (): TokenGetter => {
                 : "";
         },
 
-        getTokenType()  { return "Bearer"},
+        getTokenType()  { return "Bearer" },
     };
 }
