@@ -10,6 +10,7 @@ import (
 	"github.com/sebboness/yektaspoints/handlers"
 	"github.com/sebboness/yektaspoints/models"
 	apierr "github.com/sebboness/yektaspoints/util/error"
+	"github.com/sebboness/yektaspoints/util/log"
 )
 
 type getPointsSummaryHandlerRequest struct {
@@ -22,10 +23,19 @@ type getPointsSummaryHandlerResponse struct {
 
 func (c *PointsController) GetPointsSummaryHandler(cgin *gin.Context) {
 
-	authInfo := handlers.GetAuthorizerInfo(cgin)
+	// authInfo := handlers.GetAuthorizerInfo(cgin)
+	// TODO: Implement a way to check that the requested user (a parent) has access to retrieve the points for the user
+	//       identified in this request via the user_id query parameter (their child).
+
+	userID, _ := cgin.GetQuery("user_id")
+	if userID == "" {
+		apiErr := apierr.New(apierr.InvalidInput).WithError("user_id is a required query parameter")
+		cgin.JSON(apiErr.StatusCode(), handlers.ErrorResult(apiErr))
+		return
+	}
 
 	req := &getPointsSummaryHandlerRequest{
-		UserID: authInfo.GetUserID(),
+		UserID: userID,
 	}
 
 	resp, err := c.handleGetPointsSummary(cgin.Request.Context(), req)
@@ -50,7 +60,8 @@ func (c *PointsController) handleGetPointsSummary(ctx context.Context, req *getP
 	}
 
 	now := time.Now().UTC()
-	from := now.AddDate(0, -1, 0) // minus one month
+	from := now.AddDate(0, 0, -14)   // minus two weeks
+	weekAgo := now.AddDate(0, 0, -7) // minus one week
 	to := now
 
 	attributes := []string{
@@ -66,46 +77,75 @@ func (c *PointsController) handleGetPointsSummary(ctx context.Context, req *getP
 	}
 
 	filter := models.QueryPointsFilter{
-		UpdatedOn:  *models.NewDateFilter().WithRange(from, to),
-		Statuses:   []models.PointStatus{models.PointStatusWaiting},
+		UpdatedOn: *models.NewDateFilter().WithRange(from, to),
+		Statuses: []models.PointStatus{
+			models.PointStatusSettled,
+			models.PointStatusWaiting,
+		},
+		Types: []models.PointRequestType{
+			models.PointRequestTypeCashout,
+			models.PointRequestTypeAdd,
+			models.PointRequestTypeSubtract,
+		},
 		Attributes: attributes,
 	}
 
-	// get most recent points with waiting status (not approved yet by parents)
-	pointsWaiting, err := c.pointsDB.GetPointsByUserID(context.Background(), req.UserID, filter)
+	// get all points with filters applied
+	points, err := c.pointsDB.GetPointsByUserID(ctx, req.UserID, filter)
 	if err != nil {
-		return resp, fmt.Errorf("failed to get recent point requests: %w", err)
+		return resp, fmt.Errorf("failed to get points: %w", err)
 	}
 
-	filter = models.QueryPointsFilter{
-		UpdatedOn:  *models.NewDateFilter().WithRange(from, to),
-		Statuses:   []models.PointStatus{models.PointStatusSettled},
-		Types:      []models.PointRequestType{models.PointRequestTypeAdd, models.PointRequestTypeSubtract},
-		Attributes: attributes,
-	}
+	// map all points to user point summaries
+	c.mapPointsToSummaries(&resp.UserPoints, weekAgo, points)
 
-	// get most recent points
-	points, err := c.pointsDB.GetPointsByUserID(context.Background(), req.UserID, filter)
-	if err != nil {
-		return resp, fmt.Errorf("failed to get recent points: %w", err)
-	}
-
-	filter = models.QueryPointsFilter{
-		UpdatedOn:  *models.NewDateFilter().WithRange(from, to),
-		Statuses:   []models.PointStatus{models.PointStatusSettled},
-		Types:      []models.PointRequestType{models.PointRequestTypeCashout},
-		Attributes: attributes,
-	}
-
-	// get most recent cashouts
-	cashouts, err := c.pointsDB.GetPointsByUserID(context.Background(), req.UserID, filter)
-	if err != nil {
-		return resp, fmt.Errorf("failed to get recent cashouts: %w", err)
-	}
-
-	resp.RecentRequests = models.ToPointSummaries(pointsWaiting[0:2])
-	resp.RecentPoints = models.ToPointSummaries(points[0:2])
-	resp.RecentCashouts = models.ToPointSummaries(cashouts[0:2])
+	logger := log.Get()
+	logger.WithContext(ctx).WithFields(map[string]any{
+		"user_points": resp.UserPoints,
+		"points_len":  len(points),
+		"user_id":     req.UserID,
+	}).Infof("retrieved user point summaries")
 
 	return resp, nil
+}
+
+func (c *PointsController) mapPointsToSummaries(up *models.UserPoints, recentFromDate time.Time, points []models.Point) {
+
+	unsettled := []models.PointSummary{}
+	settled := []models.PointSummary{}
+	cashouts := []models.PointSummary{}
+
+	// user's points is the balance value in the most recent settled point object
+	for _, p := range points {
+		// first settled point is latest
+		if up.Balance == 0 && p.Status == models.PointStatusSettled && p.Balance != nil {
+			up.Balance = *p.Balance
+		}
+
+		// sum up points after given recentFromDate
+		if p.UpdatedOn.Compare(recentFromDate) >= 0 && p.Status == models.PointStatusSettled {
+			up.PointsLast7Days += p.Points
+
+			if p.Points < 0 && p.Request.Type == models.PointRequestTypeSubtract {
+				up.PointsLostLast7Days += p.Points
+			}
+		}
+
+		// unsettled points
+		if len(unsettled) < 3 && p.Status == models.PointStatusWaiting {
+			unsettled = append(unsettled, p.ToPointSummary())
+		}
+		// settled points
+		if len(settled) < 3 && p.Status == models.PointStatusSettled {
+			settled = append(settled, p.ToPointSummary())
+		}
+		// cashouts
+		if len(cashouts) < 3 && p.Status == models.PointStatusSettled && p.Request.Type == models.PointRequestTypeCashout {
+			cashouts = append(cashouts, p.ToPointSummary())
+		}
+	}
+
+	up.RecentRequests = unsettled
+	up.RecentPoints = settled
+	up.RecentCashouts = cashouts
 }

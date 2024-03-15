@@ -58,17 +58,20 @@ type PointSummary struct {
 	UserID          string               `json:"user_id"`
 	ParentNotes     string               `json:"parent_notes"`
 	Reason          string               `json:"reason"`
-	UpdatedOn       time.Time            `json:"updated_on"`
+	Points          int                  `json:"points"`
 	Type            PointRequestType     `json:"type"`
+	UpdatedOn       time.Time            `json:"updated_on"`
 	DecidedByUserID string               `json:"decided_by_user_id"`
 	Decision        PointRequestDecision `json:"decision" dynamodbav:"decision,omitempty"`
 }
 
 type UserPoints struct {
-	Balance        int            `json:"balance"`
-	RecentCashouts []PointSummary `json:"recent_cashouts"`
-	RecentRequests []PointSummary `json:"recent_requests"`
-	RecentPoints   []PointSummary `json:"recent_points"`
+	Balance             int            `json:"balance"`
+	PointsLast7Days     int            `json:"points_last_7_days"`
+	PointsLostLast7Days int            `json:"points_lost_last_7_days"`
+	RecentCashouts      []PointSummary `json:"recent_cashouts"`
+	RecentRequests      []PointSummary `json:"recent_requests"`
+	RecentPoints        []PointSummary `json:"recent_points"`
 }
 
 func (p *Point) ParseTimes() {
@@ -88,6 +91,7 @@ func (p *Point) ToPointSummary() PointSummary {
 		ID:              p.ID,
 		UserID:          p.UserID,
 		ParentNotes:     p.Request.ParentNotes,
+		Points:          p.Points,
 		Reason:          p.Request.Reason,
 		UpdatedOn:       p.UpdatedOn,
 		Type:            p.Request.Type,

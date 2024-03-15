@@ -306,49 +306,39 @@ func TestReal_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 		s, err := NewDynamoDbStorage(Config{Env: "dev"})
 		assert.Nil(t, err)
 
-		from := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
-		to := time.Date(2024, 3, 31, 59, 59, 0, 0, time.UTC)
+		now := time.Now().UTC()
+		from := now.AddDate(0, 0, -14) // minus two weeks
+		to := now
+
+		attributes := []string{
+			"id",
+			"updated_on",
+			"points",
+			"balance",
+			"request.decided_by_user_id",
+			"request.decision",
+			"request.parent_notes",
+			"request.reason",
+			"request.type",
+		}
 
 		filter := models.QueryPointsFilter{
-			UpdatedOn: models.DateFilter{
-				From: &from,
-				To:   &to,
+			UpdatedOn: *models.NewDateFilter().WithRange(from, to),
+			Statuses: []models.PointStatus{
+				models.PointStatusSettled,
+				models.PointStatusWaiting,
 			},
-			Statuses: []models.PointStatus{models.PointStatusWaiting},
+			Types: []models.PointRequestType{
+				models.PointRequestTypeCashout,
+				models.PointRequestTypeAdd,
+				models.PointRequestTypeSubtract,
+			},
+			Attributes: attributes,
 		}
 
-		// simulate getting most recent points with waiting status
-		resWaitingPoints, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
+		points, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
 		tests.AssertError(t, err, c.want.err)
-		assert.NotEmpty(t, resWaitingPoints)
-
-		filter = models.QueryPointsFilter{
-			UpdatedOn: models.DateFilter{
-				From: &from,
-				To:   &to,
-			},
-			Statuses: []models.PointStatus{models.PointStatusSettled},
-			Types:    []models.PointRequestType{models.PointRequestTypeAdd, models.PointRequestTypeSubtract},
-		}
-
-		// simulate getting most recent points
-		resRecentPoints, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
-		tests.AssertError(t, err, c.want.err)
-		assert.NotEmpty(t, resRecentPoints)
-
-		filter = models.QueryPointsFilter{
-			UpdatedOn: models.DateFilter{
-				From: &from,
-				To:   &to,
-			},
-			Statuses: []models.PointStatus{models.PointStatusSettled},
-			Types:    []models.PointRequestType{models.PointRequestTypeCashout},
-		}
-
-		// simulate getting most recent cashouts
-		resRecentCashouts, err := s.GetPointsByUserID(context.Background(), c.state.userId, filter)
-		tests.AssertError(t, err, c.want.err)
-		assert.NotEmpty(t, resRecentCashouts)
+		assert.NotEmpty(t, points)
 	}
 }
 
