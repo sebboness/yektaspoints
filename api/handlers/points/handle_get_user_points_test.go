@@ -32,7 +32,7 @@ func Test_Controller_GetUserPointsHandler(t *testing.T) {
 
 	cases := []test{
 		{"happy path", state{}, want{"", http.StatusOK}},
-		{"fail - missing user", state{missingUser: true}, want{"access denied: missing user id", http.StatusForbidden}},
+		{"fail - missing user", state{missingUser: true}, want{"user_id is a required query parameter", http.StatusBadRequest}},
 		{"fail - internal server error", state{err: errFail}, want{"fail", http.StatusInternalServerError}},
 	}
 
@@ -46,10 +46,9 @@ func Test_Controller_GetUserPointsHandler(t *testing.T) {
 			}
 
 			points := []models.Point{
-				{
-					ID:     "1",
-					UserID: "a",
-				},
+				{ID: "1", UserID: "a", Points: 1},
+				{ID: "2", UserID: "a", Points: 1},
+				{ID: "3", UserID: "a", Points: 1},
 			}
 
 			if !c.state.missingUser {
@@ -60,15 +59,18 @@ func Test_Controller_GetUserPointsHandler(t *testing.T) {
 
 			evt := handlers.MockApiGWEvent
 
+			endpoint := "/v1/points?user_id=a"
+
 			if c.state.missingUser {
 				evt.RequestContext.Authorizer = nil
+				endpoint = "/v1/points"
 			}
 
 			ctx = handlers.PrepareAuthorizedContext(ctx, evt)
 
 			w := httptest.NewRecorder()
 			cgin, _ := gin.CreateTestContext(w)
-			cgin.Request = httptest.NewRequest("GET", "/v1/points", nil).WithContext(ctx)
+			cgin.Request = httptest.NewRequest("GET", endpoint, nil).WithContext(ctx)
 
 			ctrl.GetUserPointsHandler(cgin)
 

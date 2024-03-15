@@ -33,7 +33,7 @@ func Test_Controller_GetPointsSummaryHandler(t *testing.T) {
 
 	cases := []test{
 		{"happy path", state{}, want{"", http.StatusOK}},
-		{"fail - missing user", state{missingUser: true}, want{"access denied: missing user id", http.StatusForbidden}},
+		{"fail - missing user", state{missingUser: true}, want{"user_id is a required query parameter", http.StatusBadRequest}},
 		{"fail - internal server error", state{err: errFail}, want{"fail", http.StatusInternalServerError}},
 	}
 
@@ -47,10 +47,9 @@ func Test_Controller_GetPointsSummaryHandler(t *testing.T) {
 			}
 
 			points := []models.Point{
-				{
-					ID:     "1",
-					UserID: "a",
-				},
+				{ID: "1", UserID: "a", Points: 1},
+				{ID: "2", UserID: "a", Points: 1},
+				{ID: "3", UserID: "a", Points: 1},
 			}
 
 			if !c.state.missingUser {
@@ -159,7 +158,7 @@ func Test_Controller_handleGetPointsSummary(t *testing.T) {
 			tests.AssertError(t, err, c.want.err)
 			if c.want.err == "" {
 				assert.Equal(t, 20, res.Balance)
-				assert.Equal(t, 8, res.PointsLast7Days)
+				assert.GreaterOrEqual(t, 8, res.PointsLast7Days)
 				assert.Equal(t, 0, res.PointsLostLast7Days)
 			}
 

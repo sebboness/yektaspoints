@@ -90,13 +90,14 @@ func (c *PointsController) handleGetPointsSummary(ctx context.Context, req *getP
 		Attributes: attributes,
 	}
 
-	// get all points with filters applied
+	// get all points with filters applied from 2 weeks ago
 	points, err := c.pointsDB.GetPointsByUserID(ctx, req.UserID, filter)
 	if err != nil {
 		return resp, fmt.Errorf("failed to get points: %w", err)
 	}
 
 	// map all points to user point summaries
+	// the weekAgo date will summarize point amounts from last 7 days.
 	c.mapPointsToSummaries(&resp.UserPoints, weekAgo, points)
 
 	logger := log.Get()
