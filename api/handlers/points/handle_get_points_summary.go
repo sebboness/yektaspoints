@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
 	"github.com/sebboness/yektaspoints/models"
+	"github.com/sebboness/yektaspoints/util"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 	"github.com/sebboness/yektaspoints/util/log"
 )
@@ -27,7 +28,7 @@ func (c *PointsController) GetPointsSummaryHandler(cgin *gin.Context) {
 	// TODO: Implement a way to check that the requested user (a parent) has access to retrieve the points for the user
 	//       identified in this request via the user_id query parameter (their child).
 
-	userID, _ := cgin.GetQuery("user_id")
+	userID := cgin.Param("user_id")
 	if userID == "" {
 		apiErr := apierr.New(apierr.InvalidInput).WithError("user_id is a required query parameter")
 		cgin.JSON(apiErr.StatusCode(), handlers.ErrorResult(apiErr))
@@ -69,6 +70,7 @@ func (c *PointsController) handleGetPointsSummary(ctx context.Context, req *getP
 		"updated_on",
 		"points",
 		"balance",
+		"status",
 		"request.decided_by_user_id",
 		"request.decision",
 		"request.parent_notes",
@@ -102,6 +104,9 @@ func (c *PointsController) handleGetPointsSummary(ctx context.Context, req *getP
 
 	logger := log.Get()
 	logger.WithContext(ctx).WithFields(map[string]any{
+		"dt_from":     util.ToFormatted(from),
+		"dt_to":       util.ToFormatted(to),
+		"dt_weekago":  util.ToFormatted(weekAgo),
 		"user_points": resp.UserPoints,
 		"points_len":  len(points),
 		"user_id":     req.UserID,
@@ -124,10 +129,13 @@ func (c *PointsController) mapPointsToSummaries(up *models.UserPoints, recentFro
 		}
 
 		// sum up points after given recentFromDate
-		if p.UpdatedOn.Compare(recentFromDate) >= 0 && p.Status == models.PointStatusSettled {
+		if p.UpdatedOn.Compare(recentFromDate) >= 0 &&
+			p.Status == models.PointStatusSettled &&
+			p.Request.Type != models.PointRequestTypeCashout {
+
 			up.PointsLast7Days += p.Points
 
-			if p.Points < 0 && p.Request.Type == models.PointRequestTypeSubtract {
+			if p.Points < 0 {
 				up.PointsLostLast7Days += p.Points
 			}
 		}
@@ -137,7 +145,7 @@ func (c *PointsController) mapPointsToSummaries(up *models.UserPoints, recentFro
 			unsettled = append(unsettled, p.ToPointSummary())
 		}
 		// settled points
-		if len(settled) < 3 && p.Status == models.PointStatusSettled {
+		if len(settled) < 3 && p.Status == models.PointStatusSettled && p.Request.Type != models.PointRequestTypeCashout {
 			settled = append(settled, p.ToPointSummary())
 		}
 		// cashouts

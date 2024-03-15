@@ -59,18 +59,20 @@ func Test_Controller_GetUserPointsHandler(t *testing.T) {
 
 			evt := handlers.MockApiGWEvent
 
-			endpoint := "/v1/points?user_id=a"
-
 			if c.state.missingUser {
 				evt.RequestContext.Authorizer = nil
-				endpoint = "/v1/points"
 			}
 
 			ctx = handlers.PrepareAuthorizedContext(ctx, evt)
 
 			w := httptest.NewRecorder()
 			cgin, _ := gin.CreateTestContext(w)
-			cgin.Request = httptest.NewRequest("GET", endpoint, nil).WithContext(ctx)
+
+			if !c.state.missingUser {
+				cgin.AddParam("user_id", "a")
+			}
+
+			cgin.Request = httptest.NewRequest("GET", "/", nil).WithContext(ctx)
 
 			ctrl.GetUserPointsHandler(cgin)
 

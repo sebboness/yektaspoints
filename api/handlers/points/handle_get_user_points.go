@@ -25,7 +25,7 @@ func (c *PointsController) GetUserPointsHandler(cgin *gin.Context) {
 	// TODO: Implement a way to check that the requested user (a parent) has access to retrieve the points for the user
 	//       identified in this request via the user_id query parameter (their child).
 
-	userID, _ := cgin.GetQuery("user_id")
+	userID := cgin.Param("user_id")
 	if userID == "" {
 		apiErr := apierr.New(apierr.InvalidInput).WithError("user_id is a required query parameter")
 		cgin.JSON(apiErr.StatusCode(), handlers.ErrorResult(apiErr))

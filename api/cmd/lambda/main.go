@@ -33,7 +33,7 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 
 	_env := env.GetEnv("ENV")
 
-	logger.WithContext(ctx).AddFields(map[string]any{
+	logger.WithContext(ctx).WithFields(map[string]any{
 		"env":              _env,
 		"method":           req.HTTPMethod,
 		"path":             req.Path,
