@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
-import { faCompass } from "@fortawesome/free-solid-svg-icons";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import moment from "moment";
 import { useAppDispatch } from "@/store/hooks";
 import { useForm } from "react-hook-form";
@@ -106,7 +106,7 @@ const LoginForm = (props: Props) => {
                 </label>
                 <button type="submit" className={`btn btn-primary ${loading ? "btn-disabled" : ""}`}>
                     {loading
-                        ? <><FontAwesomeIcon icon={faCompass} spin /> Logging in...</>
+                        ? <><FontAwesomeIcon icon={faSpinner} spin /> Logging in...</>
                         : "Login"}
                 </button>
             </div>

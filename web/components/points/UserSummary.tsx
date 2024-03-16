@@ -12,7 +12,9 @@ import {
 import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Image from "next/image";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { getUserPointSummary } from "@/slices/pointsSlice";
 import moment from "moment";
 
@@ -21,7 +23,6 @@ const ln = () => `[${moment().toISOString()}] UserSummary: `;
 const UserSummary = () => {
     
     const [loading, setLoading] = useState(true);
-    const [haveData, setHaveData] = useState(false);
     const dispatch = useAppDispatch();
 
     const user = useAppSelector((state) => state.auth.user);
@@ -29,15 +30,13 @@ const UserSummary = () => {
     const userID = user ? user.user_id : "";
 
     useEffect(() => {
-        if (!haveData && userID) {
+        if (userID) {
             dispatch(getUserPointSummary(userID));
-            setHaveData(true);
             setLoading(false);
         }
-    }, [haveData]);
+    }, [userID]);
 
-    console.log(`${ln()}userID`, userID);
-    console.log(`${ln()}userSummary`, userSummary);
+    console.log(`${ln()}info`, loading, userID, userSummary);
 
     return (
         <div className="w-screen xl:grid gap-8 xl:grid-cols-2 p-12">
@@ -54,10 +53,13 @@ const UserSummary = () => {
                             alt="Picture of the author"
                         />
 
-                        <div className="hero-points-display rounded-xl w-full text-center text-teal-600">
-                            <div className="text-7xl sm:text-9xl font-bold py-16">
-                                213
+                        <div className="hero-points-display rounded-xl w-full text-center text-teal-600">    
+                            <div className="text-7xl sm:text-9xl font-bold py-16">                        
+                                {loading
+                                    ? <><FontAwesomeIcon icon={faSpinner} spin /></>
+                                    : <>{userSummary.balance}</>}
                             </div>
+                            {userSummary.balance}
                         </div>
                     </div>
                     <div className="card-body">
@@ -108,42 +110,28 @@ const UserSummary = () => {
 
                         {/* Items */}
                         <div className="list-container">
-                            <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
-                                <div className="flex flex-row items-center space-x-4">
-                                    <ArrowUpRightIcon className="bg-green-400 rounded-full p-2 h-12 w-12 text-green-700" />
-                                    <div>
-                                        <h1 className="tracking-tight">Mon, Feb 26th</h1>
-                                        <p className="font-light">Cleaning my room</p>
+                            {userSummary.recent_points.map((p, i) => {
+                                const iColor = p.points > 0
+                                ? "bg-green-400 text-green-700"
+                                : "bg-red-400 text-red-700";
+
+                                const pColor = p.points > 0
+                                    ? "bg-green-500 text-green-100"
+                                    : "bg-red-500 text-red-100";
+
+                                return <div key={i} className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
+                                    <div className="flex flex-row items-center space-x-4">
+                                        <ArrowUpRightIcon className={`${iColor} rounded-full p-2 h-12 w-12`} />
+                                        <div>
+                                            <h1 className="tracking-tight">{p.updated_on}</h1>
+                                            <p className="font-light">{p.reason}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <button className="bg-green-500 rounded-full px-4 py-1 text-green-100 text-lg font-bold">10</button>
-                                </div>
-                            </div>
-                            <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
-                                <div className="flex flex-row items-center space-x-4">
-                                    <ArrowDownRightIcon className="bg-red-400 rounded-full p-2 h-12 w-12 text-red-700" />
                                     <div>
-                                        <h1 className="tracking-tight">Sun, Feb 25th</h1>
-                                        <p className="font-light">Nagging and not listening</p>
+                                        <button className={`${pColor} rounded-full px-4 py-1 text-lg font-bold`}>{p.points}</button>
                                     </div>
-                                </div>
-                                <div>
-                                    <button className="bg-red-500 rounded-full px-4 py-1 text-red-100 text-lg font-bold">5</button>
-                                </div>
-                            </div>
-                            <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
-                                <div className="flex flex-row items-center space-x-4">
-                                    <ArrowUpRightIcon className="bg-green-400 rounded-full p-2 h-12 w-12 text-green-700" />
-                                    <div>
-                                        <h1 className="tracking-tight">Fri, Feb 23rd</h1>
-                                        <p className="font-light">Taking out Gina for a walk</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button className="bg-green-500 rounded-full px-4 py-1 text-green-100 text-lg font-bold">2</button>
-                                </div>
-                            </div>
+                                </div>;
+                            })}
                         </div>
                         {/* End Items */}
 
