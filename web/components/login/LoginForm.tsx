@@ -3,14 +3,14 @@
 import * as yup from "yup";
 
 import { AuthSlice, getSimpleTokenRetriever, setAuthCookie } from "@/slices/authSlice";
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import moment from "moment";
-import { useAppDispatch } from "@/store/hooks";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 
@@ -35,6 +35,7 @@ const LoginForm = (props: Props) => {
     const searchParams = useSearchParams();
     
     const dispatch = useAppDispatch();
+    const authState = useAppSelector((state) => state.auth);
     const api = MyPointsApi.getInstance();
     
     // Loading when credentials are submitted
@@ -66,19 +67,14 @@ const LoginForm = (props: Props) => {
 
             if (userResult.data) {
                 console.log(`${ln()}got user a-ok`, userResult.data);  
-
-                dispatch(AuthSlice.actions.setAuthToken(authResult.data));
+                
                 dispatch(setAuthCookie({
                     token: authResult.data,
                     user: userResult.data,
                 }));
 
-                // redirect to where the user came from (defaults to home page)
-                const returnUrl = searchParams.has("return_url")
-                    ? (searchParams.get("return_url") || "/")
-                    : "/";
-
-                router.push(returnUrl);
+                dispatch(AuthSlice.actions.setAuthToken(authResult.data));
+                dispatch(AuthSlice.actions.setUserData(userResult.data));
                 
                 return;
             }
@@ -88,6 +84,20 @@ const LoginForm = (props: Props) => {
         setLoading(false);
         setPreparing(false);
     }
+
+    useEffect(() => {
+        console.log(`${ln()}authCookieSet? ${authState.authCookieSet}`);
+        if (authState.authCookieSet) {
+            // redirect to where the user came from (defaults to home page)
+            const returnUrl = searchParams.has("return_url")
+                ? (searchParams.get("return_url") || "/")
+                : "/";
+
+            console.log(`${ln()}redirecting to? ${returnUrl}`);
+
+            router.push(returnUrl);
+        }
+    }, [authState.authCookieSet]);
 
     return (
         <form className="grid grid-cols-1 gap-y-4" onSubmit={handleSubmit(onSubmit)}>

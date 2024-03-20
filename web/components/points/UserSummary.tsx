@@ -8,13 +8,18 @@ import {
     CurrencyDollarIcon,
     HandThumbUpIcon,
     LightBulbIcon,
+    SparklesIcon,
+    SunIcon,
 } from "@heroicons/react/24/solid";
 import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Image from "next/image";
+import RecentPoints from "./RecentPoints";
+import RecentRequests from "./RecentRequests";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { formatDay_DDD_MMM_DD_hmm } from "@/lib/MomentUtils";
 import { getUserPointSummary } from "@/slices/pointsSlice";
 import moment from "moment";
 
@@ -26,17 +31,24 @@ const UserSummary = () => {
     const dispatch = useAppDispatch();
 
     const user = useAppSelector((state) => state.auth.user);
-    const userSummary = useAppSelector((state) => state.points.userSummary);
+    const sum = useAppSelector((state) => state.points.userSummary);
     const userID = user ? user.user_id : "";
 
     useEffect(() => {
         if (userID) {
+            console.log(`${ln()}dispatching getUserPointSummary`);
             dispatch(getUserPointSummary(userID));
             setLoading(false);
         }
     }, [userID]);
 
-    console.log(`${ln()}info`, loading, userID, userSummary);
+    console.log(`${ln()}info`, loading, userID, sum);
+
+    if (!user)
+        return <></>;
+
+    const pointsGainedDisplay = `${sum.points_last_7_days} point${sum.points_last_7_days === 1 ? "" : "s"}`;
+    const pointsLostDisplay = `${-sum.points_lost_last_7_days} point${sum.points_lost_last_7_days === -1 ? "" : "s"}`;
 
     return (
         <div className="w-screen xl:grid gap-8 xl:grid-cols-2 p-12">
@@ -57,32 +69,44 @@ const UserSummary = () => {
                             <div className="text-7xl sm:text-9xl font-bold py-16">                        
                                 {loading
                                     ? <><FontAwesomeIcon icon={faSpinner} spin /></>
-                                    : <>{userSummary.balance}</>}
+                                    : <>{sum.balance}</>}
                             </div>
-                            {userSummary.balance}
                         </div>
                     </div>
                     <div className="card-body">
-                        <p className="text-xl sm:text-4xl"><b>Wow!</b> Great job, Yekta!</p>
+                        <p className="text-xl sm:text-4xl"><b>Wow!</b> Great job, {user.name}!</p>
                         
                         {/* Info items */}
                         <div className="list-container">
-                            <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
-                                <div className="flex flex-row items-center space-x-4">
-                                    <LightBulbIcon className="bg-orange-400 rounded-full p-2 h-12 w-12 text-yellow-200" />
-                                    <div>
-                                        <h1 className="text-lg md:text-2xl">You earned 47 points this week. Keept it up!</h1>
+                            {sum.points_last_7_days > 0
+                                ? <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
+                                    <div className="flex flex-row items-center space-x-4">
+                                        <LightBulbIcon className="bg-orange-400 text-yellow-200 rounded-full p-2 h-12 w-12 " />
+                                        <div>
+                                            <p className="text-lg md:text-2xl">You earned {pointsGainedDisplay} this week. Keept it up!</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
-                                <div className="flex flex-row items-center space-x-4">
-                                    <HandThumbUpIcon className="bg-blue-700 rounded-full p-2 h-12 w-12 text-blue-300" />
-                                    <div>
-                                        <h1 className="text-lg md:text-2xl">You didn&apos;t lose any points this week!</h1>
+                                : <></>}
+
+                            {sum.points_lost_last_7_days == 0
+                                ? <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
+                                    <div className="flex flex-row items-center space-x-4">
+                                        <HandThumbUpIcon className="bg-blue-700 text-blue-300 rounded-full p-2 h-12 w-12 " />
+                                        <div>
+                                            <p className="text-lg md:text-2xl">You didn&apos;t lose any points this week!</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                                : <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
+                                <div className="flex flex-row items-center space-x-4">
+                                    <SparklesIcon className=" bg-gray-900 text-yellow-200 rounded-full p-2 h-12 w-12 " />
+                                    <div>
+                                        <p className="text-lg md:text-2xl">You lost {pointsLostDisplay} this week, but don't worry!</p>
+                                        <p className="">You can earn more with good behavior and good grades.</p>
+                                    </div>
+                                </div>
+                            </div>}
                         </div>
                         {/* End Info items */}
                     </div>
@@ -108,32 +132,9 @@ const UserSummary = () => {
                     <div className="card-body">
                         <p className="text-2xl font-bold">What I got so far</p>
 
-                        {/* Items */}
-                        <div className="list-container">
-                            {userSummary.recent_points.map((p, i) => {
-                                const iColor = p.points > 0
-                                ? "bg-green-400 text-green-700"
-                                : "bg-red-400 text-red-700";
-
-                                const pColor = p.points > 0
-                                    ? "bg-green-500 text-green-100"
-                                    : "bg-red-500 text-red-100";
-
-                                return <div key={i} className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
-                                    <div className="flex flex-row items-center space-x-4">
-                                        <ArrowUpRightIcon className={`${iColor} rounded-full p-2 h-12 w-12`} />
-                                        <div>
-                                            <h1 className="tracking-tight">{p.updated_on}</h1>
-                                            <p className="font-light">{p.reason}</p>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <button className={`${pColor} rounded-full px-4 py-1 text-lg font-bold`}>{p.points}</button>
-                                    </div>
-                                </div>;
-                            })}
-                        </div>
-                        {/* End Items */}
+                        {/* Recent points */}
+                        <RecentPoints sum={sum} />
+                        {/* End recent points */}
 
                         <button className="btn btn-primary btn-lg mt-4">See more...</button>
                     </div>
@@ -142,47 +143,10 @@ const UserSummary = () => {
                 <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 border border-zinc-500">
                     <div className="card-body">
                         <p className="text-2xl font-bold">Waiting on points</p>
-                        
-                        {/* Items */}
-                        <div className="list-container">
-                            <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
-                                <div className="flex flex-row items-center space-x-4">
-                                    <ClockIcon className="bg-teal-400 rounded-full p-2 h-12 w-12 text-teal-700" />
-                                    <div>
-                                        <h1 className="tracking-tight">Mon, Feb 26th</h1>
-                                        <p className="font-light">Cleaning my room</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button className="bg-teal-500 rounded-full px-4 py-1 text-teal-100 text-lg font-bold">10</button>
-                                </div>
-                            </div>
-                            <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
-                                <div className="flex flex-row items-center space-x-4">
-                                    <ClockIcon className="bg-teal-400 rounded-full p-2 h-12 w-12 text-teal-700" />
-                                    <div>
-                                        <h1 className="tracking-tight">Sun, Feb 25th</h1>
-                                        <p className="font-light">Nagging and not listening</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button className="bg-teal-500 rounded-full px-4 py-1 text-teal-100 text-lg font-bold">5</button>
-                                </div>
-                            </div>
-                            <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
-                                <div className="flex flex-row items-center space-x-4">
-                                    <ClockIcon className="bg-teal-400 rounded-full p-2 h-12 w-12 text-teal-700" />
-                                    <div>
-                                        <h1 className="tracking-tight">Fri, Feb 23rd</h1>
-                                        <p className="font-light">Taking out Gina for a walk</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button className="bg-teal-500 rounded-full px-4 py-1 text-teal-100 text-lg font-bold">2</button>
-                                </div>
-                            </div>
-                        </div>
-                        {/* End Items */}
+
+                        {/* Points waiting */}
+                        <RecentRequests sum={sum} />
+                        {/* End points waiting */}
                     </div>
                 </div>
             </div>
