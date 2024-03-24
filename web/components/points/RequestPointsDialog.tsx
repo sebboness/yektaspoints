@@ -22,7 +22,7 @@ const formSchema = yup.object({
 export const requestPointsDialogID = "request_points_dialog";
 
 type FormData = {
-    points: number;
+    points?: number;
     reason: string;
 }
 
@@ -69,7 +69,7 @@ const RequestPointsDialog = () => {
                 <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={doClose}>✕</button>
                 <h3 className="font-bold text-lg">Earn some points</h3>
                 <p className="py-4">Press ESC key or click the button below to close</p>
-                <form method="dialog">
+                <form method="dialog" onSubmit={handleSubmit(onSubmit)}>
                     <div className="form-control">
                         <input type="text" placeholder="Points" className="input input-bordered" { ...register("points")} />
                         <label className={`label ${errors.points ? "visible" : "invisible"}`}>
