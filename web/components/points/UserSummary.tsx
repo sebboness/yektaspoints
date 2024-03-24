@@ -1,17 +1,14 @@
 "use client";
 
 import {
-    ArrowDownRightIcon,
-    ArrowUpRightIcon,
     CircleStackIcon,
-    ClockIcon,
     CurrencyDollarIcon,
     HandThumbUpIcon,
     LightBulbIcon,
     SparklesIcon,
-    SunIcon,
 } from "@heroicons/react/24/solid";
 import React, { useEffect, useState } from "react";
+import RequestPointsDialog, { requestPointsDialogID } from "./RequestPointsDialog";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,7 +16,6 @@ import Image from "next/image";
 import RecentPoints from "./RecentPoints";
 import RecentRequests from "./RecentRequests";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { formatDay_DDD_MMM_DD_hmm } from "@/lib/MomentUtils";
 import { getUserPointSummary } from "@/slices/pointsSlice";
 import moment from "moment";
 
@@ -33,6 +29,18 @@ const UserSummary = () => {
     const user = useAppSelector((state) => state.auth.user);
     const sum = useAppSelector((state) => state.points.userSummary);
     const userID = user ? user.user_id : "";
+    
+    const openRequestPointsDialog = (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (typeof document !== "undefined") {
+            const dialog = document.getElementById(requestPointsDialogID) as HTMLDialogElement;
+            if (dialog) {
+                dialog.showModal();
+            }
+        }
+
+        e.preventDefault();
+        return false;
+    }
 
     useEffect(() => {
         if (userID) {
@@ -114,7 +122,7 @@ const UserSummary = () => {
                     {/* Point actions */}
                     <div className="card-body items-center text-center">                                
                         <div className="card-actions mt-4">
-                            <button className="btn btn-primary btn-lg">
+                            <button className="btn btn-primary btn-lg" onClick={openRequestPointsDialog}>
                                 <CircleStackIcon className="w-8 h-8" />Earn
                             </button>
                             <button className="btn btn-secondary btn-lg">
@@ -150,6 +158,8 @@ const UserSummary = () => {
                     </div>
                 </div>
             </div>
+
+            <RequestPointsDialog />
         </div>
     );
 }
