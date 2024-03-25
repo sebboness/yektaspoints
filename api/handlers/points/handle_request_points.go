@@ -21,8 +21,8 @@ type pointsHandlerRequest struct {
 }
 
 type pointsHandlerResponse struct {
-	Points int    `json:"points"`
-	Reason string `json:"reason"`
+	Point   models.Point        `json:"point"`
+	Summary models.PointSummary `json:"point_summary"`
 }
 
 func (c *PointsController) RequestPointsHandler(cgin *gin.Context) {
@@ -80,6 +80,10 @@ func (c *PointsController) handleRequestPoints(ctx context.Context, req *pointsH
 	if err != nil {
 		return resp, fmt.Errorf("failed to save points: %w", err)
 	}
+
+	point.ParseTimes()
+	resp.Point = point
+	resp.Summary = point.ToPointSummary()
 
 	return resp, nil
 }

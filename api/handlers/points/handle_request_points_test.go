@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http/httptest"
 	"testing"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/sebboness/yektaspoints/handlers"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 	apierr "github.com/sebboness/yektaspoints/util/error"
+	"github.com/sebboness/yektaspoints/util/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -73,13 +73,11 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 			ctrl.RequestPointsHandler(cgin)
 
 			assert.Equal(t, c.want.code, w.Code)
-			body, err := io.ReadAll(w.Body)
-			assert.Nil(t, err, "reading response body should have no error")
+			result := tests.AssertResult(t, w.Body)
+			tests.AssertResultError(t, result, c.want.err)
 
-			if c.want.err == "" {
-				assert.Contains(t, string(body), `"points":0`)
-			} else {
-				assert.Contains(t, string(body), c.want.err)
+			if c.want.code == 200 {
+				assert.NotNil(t, result.Data)
 			}
 
 			mockPointsDB.AssertExpectations(t)

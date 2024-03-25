@@ -65,7 +65,7 @@ const RequestPointsDialog = () => {
 
     return (
         <dialog id={requestPointsDialogID} className="modal" ref={dialogRef}>
-            <div className="modal-box">
+            <div className="modal-box bg-gradient-135 from-pink-200 to-lime-100 border border-zinc-500">
                 <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={doClose}>✕</button>
                 <h3 className="font-bold text-lg">Earn some points</h3>
                 <p className="py-4">Press ESC key or click the button below to close</p>
@@ -91,7 +91,7 @@ const RequestPointsDialog = () => {
                                 : "Request"}
                         </button>
 
-                        <button className="btn btn-secondary">Cancel</button>
+                        <a className="btn btn-secondary" onClick={doClose}>Cancel</a>
                     </div>
                 </form>
             </div>
