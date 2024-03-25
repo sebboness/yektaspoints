@@ -1,12 +1,12 @@
-import { Point, UserPoints } from "@/lib/models/Points";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { Point, PointSummary, UserPoints } from "@/lib/models/Points";
 
 import { ErrorAsResult } from "@/lib/api/Result";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { getTokenRetriever } from "@/store/store";
 import moment from "moment";
 
-const logName = () => `[${moment().toISOString()}] pointsSlice: `;
+const ln = () => `[${moment().toISOString()}] pointsSlice: `;
 
 type LoginOptions = {
     username: string;
@@ -50,17 +50,18 @@ export const PointsSlice = createSlice({
     name: "points",
     initialState,
     reducers: {
-        // setAuthToken: (state, action: PayloadAction<TokenData | undefined>) => {
-        //     console.log(`${logName()}setAuthToken: token`, action.payload);
-        //     state.token = action.payload;
-        // },
+        addPointToRequesting: (state, action: PayloadAction<PointSummary>) => {
+            state.userSummary.recent_requests.unshift(action.payload);
+            console.log(`${ln()}addPointToRequesting payload`, action.payload);
+            console.log(`${ln()}addPointToRequesting new recent point reqs`, state.userSummary.recent_requests);
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(getUserPointSummary.fulfilled, (state, action) => {
             state.userSummary = action.payload;
         });
         builder.addCase(getUserPointSummary.rejected, (state, action) => {
-            console.log(`${logName()}getUserPointSummary rejected`, action.error);
+            console.log(`${ln()}getUserPointSummary rejected`, action.error);
             // TODO hmmm
         });
     },

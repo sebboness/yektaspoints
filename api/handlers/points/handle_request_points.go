@@ -61,7 +61,7 @@ func (c *PointsController) handleRequestPoints(ctx context.Context, req *pointsH
 		return resp, err
 	}
 
-	now := util.ToFormattedUTC(time.Now())
+	now := util.ToFormatted(time.Now())
 
 	point := models.Point{
 		ID:     ksuid.New().String(),

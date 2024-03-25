@@ -1,5 +1,5 @@
 import { Api, TokenGetter } from "./Api";
-import { Point, UserPoints } from "../models/Points";
+import { Point, RequestPointsRequest, RequestPointsResponse, UserPoints } from "../models/Points";
 import { TokenData, UserData } from "../auth/Auth";
 
 import { ResultT } from "./Result";
@@ -76,5 +76,11 @@ export class MyPointsApi extends Api {
 
     public getPointSummaryByUser(userID: string): Promise<ResultT<UserPoints>> {
         return this.get(`v1/points/summary/${userID}`);
+    }
+
+    public postRequestPoints(payload: RequestPointsRequest): Promise<ResultT<RequestPointsResponse>> {
+        return this.post(`v1/points`, {
+            payload,
+        });
     }
 }

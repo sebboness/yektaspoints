@@ -37,3 +37,13 @@ export type UserPoints = {
     recent_requests: PointSummary[]
     recent_points: PointSummary[]
 };
+
+export type RequestPointsRequest = {
+    points: number;
+    reason: string;
+}
+
+export type RequestPointsResponse = {
+    point: Point;
+    point_summary: PointSummary;
+}

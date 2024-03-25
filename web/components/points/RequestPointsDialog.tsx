@@ -3,11 +3,13 @@
 import * as yup from "yup";
 
 import React, { useRef, useState } from "react";
+import pointsSlice, { PointsSlice } from "@/slices/pointsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { getTokenRetriever } from "@/store/store";
 import moment from "moment";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -50,7 +52,21 @@ const RequestPointsDialog = () => {
         setLoading(true);      
         console.log(`${ln()}submitted data`, data);
 
-        
+        const result = await api
+            .withToken(getTokenRetriever())
+            .postRequestPoints({
+                points: data.points || 0,
+                reason: data.reason,
+            })
+
+        if (result.data) {
+            if (dialogRef.current)
+                dialogRef.current.close();
+            console.log(`${ln()}request points response`, result.data);
+            dispatch(PointsSlice.actions.addPointToRequesting(result.data.point_summary));
+        } else {
+            console.log(`${ln()}error requesting points`, result);
+        }
 
         setLoading(false);
     }
