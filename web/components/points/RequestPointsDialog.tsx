@@ -14,7 +14,7 @@ import moment from "moment";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 
-const ln = () => `[${moment().toISOString()}] RequestPointsForm: `;
+const ln = () => `[${moment().toISOString()}] RequestPointsDialog: `;
 
 const formSchema = yup.object({
     points: yup.number().integer().min(0).max(1000),
@@ -42,6 +42,7 @@ const RequestPointsDialog = () => {
     const { 
         register,
         handleSubmit,
+        reset,
         watch,
         formState: { errors },
     } = useForm({
@@ -60,10 +61,9 @@ const RequestPointsDialog = () => {
             })
 
         if (result.data) {
-            if (dialogRef.current)
-                dialogRef.current.close();
             console.log(`${ln()}request points response`, result.data);
             dispatch(PointsSlice.actions.addPointToRequesting(result.data.point_summary));
+            close();
         } else {
             console.log(`${ln()}error requesting points`, result);
         }
@@ -71,9 +71,15 @@ const RequestPointsDialog = () => {
         setLoading(false);
     }
 
-    const doClose = (e: React.MouseEvent<HTMLElement>) => {
+    const close = () => {
+        reset();
+
         if (dialogRef.current)
             dialogRef.current.close();
+    }
+
+    const doClose = (e: React.MouseEvent<HTMLElement>) => {
+        close();
 
         e.preventDefault();
         return false;
