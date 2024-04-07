@@ -1,3 +1,19 @@
+export enum PointDecision {
+    APPROVE = "APPROVE",
+    DENY = "DENY",
+};
+
+export enum PointStatus {
+    SETTLED = "SETTLED",
+    WAITING = "WAITING",
+};
+
+export enum PointRequestType {
+    ADD = "ADD",
+    SUBTRACT = "SUBTRACT",
+    CASHOUT = "CASHOUT",
+};
+
 export type Point = {
     id: string
     user_id: string
@@ -7,6 +23,10 @@ export type Point = {
     created_on: string
     updated_on: string
     request: PointRequest
+}
+
+export type PointsList = {
+    points: Point[];
 }
 
 export interface PointRequest {
@@ -47,3 +67,17 @@ export type RequestPointsResponse = {
     point: Point;
     point_summary: PointSummary;
 }
+
+export const mapPointToSummary = (p: Point): PointSummary => ({
+    id: p.id,
+    parent_notes: p.request.parent_notes,
+    reason: p.request.reason,
+    points: p.points,
+    type: p.request.type,
+    updated_on: p.updated_on,
+    decided_by_user_id: p.request.decided_by_user_id,
+    decision: p.request.decision,
+});
+
+export const mapPointsToSummaries = (points: Point[]): PointSummary[] => 
+    Object.values(points).map((p => mapPointToSummary(p)));

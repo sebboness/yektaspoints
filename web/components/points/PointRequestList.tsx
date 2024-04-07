@@ -1,18 +1,18 @@
 import { ClockIcon } from "@heroicons/react/24/solid";
+import { PointSummary } from "@/lib/models/Points";
 import React from "react";
-import { UserPoints } from "@/lib/models/Points";
 import { formatDay_DDD_MMM_DD_hmm } from "@/lib/MomentUtils";
 
 type Props = {
-    sum: UserPoints;
+    points: PointSummary[];
 }
 
-const RecentRequests = (props: Props) => {
-    const { sum } = props;
+const PointRequestList = (props: Props) => {
+    const { points } = props;
 
     return (
         <div className="list-container">
-            {sum.recent_requests.map((p, i) => {
+            {points.map((p, i) => {
                 const iColor = p.points > 0
                 ? "bg-green-400 text-green-700"
                 : "bg-red-400 text-red-700";
@@ -41,4 +41,4 @@ const RecentRequests = (props: Props) => {
     )
 }
 
-export default RecentRequests;
+export default PointRequestList;

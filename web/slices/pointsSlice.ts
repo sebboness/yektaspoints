@@ -8,12 +8,23 @@ import moment from "moment";
 
 const ln = () => `[${moment().toISOString()}] pointsSlice: `;
 
-type LoginOptions = {
-    username: string;
-    password: string;
-}
+export const getUserPoints = createAsyncThunk("getUserPoints", async (userID: string, thunkApi) => {
+    const api = MyPointsApi.getInstance();
+    try {
+        const result = await api
+            .withToken(getTokenRetriever())
+            .getPointsByUser(userID);
 
-export const getUserPointSummary = createAsyncThunk("auth/login", async (userID: string, thunkApi) => {
+        if (result.data)
+            return result.data;
+        else
+            throw result;
+    } catch (err: any) {
+        throw ErrorAsResult(err);
+    }
+});
+
+export const getUserPointSummary = createAsyncThunk("getUserPointSummary", async (userID: string, thunkApi) => {
     const api = MyPointsApi.getInstance();
     try {
         const result = await api
@@ -57,6 +68,13 @@ export const PointsSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
+        builder.addCase(getUserPoints.fulfilled, (state, action) => {
+            state.userPoints = action.payload.points;
+        });
+        builder.addCase(getUserPoints.rejected, (state, action) => {
+            console.log(`${ln()}getUserPoints rejected`, action.error);
+            // TODO hmmm
+        });
         builder.addCase(getUserPointSummary.fulfilled, (state, action) => {
             state.userSummary = action.payload;
         });

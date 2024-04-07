@@ -13,8 +13,8 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Image from "next/image";
-import RecentPoints from "./RecentPoints";
-import RecentRequests from "./RecentRequests";
+import PointRequestList from "./PointRequestList";
+import PointsList from "./PointsList";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { getUserPointSummary } from "@/slices/pointsSlice";
 import moment from "moment";
@@ -141,7 +141,7 @@ const UserSummary = () => {
                         <p className="text-2xl font-bold">What I got so far</p>
 
                         {/* Recent points */}
-                        <RecentPoints sum={sum} />
+                        <PointsList points={sum.recent_points} />
                         {/* End recent points */}
 
                         <button className="btn btn-primary btn-lg mt-4">See more...</button>
@@ -153,7 +153,7 @@ const UserSummary = () => {
                         <p className="text-2xl font-bold">Waiting on points</p>
 
                         {/* Points waiting */}
-                        <RecentRequests sum={sum} />
+                        <PointRequestList points={sum.recent_requests} />
                         {/* End points waiting */}
                     </div>
                 </div>
