@@ -1,18 +1,17 @@
 "use client";
 
-import * as yup from "yup";
-
-import React, { useRef, useState } from "react";
-import pointsSlice, { PointsSlice } from "@/slices/pointsSlice";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { MyPointsApi } from "@/lib/api/MyPointsApi";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { getTokenRetriever } from "@/store/store";
 import moment from "moment";
+import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+
+import { MyPointsApi } from "@/lib/api/MyPointsApi";
+import { PointsSlice } from "@/slices/pointsSlice";
+import { useAppDispatch } from "@/store/hooks";
+import { getTokenRetriever } from "@/store/store";
 
 const ln = () => `[${moment().toISOString()}] RequestPointsDialog: `;
 
@@ -26,14 +25,14 @@ export const requestPointsDialogID = "request_points_dialog";
 type FormData = {
     points?: number;
     reason: string;
-}
+};
 
 const RequestPointsDialog = () => {
 
     const dialogRef = useRef<HTMLDialogElement>(null);
 
     const dispatch = useAppDispatch();
-    const authState = useAppSelector((state) => state.auth);
+    // const authState = useAppSelector((state) => state.auth);
     const api = MyPointsApi.getInstance();
     
     const [loading, setLoading] = useState(false);
@@ -43,7 +42,7 @@ const RequestPointsDialog = () => {
         register,
         handleSubmit,
         reset,
-        watch,
+        // watch,
         formState: { errors },
     } = useForm({
         resolver: yupResolver(formSchema)
@@ -58,7 +57,7 @@ const RequestPointsDialog = () => {
             .postRequestPoints({
                 points: data.points || 0,
                 reason: data.reason,
-            })
+            });
 
         if (result.data) {
             console.log(`${ln()}request points response`, result.data);
@@ -69,21 +68,21 @@ const RequestPointsDialog = () => {
         }
 
         setLoading(false);
-    }
+    };
 
     const close = () => {
         reset();
 
         if (dialogRef.current)
             dialogRef.current.close();
-    }
+    };
 
     const doClose = (e: React.MouseEvent<HTMLElement>) => {
         close();
 
         e.preventDefault();
         return false;
-    }
+    };
 
     return (
         <dialog id={requestPointsDialogID} className="modal" ref={dialogRef}>
@@ -95,7 +94,7 @@ const RequestPointsDialog = () => {
                     <div className="form-control">
                         <input type="text" placeholder="Points" className="input input-bordered" { ...register("points")} />
                         <label className={`label ${errors.points ? "visible" : "invisible"}`}>
-                            <a href="#" className="label-text-alt link link-hover text-red-600">Enter some points (for example "5")</a>
+                            <a href="#" className="label-text-alt link link-hover text-red-600">Enter some points (for example 5)</a>
                         </label>
                     </div>
 
@@ -119,6 +118,6 @@ const RequestPointsDialog = () => {
             </div>
         </dialog>
     );
-}
+};
 
 export default RequestPointsDialog;

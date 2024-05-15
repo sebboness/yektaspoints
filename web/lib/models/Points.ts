@@ -23,11 +23,11 @@ export type Point = {
     created_on: string
     updated_on: string
     request: PointRequest
-}
+};
 
 export type PointsList = {
     points: Point[];
-}
+};
 
 export interface PointRequest {
     decided_by_user_id?: string
@@ -61,12 +61,12 @@ export type UserPoints = {
 export type RequestPointsRequest = {
     points: number;
     reason: string;
-}
+};
 
 export type RequestPointsResponse = {
     point: Point;
     point_summary: PointSummary;
-}
+};
 
 export const mapPointToSummary = (p: Point): PointSummary => ({
     id: p.id,

@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-
 import Link from "next/link";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
-import { useAppSelector } from "@/store/hooks";
 
 type Kid = {
     id: string;
@@ -16,11 +14,13 @@ const initialKids: Kid[] = [
         id: "123",
         name: "Yekta",
     },
-]
+];
 
 const KidsList = () => {
-    const user = useAppSelector((state) => state.auth.user);
+    // const user = useAppSelector((state) => state.auth.user);
     const [kids, setKids] = useState(initialKids);
+
+    console.log("setKids", setKids);
 
     return (
         <div className="list-container">
@@ -36,6 +36,6 @@ const KidsList = () => {
             )}
         </div>
     );
-}
+};
 
 export default KidsList;

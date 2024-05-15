@@ -1,10 +1,9 @@
-import { RequestCookies, ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies";
-import { TokenData, UserData } from "./Auth";
-
+import { RequestCookies } from "next/dist/compiled/@edge-runtime/cookies";
 import { NextResponse } from "next/server";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
-import { cookies } from "next/headers";
 import moment from "moment";
+
+import { TokenData, UserData } from "./Auth";
 
 const ln = () => `[${moment().toISOString()}] AuthCookie: `;
 

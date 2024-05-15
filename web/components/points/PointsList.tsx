@@ -1,12 +1,12 @@
-import { ArrowDownRightIcon, ArrowUpRightIcon } from "@heroicons/react/24/solid";
-import { PointSummary, UserPoints } from "@/lib/models/Points";
-
 import React from "react";
+import { ArrowDownRightIcon, ArrowUpRightIcon } from "@heroicons/react/24/solid";
+
+import { PointSummary } from "@/lib/models/Points";
 import { formatDay_DDD_MMM_DD_hmm } from "@/lib/MomentUtils";
 
 type Props = {
     points: PointSummary[];
-}
+};
 
 const PointsList = (props: Props) => {
     const { points } = props;
@@ -15,8 +15,8 @@ const PointsList = (props: Props) => {
         <div className="list-container">
             {points.map((p, i) => {
                 const iColor = p.points > 0
-                ? "bg-green-400 text-green-700"
-                : "bg-red-400 text-red-700";
+                    ? "bg-green-400 text-green-700"
+                    : "bg-red-400 text-red-700";
 
                 const pColor = p.points > 0
                     ? "bg-green-500 text-green-100"
@@ -41,7 +41,7 @@ const PointsList = (props: Props) => {
                 </div>;
             })}
         </div>
-    )
-}
+    );
+};
 
 export default PointsList;

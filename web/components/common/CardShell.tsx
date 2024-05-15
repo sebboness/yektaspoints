@@ -6,6 +6,6 @@ const CardShell = ({ children }: { children: React.ReactNode; }) => {
             {children}
         </div>
     );
-}
+};
 
 export default CardShell;

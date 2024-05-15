@@ -1,19 +1,10 @@
-import { TokenDataElId, UserDataElId } from "@/lib/auth/Auth";
-
 import React from "react";
-import { Roles } from "@/lib/auth/Roles";
-import _ from "lodash";
-import authCookie from "@/lib/auth/AuthCookie";
 import { cookies } from "next/headers";
-import moment from "moment";
 
-const logName = () => `[${moment().toISOString()}] AuthChecker: `;
+import { TokenDataElId, UserDataElId } from "@/lib/auth/Auth";
+import authCookie from "@/lib/auth/AuthCookie";
 
-type Props = {
-    roles?: Roles[];
-};
-
-export const AuthChecker = async (props: Props) => {
+export const AuthChecker = async () => {
 
     const tokenData = authCookie.getTokenData(cookies());
     const userData = authCookie.getUserData(cookies());
