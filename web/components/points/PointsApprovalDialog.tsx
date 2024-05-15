@@ -2,16 +2,16 @@
 
 import * as yup from "yup";
 
-import pointsSlice, { PointsSlice } from "@/slices/pointsSlice";
 import React, { useRef, useState } from "react";
+import pointsSlice, { PointsSlice } from "@/slices/pointsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { getTokenRetriever } from "@/store/store";
-import moment from "moment";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { Point } from "@/lib/models/Points";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { getTokenRetriever } from "@/store/store";
+import moment from "moment";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 
@@ -106,7 +106,7 @@ const PointsApprovalDialog = (props: Props) => {
                     </div>
 
                     <div>
-                        <form method="dialog" onSubmit={handleSubmit(onSubmit)}>
+                        {/* <form method="dialog" onSubmit={handleSubmit(onSubmit)}>
                             <input type="hidden" { ...register("pointId")} value={props.point.id}/>
                             <input type="hidden" { ...register("decision")} value={decision}/>
                             <div className="form-control">
@@ -125,7 +125,7 @@ const PointsApprovalDialog = (props: Props) => {
                                     </>
                                     : <>Loading...</>}
                             </div>
-                        </form>
+                        </form> */}
                     </div>
                 </div>
             </div>
