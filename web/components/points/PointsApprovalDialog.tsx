@@ -1,21 +1,20 @@
 "use client";
 
-import * as yup from "yup";
-
-import pointsSlice, { PointsSlice } from "@/slices/pointsSlice";
-import React, { useRef, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { getTokenRetriever } from "@/store/store";
-import moment from "moment";
-import { MyPointsApi } from "@/lib/api/MyPointsApi";
-import { Point } from "@/lib/models/Points";
+// import moment from "moment";
+import React, { useRef } from "react";
 import { useForm } from "react-hook-form";
+import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 
-const ln = () => `[${moment().toISOString()}] PointsApprovalDialog: `;
+// import pointsSlice, { PointsSlice } from "@/slices/pointsSlice";
+// import { useAppDispatch } from "@/store/hooks";
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import { MyPointsApi } from "@/lib/api/MyPointsApi";
+// import { Point } from "@/lib/models/Points";
+// import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+// import { getTokenRetriever } from "@/store/store";
+
+// const ln = () => `[${moment().toISOString()}] PointsApprovalDialog: `;
 
 const formSchema = yup.object({
     points: yup.number().integer().min(0).max(1000),
@@ -24,73 +23,73 @@ const formSchema = yup.object({
 
 export const requestPointsDialogID = "request_points_dialog";
 
-type Props = {
-    point: Point
-}
+// type Props = {
+//     point: Point
+// };
 
-type FormData = {
-    pointId: string;
-    decision: string;
-    notes?: string;
-}
+// type FormData = {
+//     pointId: string;
+//     decision: string;
+//     notes?: string;
+// };
 
-const PointsApprovalDialog = (props: Props) => {
+const PointsApprovalDialog = () => {
 
     const dialogRef = useRef<HTMLDialogElement>(null);
 
-    const dispatch = useAppDispatch();
-    const authState = useAppSelector((state) => state.auth);
-    const api = MyPointsApi.getInstance();
+    // const dispatch = useAppDispatch();
+    // const authState = useAppSelector((state) => state.auth);
+    // const api = MyPointsApi.getInstance();
     
-    const [loading, setLoading] = useState(false);
-    const [decision, setDecision] = useState("");
+    // const [loading, setLoading] = useState(false);
+    // const [decision, setDecision] = useState("");
 
     // Setup form validation variables and methods
     const { 
-        register,
-        handleSubmit,
+        // register,
+        // handleSubmit,
         reset,
-        watch,
-        formState: { errors },
+        // watch,
+        // formState: { errors },
     } = useForm({
         resolver: yupResolver(formSchema)
     });
 
-    const onSubmit = async (data: FormData) => {  
-        setLoading(true);      
-        console.log(`${ln()}submitted data`, data);
+    // const onSubmit = async (data: FormData) => {  
+    // setLoading(true);      
+    // console.log(`${ln()}submitted data`, data);
 
-        // const result = await api
-        //     .withToken(getTokenRetriever())
-        //     .postRequestPoints({
-        //         points: data.points || 0,
-        //         notes: data.notes,
-        //     })
+    // const result = await api
+    //     .withToken(getTokenRetriever())
+    //     .postRequestPoints({
+    //         points: data.points || 0,
+    //         notes: data.notes,
+    //     })
 
-        // if (result.data) {
-        //     console.log(`${ln()}approve/deny point request`, result.data);
-        //     dispatch(PointsSlice.actions.addPointToRequesting(result.data.point_summary));
-        //     close();
-        // } else {
-        //     console.log(`${ln()}error approve/deny point request`, result);
-        // }
+    // if (result.data) {
+    //     console.log(`${ln()}approve/deny point request`, result.data);
+    //     dispatch(PointsSlice.actions.addPointToRequesting(result.data.point_summary));
+    //     close();
+    // } else {
+    //     console.log(`${ln()}error approve/deny point request`, result);
+    // }
 
-        setLoading(false);
-    }
+    // setLoading(false);
+    // };
 
     const close = () => {
         reset();
 
         if (dialogRef.current)
             dialogRef.current.close();
-    }
+    };
 
     const doClose = (e: React.MouseEvent<HTMLElement>) => {
         close();
 
         e.preventDefault();
         return false;
-    }
+    };
 
     return (
         <dialog id={requestPointsDialogID} className="modal" ref={dialogRef}>
@@ -106,7 +105,7 @@ const PointsApprovalDialog = (props: Props) => {
                     </div>
 
                     <div>
-                        <form method="dialog" onSubmit={handleSubmit(onSubmit)}>
+                        {/* <form method="dialog" onSubmit={handleSubmit(onSubmit)}>
                             <input type="hidden" { ...register("pointId")} value={props.point.id}/>
                             <input type="hidden" { ...register("decision")} value={decision}/>
                             <div className="form-control">
@@ -125,12 +124,12 @@ const PointsApprovalDialog = (props: Props) => {
                                     </>
                                     : <>Loading...</>}
                             </div>
-                        </form>
+                        </form> */}
                     </div>
                 </div>
             </div>
         </dialog>
     );
-}
+};
 
 export default PointsApprovalDialog;

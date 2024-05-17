@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useAppSelector  } from "@/store/hooks";
-import { Roles } from "@/lib/auth/Roles";
-import { useRouter } from "next/navigation";
+import React from "react";
+
+import { useAppSelector } from "@/store/hooks";
 
 const Greeter = () => {
 
@@ -31,6 +30,6 @@ const Greeter = () => {
         {/* <p>{displayTxt}</p> */}
         <p>{JSON.stringify(user)}</p>
     </>);
-}
+};
 
-export default Greeter
+export default Greeter;

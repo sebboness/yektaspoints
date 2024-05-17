@@ -1,6 +1,6 @@
-import { NewErrorResult, NewSuccessResult } from "@/lib/api/Result";
 import { NextRequest, NextResponse } from "next/server";
 
+import { NewErrorResult, NewSuccessResult } from "@/lib/api/Result";
 import { AuthCookieBody } from "@/lib/auth/Auth";
 import { HttpStatus } from "@/lib/HttpStatusCodes";
 import authCookie from "@/lib/auth/AuthCookie";
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     const body: AuthCookieBody = {
         token: tokenData,
         user: userData,
-    }
+    };
 
     return NextResponse.json(NewSuccessResult(body), { status: 200 });
 }
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-    let response = NextResponse.json(NewSuccessResult(true), {
+    const response = NextResponse.json(NewSuccessResult(true), {
         status: HttpStatus.OK,
         statusText: "Auth cookie deleted successfully",
     });

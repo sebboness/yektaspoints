@@ -1,5 +1,10 @@
 "use client";
 
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, { useEffect, useState } from "react";
+import moment from "moment";
+import Image from "next/image";
 import {
     CircleStackIcon,
     CurrencyDollarIcon,
@@ -7,17 +12,13 @@ import {
     LightBulbIcon,
     SparklesIcon,
 } from "@heroicons/react/24/solid";
-import React, { useEffect, useState } from "react";
-import RequestPointsDialog, { requestPointsDialogID } from "./RequestPointsDialog";
+
+import { getUserPointSummary } from "@/slices/pointsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import Image from "next/image";
+import RequestPointsDialog, { requestPointsDialogID } from "./RequestPointsDialog";
 import PointRequestList from "./PointRequestList";
 import PointsList from "./PointsList";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { getUserPointSummary } from "@/slices/pointsSlice";
-import moment from "moment";
 
 const ln = () => `[${moment().toISOString()}] UserSummary: `;
 
@@ -40,7 +41,7 @@ const UserSummary = () => {
 
         e.preventDefault();
         return false;
-    }
+    };
 
     useEffect(() => {
         if (userID) {
@@ -107,14 +108,14 @@ const UserSummary = () => {
                                     </div>
                                 </div>
                                 : <div className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
-                                <div className="flex flex-row items-center space-x-4">
-                                    <SparklesIcon className=" bg-gray-900 text-yellow-200 rounded-full p-2 h-12 w-12 " />
-                                    <div>
-                                        <p className="text-lg md:text-2xl">You lost {pointsLostDisplay} this week, but don't worry!</p>
-                                        <p className="">You can earn more with good behavior and good grades.</p>
+                                    <div className="flex flex-row items-center space-x-4">
+                                        <SparklesIcon className=" bg-gray-900 text-yellow-200 rounded-full p-2 h-12 w-12 " />
+                                        <div>
+                                            <p className="text-lg md:text-2xl">You lost {pointsLostDisplay} this week, but no need to worry!</p>
+                                            <p className="">You can earn more with good behavior and good grades.</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>}
+                                </div>}
                         </div>
                         {/* End Info items */}
                     </div>
@@ -162,6 +163,6 @@ const UserSummary = () => {
             <RequestPointsDialog />
         </div>
     );
-}
+};
 
 export default UserSummary;

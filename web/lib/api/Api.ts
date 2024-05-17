@@ -1,6 +1,6 @@
-import { NewErrorResultT, Result, ResultT } from "./Result";
-
 import moment from "moment";
+
+import { NewErrorResultT, ResultT } from "./Result";
 
 export type QueryParams = {[key: string]: string[]} | undefined;
 
@@ -38,7 +38,7 @@ export class Api {
             for (const [k, v] of Object.entries(queryParams)) {
                 const key = encodeURIComponent(k);
                 const val = encodeURIComponent(v.join(","));
-                parts.push(`${key}=${val}`)
+                parts.push(`${key}=${val}`);
             }
             queryString = "?" + parts.join("&");
         }
@@ -97,10 +97,10 @@ export class Api {
                             }
                             else
                                 resolve(NewErrorResultT(`Unexpected response: ${JSON.stringify(obj)}`, undefined, resp.status));
-                        })
+                        });
                     
                 })
-                .catch((err: any) => {
+                .catch((err) => {
                     console.error(`${this.logName()}caught an error:`, err);
                     console.error(`${this.logName()}typeof error:`, typeof err);
                     if (err && err.errors)

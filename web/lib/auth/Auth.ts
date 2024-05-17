@@ -1,5 +1,6 @@
-import { Roles } from "./Roles";
 import { jwtDecode } from "jwt-decode";
+
+import { Roles } from "./Roles";
 
 export const TokenDataElId = "__mp.td__";
 export const UserDataElId = "__mp.ud__";
@@ -11,7 +12,7 @@ export type TokenData = {
     expires_in: number;
     new_password_required: boolean;
     session: string;
-}
+};
 
 export type UserData = {
     email: string;
@@ -27,9 +28,9 @@ export type UserData = {
 export type AuthCookieBody = {
     token: TokenData;
     user: UserData;
-}
+};
 
-type JwtData = {[key: string]: any};
+type JwtData = {[key: string]: never};
 
 /**
  * Parses the given token and returns user data
@@ -54,4 +55,4 @@ export const ParseToken = (token: string): UserData | undefined => {
     }
 
     return undefined;
-}
+};

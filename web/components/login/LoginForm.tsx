@@ -1,18 +1,17 @@
 "use client";
 
-import * as yup from "yup";
-
-import { AuthSlice, getSimpleTokenRetriever, setAuthCookie } from "@/slices/authSlice";
-import React, { useEffect, useState } from "react"
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { MyPointsApi } from "@/lib/api/MyPointsApi";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import * as yup from "yup";
 import moment from "moment";
 import { useForm } from "react-hook-form";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
+
+import { MyPointsApi } from "@/lib/api/MyPointsApi";
+import { AuthSlice, getSimpleTokenRetriever, setAuthCookie } from "@/slices/authSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 const ln = () => `[${moment().toISOString()}] LoginForm: `;
 
@@ -24,11 +23,9 @@ const formSchema = yup.object({
 export type LoginFormData = {
     username?: string;
     password?: string;
-}
+};
 
-type Props = {}
-
-const LoginForm = (props: Props) => {
+const LoginForm = () => {
 
     // router/nav stuff
     const router = useRouter();
@@ -42,11 +39,13 @@ const LoginForm = (props: Props) => {
     const [loading, setLoading] = useState(false);
     const [preparing, setPreparing] = useState(false);
 
+    console.log("preparing", preparing);
+
     // Setup form validation variables and methods
     const { 
         register,
         handleSubmit,
-        watch,
+        // watch,
         formState: { errors },
     } = useForm({
         resolver: yupResolver(formSchema)
@@ -83,7 +82,7 @@ const LoginForm = (props: Props) => {
         console.log(`${ln()}login error`, authResult);
         setLoading(false);
         setPreparing(false);
-    }
+    };
 
     useEffect(() => {
         console.log(`${ln()}authCookieSet? ${authState.authCookieSet}`);
@@ -121,9 +120,9 @@ const LoginForm = (props: Props) => {
                 </button>
             </div>
         </form>
-    )
-}
+    );
+};
 
-LoginForm.propTypes = {}
+LoginForm.propTypes = {};
 
-export default LoginForm
+export default LoginForm;

@@ -1,7 +1,6 @@
 import { Api, TokenGetter } from "./Api";
-import { Point, PointsList, RequestPointsRequest, RequestPointsResponse, UserPoints } from "../models/Points";
+import { PointsList, RequestPointsRequest, RequestPointsResponse, UserPoints } from "../models/Points";
 import { TokenData, UserData } from "../auth/Auth";
-
 import { ResultT } from "./Result";
 
 // Define base URIs for different environments
@@ -10,7 +9,7 @@ const baseUris: {[key: string]: string} = {
     "local":   "https://mypoints-api-dev.hexonite.net",
     "dev":     "https://mypoints-api-dev.hexonite.net",
     "staging": "https://mypoints-api-staging.hexonite.net",
-    "prod":    "https://mypoints-api.hexonite.net",
+    "prod":    "https://api.points4us.com",
 };
 
 export class MyPointsApi extends Api {
@@ -20,6 +19,7 @@ export class MyPointsApi extends Api {
         const baseUri = baseUris[env];
         super(baseUri);
         console.info(`${this.logName()}Using ${env}:${baseUri} version of api`);
+        console.info(`${this.logName()}process.env`, process.env);
     }
 
     public static getInstance(): MyPointsApi {
@@ -79,7 +79,7 @@ export class MyPointsApi extends Api {
     }
 
     public postRequestPoints(payload: RequestPointsRequest): Promise<ResultT<RequestPointsResponse>> {
-        return this.post(`v1/points`, {
+        return this.post("v1/points", {
             payload,
         });
     }

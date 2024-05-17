@@ -2,6 +2,7 @@ import "../styles/globals.css";
 
 import { Inter } from "next/font/google";
 import type { Metadata } from "next";
+
 import { Providers } from "./provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -49,7 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                         {children}
                     </Providers>
                 </main>
-                <script src="https://kit.fontawesome.com/67e614e582.js" crossOrigin="anonymous"></script>
+                <script src="https://kit.fontawesome.com/67e614e582.js" crossOrigin="anonymous" async></script>
             </body>
         </html>
     );

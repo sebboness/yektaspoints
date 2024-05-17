@@ -1,7 +1,9 @@
+import { Suspense } from "react";
+import Image from "next/image";
+
 import LoginForm from "@/components/login/LoginForm";
 // import { redirect, useRouter } from "next/navigation";
 // import { useAppSelector } from "@/store/hooks";
-import Image from "next/image";
 
 export default function LoginPage() {    
     
@@ -35,7 +37,9 @@ export default function LoginPage() {
                             {/* Hello there! :) */}
                         </h1>
 
-                        <LoginForm />
+                        <Suspense>
+                            <LoginForm />
+                        </Suspense>
                     </div>
                 </div>
             </div>

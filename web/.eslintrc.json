@@ -11,6 +11,7 @@
     "react-hooks"
   ],
   "root": true,
+  "ignorePatterns": ["**/amplify/*"],
   "rules": {
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
@@ -35,6 +36,7 @@
     "no-multi-spaces": ["error"],
     "semi": "off",
     "@typescript-eslint/semi": "error",
-    "@typescript-eslint/typedef": "off"
+    "@typescript-eslint/typedef": "off",
+    "@typescript-eslint/no-explicit-any": "off"
   }
 }

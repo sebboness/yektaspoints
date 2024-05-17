@@ -1,7 +1,8 @@
+import React from "react";
+
 import { AuthWrapper } from "@/components/AuthWrapper";
 import CardSingleBody from "@/components/common/CardSingleBody";
 import KidsList from "@/components/family/KidsList";
-import React from "react";
 
 export default async function Family() {
 

@@ -1,30 +1,21 @@
 "use client";
 
-import {
-    CircleStackIcon,
-    CurrencyDollarIcon,
-    HandThumbUpIcon,
-    LightBulbIcon,
-    SparklesIcon,
-} from "@heroicons/react/24/solid";
-import { PointRequestType, PointStatus, mapPointsToSummaries } from "@/lib/models/Points";
 import React, { useEffect, useState } from "react";
-import { getUserPointSummary, getUserPoints } from "@/slices/pointsSlice";
+import moment from "moment";
+
+import { mapPointsToSummaries, PointRequestType, PointStatus } from "@/lib/models/Points";
+import { getUserPoints } from "@/slices/pointsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 import CashoutList from "../points/CashoutList";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import Image from "next/image";
 import PointRequestList from "../points/PointRequestList";
 import PointsList from "../points/PointsList";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import moment from "moment";
 
 const ln = () => `[${moment().toISOString()}] ChildsPoints: `;
 
 type Props = {
     childUserId: string,
-}
+};
 
 const ChildsPoints = (props: Props) => {
     
@@ -54,7 +45,7 @@ const ChildsPoints = (props: Props) => {
             <div className="container mx-auto col-span-3">
                 <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 border border-zinc-500 mb-8">
                     <div className="card-body">
-                        <p className="text-2xl font-bold">Child's points</p>
+                        <p className="text-2xl font-bold">Child&apos;s points</p>
 
                         <PointsList points={mapPointsToSummaries(settledPoints)} />
                     </div>
@@ -65,7 +56,7 @@ const ChildsPoints = (props: Props) => {
             <div className="container mx-auto col-span-2">
                 <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 mb-16 border border-zinc-500">
                     <div className="card-body">
-                        <p className="text-2xl font-bold">Child's requests</p>
+                        <p className="text-2xl font-bold">Child&apos;s requests</p>
 
                         <PointRequestList points={mapPointsToSummaries(requestedPoints)} />
                     </div>
@@ -73,7 +64,7 @@ const ChildsPoints = (props: Props) => {
 
                 <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 border border-zinc-500">
                     <div className="card-body">
-                        <p className="text-2xl font-bold">Child's cashout history</p>
+                        <p className="text-2xl font-bold">Child&apos;s cashout history</p>
 
                         <CashoutList points={mapPointsToSummaries(cashouts)} />
                     </div>
@@ -81,6 +72,6 @@ const ChildsPoints = (props: Props) => {
             </div>
         </>
     );
-}
+};
 
 export default ChildsPoints;

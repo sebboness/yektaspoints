@@ -13,7 +13,7 @@ type Props = {
 
 export const Some = async () => {
     return (<></>);
-}
+};
 
 export const AuthWrapper = ({ children }: Props) => {
     // // const store = useAppStore();

@@ -8,6 +8,6 @@ const CardSingleBody = ({ children }: { children: React.ReactNode; }) => {
             </div>
         </div>
     );
-}
+};
 
 export default CardSingleBody;
