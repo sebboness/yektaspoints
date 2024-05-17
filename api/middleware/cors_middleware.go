@@ -6,10 +6,15 @@ import (
 )
 
 var allowList = map[string]bool{
-	"http://localhost:3000":                 true,
-	"https://mypoints.hexonite.net":         true,
-	"https://mypoints-dev.hexonite.net":     true,
-	"https://mypoints-staging.hexonite.net": true,
+	"http://localhost:3000":                     true,
+	"https://mypoints.hexonite.net":             true,
+	"https://mypoints-dev.hexonite.net":         true,
+	"https://mypoints-staging.hexonite.net":     true,
+	"https://points4us.com":                     true,
+	"https://www.mypoints.hexonite.net":         true,
+	"https://www.mypoints-dev.hexonite.net":     true,
+	"https://www.mypoints-staging.hexonite.net": true,
+	"https://www.points4us.com":                 true,
 }
 
 func CORSMiddleware() gin.HandlerFunc {
