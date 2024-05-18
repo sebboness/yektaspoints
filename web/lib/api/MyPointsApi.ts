@@ -19,7 +19,6 @@ export class MyPointsApi extends Api {
         const baseUri = baseUris[env];
         super(baseUri);
         console.info(`${this.logName()}Using ${env}:${baseUri} version of api`);
-        console.info(`${this.logName()}process.env`, process.env);
         console.info(`${this.logName()}process.env.ENV`, process.env.ENV);
         console.info(`${this.logName()}process.env.NEXT_PUBLIC_ENV`, process.env.NEXT_PUBLIC_ENV);
         console.info(`${this.logName()}process.env.NEXT_PUBLIC_ABC`, process.env.NEXT_PUBLIC_ABC);

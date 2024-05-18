@@ -26,6 +26,8 @@ export type LoginFormData = {
 };
 
 const LoginForm = () => {
+    
+    const [mounted, setMounted] = useState(false);
 
     // router/nav stuff
     const router = useRouter();
@@ -97,6 +99,17 @@ const LoginForm = () => {
             router.push(returnUrl);
         }
     }, [authState.authCookieSet]);
+
+    // The following 7 lines are needed to avoid Suspense related errors:
+    // "There was an error while hydrating this Suspense boundary"
+    // This must appear after all hooks are declared, so right above return
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return null;
+    }
 
     return (
         <form className="grid grid-cols-1 gap-y-4" onSubmit={handleSubmit(onSubmit)}>
