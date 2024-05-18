@@ -1,7 +1,7 @@
 import { Api, TokenGetter } from "./Api";
-import { PointsList, RequestPointsRequest, RequestPointsResponse, UserPoints } from "../models/Points";
-import { TokenData, UserData } from "../auth/Auth";
 import { ResultT } from "./Result";
+import { TokenData, UserData } from "../auth/Auth";
+import { PointsList, RequestPointsRequest, RequestPointsResponse, UserPoints } from "../models/Points";
 
 // Define base URIs for different environments
 const baseUris: {[key: string]: string} = {
@@ -20,11 +20,14 @@ export class MyPointsApi extends Api {
         super(baseUri);
         console.info(`${this.logName()}Using ${env}:${baseUri} version of api`);
         console.info(`${this.logName()}process.env`, process.env);
+        console.info(`${this.logName()}process.env.ENV`, process.env.ENV);
+        console.info(`${this.logName()}process.env.NEXT_PUBLIC_ENV`, process.env.NEXT_PUBLIC_ENV);
+        console.info(`${this.logName()}process.env.NEXT_PUBLIC_ABC`, process.env.NEXT_PUBLIC_ABC);
     }
 
     public static getInstance(): MyPointsApi {
         if (!MyPointsApi.instance) {
-            MyPointsApi.instance = new MyPointsApi(process.env["ENV"] || "local");
+            MyPointsApi.instance = new MyPointsApi(process.env.NEXT_PUBLIC_ENV || "local");
         }
         return MyPointsApi.instance;
     }

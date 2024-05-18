@@ -16,7 +16,7 @@ class AuthCookie {
     }
 
     deleteAll(res: NextResponse, domain: string): NextResponse {
-        const env = process.env["ENV"];
+        const env = process.env.ENV;
 
         // cookie settings
         const secure = env == "local" ? false : true;
@@ -69,7 +69,7 @@ class AuthCookie {
         const refreshToken = tokenData.refresh_token;
         tokenData.refresh_token = "";
         const tokenJson = JSON.stringify(tokenData);
-        const env = process.env["ENV"];
+        const env = process.env.ENV;
 
         // cookie settings
         const maxAge = 60*60*24*30;// 30 days
@@ -106,7 +106,7 @@ class AuthCookie {
 
     setUserData(res: NextResponse, domain: string, userData: UserData) {
         const userJson = JSON.stringify(userData);
-        const env = process.env["ENV"];
+        const env = process.env.ENV;
 
         // cookie settings
         const maxAge = 60*60*24*30;// 30 days
