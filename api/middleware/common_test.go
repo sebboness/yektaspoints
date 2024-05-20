@@ -17,6 +17,10 @@ func testMiddlewareRequest(t *testing.T, r *gin.Engine, expectedHTTPCode int) {
 	})
 }
 
+func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, recorder func(w *httptest.ResponseRecorder) bool) {
+	panic("unimplemented")
+}
+
 // Sets auth info for use in tests
 func setAuthInfoForTest(authInfo handlers.AuthorizerInfo) gin.HandlerFunc {
 	return func(c *gin.Context) {
