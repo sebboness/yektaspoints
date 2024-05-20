@@ -13,7 +13,7 @@ import (
 type ctxKey string
 
 const (
-	ctxKeyAuthInfo ctxKey = "api:auth"
+	CtxKeyAuthInfo ctxKey = "api:auth"
 
 	claimKeyUserID        = "sub"
 	claimKeyUsername      = "cognito:username"
@@ -40,13 +40,13 @@ func PrepareAuthorizedContext(ctx context.Context, req events.APIGatewayProxyReq
 		// logger.Infof("PrepareAuthorizedContext B")
 	}
 
-	return context.WithValue(ctx, ctxKeyAuthInfo, authorizer)
+	return context.WithValue(ctx, CtxKeyAuthInfo, authorizer)
 }
 
 func GetAuthorizerInfo(c *gin.Context) AuthorizerInfo {
 	if c.Request != nil {
 		ctx := c.Request.Context()
-		info := ctx.Value(ctxKeyAuthInfo)
+		info := ctx.Value(CtxKeyAuthInfo)
 
 		authInfoJson, _ := json.Marshal(info)
 		logger.Infof("GetAuthorizerInfo authInfo?: " + string(authInfoJson))

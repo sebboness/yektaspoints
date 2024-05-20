@@ -56,8 +56,8 @@ func Test_PrepareAuthorizedContext(t *testing.T) {
 			}
 
 			ctx = PrepareAuthorizedContext(ctx, evt)
-			assert.NotNil(t, ctx.Value(ctxKeyAuthInfo))
-			assert.IsType(t, AuthorizerInfo{}, ctx.Value(ctxKeyAuthInfo))
+			assert.NotNil(t, ctx.Value(CtxKeyAuthInfo))
+			assert.IsType(t, AuthorizerInfo{}, ctx.Value(CtxKeyAuthInfo))
 		})
 	}
 }
@@ -86,7 +86,7 @@ func Test_GetAuthorizerInfo(t *testing.T) {
 			ctx := context.Background()
 
 			if c.state.setupCtxWithInfo {
-				ctx = context.WithValue(ctx, ctxKeyAuthInfo, AuthorizerInfo{
+				ctx = context.WithValue(ctx, CtxKeyAuthInfo, AuthorizerInfo{
 					Claims: map[string]any{
 						"sub": "123",
 					},
