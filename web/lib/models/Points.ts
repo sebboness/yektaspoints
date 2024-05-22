@@ -1,7 +1,5 @@
-export enum PointDecision {
-    APPROVE = "APPROVE",
-    DENY = "DENY",
-};
+export const PointDecisionApprove = "APPROVE";
+export const PointDecisionDeny = "DENY";
 
 export enum PointStatus {
     SETTLED = "SETTLED",
@@ -60,7 +58,7 @@ export type UserPoints = {
 
 export type ApprovePointsRequest = {
     point_id: string
-    decision: PointDecision | null
+    decision: string
     parent_notes: string | null
 };
 

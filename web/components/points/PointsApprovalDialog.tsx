@@ -10,19 +10,19 @@ import pointsSlice, { PointsSlice } from "@/slices/pointsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
-import { Point, PointDecision } from "@/lib/models/Points";
+import { Point, PointDecisionApprove, PointDecisionDeny } from "@/lib/models/Points";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { getTokenRetriever } from "@/store/store";
 
 const ln = () => `[${moment().toISOString()}] PointsApprovalDialog: `;
 
 const formSchema = yup.object({
-    decision: yup.string().nullable().oneOf([PointDecision.APPROVE.toString(), PointDecision.DENY.toString()]),
+    decision: yup.string().nullable().oneOf([PointDecisionApprove, PointDecisionDeny]),
     point_id: yup.string().required().min(0).max(1000),
     parent_notes: yup.string().required().min(5).max(256),
 });
 
-export const requestPointsDialogID = "request_points_dialog";
+export const approvePointsRequestDialogID = "approve_points_request_dialog";
 
 type Props = {
     point: Point
@@ -30,7 +30,7 @@ type Props = {
 
 type FormData = {
     point_id: string;
-    decision: PointDecision | null;
+    decision?: string | null;
     parent_notes: string | null;
 };
 
@@ -43,7 +43,7 @@ const PointsApprovalDialog = (props: Props) => {
     const api = MyPointsApi.getInstance();
     
     const [loading, setLoading] = useState(false);
-    const [decision, setDecision] = useState();
+    const [decision, setDecision] = useState("");
 
     // Setup form validation variables and methods
     const { 
@@ -63,10 +63,10 @@ const PointsApprovalDialog = (props: Props) => {
         const result = await api
             .withToken(getTokenRetriever())
             .approveRequestPoints({
-                decision: data.decision,
+                decision: data.decision || "",
                 parent_notes: data.parent_notes,
                 point_id: props.point.id,
-            })
+            });
 
         if (result.status === "SUCCESS") {
             console.log(`${ln()}approve/deny point request`, result);
@@ -94,7 +94,7 @@ const PointsApprovalDialog = (props: Props) => {
     };
 
     return (
-        <dialog id={requestPointsDialogID} className="modal" ref={dialogRef}>
+        <dialog id={approvePointsRequestDialogID} className="modal" ref={dialogRef}>
             <div className="modal-box bg-gradient-135 from-pink-200 to-lime-100 border border-zinc-500">
                 <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={doClose}>✕</button>
                 
@@ -120,8 +120,14 @@ const PointsApprovalDialog = (props: Props) => {
                             <div className="modal-action">
                                 {loading
                                     ? <>
-                                        <button className={`btn btn-primary ${loading ? "btn-disabled" : ""}`} onClick={setDecision(PointDecision.APPROVE)}>Approve</button>
-                                        <button className={`btn btn-primary ${loading ? "btn-disabled" : ""}`} onClick={setDecision(PointDecision.DENY)}>Deny</button>
+                                        <button
+                                            className={`btn btn-primary ${loading ? "btn-disabled" : ""}`}
+                                            onClick={() => setDecision(PointDecisionApprove)}
+                                        >Approve</button>
+                                        <button
+                                            className={`btn btn-primary ${loading ? "btn-disabled" : ""}`}
+                                            onClick={() => setDecision(PointDecisionDeny)}
+                                        >Deny</button>
                                         <a className="btn btn-secondary" onClick={doClose}>Cancel</a>
                                     </>
                                     : <>Loading...</>}

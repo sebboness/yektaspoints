@@ -1,7 +1,7 @@
 "use client";
 
 import moment from "moment";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -27,9 +27,20 @@ type FormData = {
     reason: string;
 };
 
-const RequestPointsDialog = () => {
+export interface RequestPointsDialogInterface {
+    open(): void;
+}
+
+const RequestPointsDialog = React.forwardRef((props, ref) => {
+
+    const [mounted, setMounted] = useState(false);
 
     const dialogRef = useRef<HTMLDialogElement>(null);
+
+    useImperativeHandle(ref, () => ({
+        close: () => close(),
+        open: () => open(),
+    }));
 
     const dispatch = useAppDispatch();
     const api = MyPointsApi.getInstance();
@@ -69,6 +80,7 @@ const RequestPointsDialog = () => {
     };
 
     const close = () => {
+        console.log("close");
         reset();
 
         if (dialogRef.current)
@@ -81,6 +93,18 @@ const RequestPointsDialog = () => {
         e.preventDefault();
         return false;
     };
+
+    const open = () => {
+        console.log("open");
+        if (dialogRef.current)
+            dialogRef.current.showModal();
+    }
+    
+    // Ensure component is mounted
+    useEffect(() => setMounted(true), []);
+    if (!mounted) {
+        return null;
+    }
 
     return (
         <dialog id={requestPointsDialogID} className="modal" ref={dialogRef}>
@@ -116,6 +140,6 @@ const RequestPointsDialog = () => {
             </div>
         </dialog>
     );
-};
+});
 
 export default RequestPointsDialog;

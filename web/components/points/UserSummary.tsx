@@ -2,7 +2,7 @@
 
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import moment from "moment";
 import Image from "next/image";
 import {
@@ -16,13 +16,15 @@ import {
 import { getUserPointSummary } from "@/slices/pointsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
-import RequestPointsDialog, { requestPointsDialogID } from "./RequestPointsDialog";
+import RequestPointsDialog, { RequestPointsDialogInterface, requestPointsDialogID } from "./RequestPointsDialog";
 import PointRequestList from "./PointRequestList";
 import PointsList from "./PointsList";
 
 const ln = () => `[${moment().toISOString()}] UserSummary: `;
 
 const UserSummary = () => {
+
+    const dialogRequestPoints = useRef<RequestPointsDialogInterface>();
     
     const [loading, setLoading] = useState(true);
     const dispatch = useAppDispatch();
@@ -31,17 +33,17 @@ const UserSummary = () => {
     const sum = useAppSelector((state) => state.points.userSummary);
     const userID = user ? user.user_id : "";
     
-    const openRequestPointsDialog = (e: React.MouseEvent<HTMLButtonElement>) => {
-        if (typeof document !== "undefined") {
-            const dialog = document.getElementById(requestPointsDialogID) as HTMLDialogElement;
-            if (dialog) {
-                dialog.showModal();
-            }
-        }
+    // const openRequestPointsDialog = (e: React.MouseEvent<HTMLButtonElement>) => {
+    //     if (typeof document !== "undefined") {
+    //         const dialog = document.getElementById(requestPointsDialogID) as HTMLDialogElement;
+    //         if (dialog) {
+    //             dialog.showModal();
+    //         }
+    //     }
 
-        e.preventDefault();
-        return false;
-    };
+    //     e.preventDefault();
+    //     return false;
+    // };
 
     useEffect(() => {
         if (userID) {
@@ -123,7 +125,7 @@ const UserSummary = () => {
                     {/* Point actions */}
                     <div className="card-body items-center text-center">                                
                         <div className="card-actions mt-4">
-                            <button className="btn btn-primary btn-lg" onClick={openRequestPointsDialog}>
+                            <button className="btn btn-primary btn-lg" onClick={() => dialogRequestPoints.current?.open()}>
                                 <CircleStackIcon className="w-8 h-8" />Earn
                             </button>
                             <button className="btn btn-secondary btn-lg">
@@ -160,7 +162,7 @@ const UserSummary = () => {
                 </div>
             </div>
 
-            <RequestPointsDialog />
+            <RequestPointsDialog ref={dialogRequestPoints} />
         </div>
     );
 };
