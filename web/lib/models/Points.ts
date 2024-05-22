@@ -58,6 +58,12 @@ export type UserPoints = {
     recent_points: PointSummary[]
 };
 
+export type ApprovePointsRequest = {
+    point_id: string
+    decision: PointDecision | null
+    parent_notes: string | null
+};
+
 export type RequestPointsRequest = {
     points: number;
     reason: string;

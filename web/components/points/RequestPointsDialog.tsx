@@ -32,7 +32,6 @@ const RequestPointsDialog = () => {
     const dialogRef = useRef<HTMLDialogElement>(null);
 
     const dispatch = useAppDispatch();
-    // const authState = useAppSelector((state) => state.auth);
     const api = MyPointsApi.getInstance();
     
     const [loading, setLoading] = useState(false);
@@ -42,7 +41,6 @@ const RequestPointsDialog = () => {
         register,
         handleSubmit,
         reset,
-        // watch,
         formState: { errors },
     } = useForm({
         resolver: yupResolver(formSchema)

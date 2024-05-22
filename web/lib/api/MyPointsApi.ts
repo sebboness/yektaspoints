@@ -1,7 +1,7 @@
 import { Api, TokenGetter } from "./Api";
-import { ResultT } from "./Result";
+import { Result, ResultT } from "./Result";
 import { TokenData, UserData } from "../auth/Auth";
-import { PointsList, RequestPointsRequest, RequestPointsResponse, UserPoints } from "../models/Points";
+import { ApprovePointsRequest, PointsList, RequestPointsRequest, RequestPointsResponse, UserPoints } from "../models/Points";
 
 // Define base URIs for different environments
 const baseUris: {[key: string]: string} = {
@@ -82,6 +82,12 @@ export class MyPointsApi extends Api {
 
     public postRequestPoints(payload: RequestPointsRequest): Promise<ResultT<RequestPointsResponse>> {
         return this.post("v1/points", {
+            payload,
+        });
+    }
+
+    public approveRequestPoints(payload: ApprovePointsRequest): Promise<Result> {
+        return this.put(`v1/points/${payload.point_id}/approve`, {
             payload,
         });
     }
