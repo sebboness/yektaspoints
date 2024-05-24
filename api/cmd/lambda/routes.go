@@ -2,11 +2,18 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sebboness/yektaspoints/middleware"
+	mw "github.com/sebboness/yektaspoints/middleware"
 )
 
+const groupChild = "child"
+const groupParent = "parent"
+
+var groupsChild = []string{groupChild}
+var groupsChildParent = []string{groupChild, groupParent}
+var groupsParent = []string{groupParent}
+
 func RegisterRoutes(r *gin.Engine) *gin.Engine {
-	r.Use(gin.Recovery()).Use(middleware.CORSMiddleware())
+	r.Use(gin.Recovery()).Use(mw.CORSMiddleware())
 
 	// Health
 	r.GET("/", lambdaCtrl.HealthCheckHandler)
@@ -20,18 +27,18 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 	r.POST("/v1/user/register/confirm", userCtrl.UserRegisterConfirmHandler)
 
 	authedUserRoutes := r.Group("/v1")
-	authedUserRoutes.Use(middleware.WithAuthorizedUser())
+	authedUserRoutes.Use(mw.WithAuthorizedUser())
 	{
 		r.GET("/v1/health", lambdaCtrl.HealthCheckHandler)
 
 		// family
-		r.GET("/v1/family", familyCtrl.GetFamilyHandler)
+		r.GET("/v1/family", familyCtrl.GetFamilyHandler, mw.WithRolesAny(groupsChildParent))
 
 		// Points
-		r.GET("/v1/points/:point_id", pointsCtrl.GetUserPointsHandler)
-		r.GET("/v1/points/summary/:user_id", pointsCtrl.GetPointsSummaryHandler)
-		r.GET("/v1/points/user/:user_id", pointsCtrl.GetUserPointsHandler)
-		r.POST("/v1/points", pointsCtrl.RequestPointsHandler)
+		r.GET("/v1/points/:point_id", pointsCtrl.GetUserPointsHandler, mw.WithRolesAny(groupsChildParent))
+		r.GET("/v1/points/summary/:user_id", pointsCtrl.GetPointsSummaryHandler, mw.WithRolesAny(groupsChildParent))
+		r.GET("/v1/points/user/:user_id", pointsCtrl.GetUserPointsHandler, mw.WithRolesAny(groupsChildParent))
+		r.POST("/v1/points", pointsCtrl.RequestPointsHandler, mw.WithRolesAny(groupsChild))
 
 		// User
 		r.GET("/v1/user", userCtrl.GetUserHandler)

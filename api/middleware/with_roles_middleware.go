@@ -10,13 +10,22 @@ import (
 	"github.com/sebboness/yektaspoints/util/result"
 )
 
-func WithParentUser() gin.HandlerFunc {
+// WithRolesAny checks if the current user's roles matches any of the given roles.
+// If no match is found, the request returns a 401; Otherwise the request continues.
+func WithRolesAny(roles []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		authInfo := handlers.GetAuthorizerInfo(c)
 
-		if !slices.Contains(authInfo.GetGroups(), "parent") {
-			// reject request
+		matches := false
+		for _, role := range roles {
+			if slices.Contains(authInfo.GetGroups(), role) {
+				matches = true
+				break
+			}
+		}
+
+		if !matches {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, result.ErrorResult(fmt.Errorf("user not a parent")))
 			return
 		}

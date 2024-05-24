@@ -3,27 +3,18 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
-	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sebboness/yektaspoints/handlers"
 )
 
-func testMiddlewareRequest(t *testing.T, r *gin.Engine, expectedHTTPCode int) {
-	req, _ := http.NewRequest("GET", "/", nil)
+func testHTTPResponse(r *gin.Engine, req *http.Request, f func(w *httptest.ResponseRecorder)) {
 
-	testHTTPResponse(t, r, req, func(w *httptest.ResponseRecorder) bool {
-		return w.Code == expectedHTTPCode
-	})
-}
+	// Create a response recorder
+	w := httptest.NewRecorder()
 
-func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, recorder func(w *httptest.ResponseRecorder) bool) {
-	panic("unimplemented")
-}
+	// Create the service and process the above request.
+	r.ServeHTTP(w, req)
 
-// Sets auth info for use in tests
-func setAuthInfoForTest(authInfo handlers.AuthorizerInfo) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Set((string)(handlers.CtxKeyAuthInfo), authInfo)
-	}
+	// Run assertion function
+	f(w)
 }

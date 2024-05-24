@@ -91,17 +91,44 @@ func SuccessResult(data any) *result.Result {
 	return result.SuccessResult(data)
 }
 
+// Used in tests
+var defaultMockClaims = map[string]interface{}{
+	"cognito:username": "john",
+	"email":            "john@info.co",
+	"email_verified":   "true",
+	"name":             "John",
+	"sub":              "123",
+}
+
 // Use this mock API Gateway event in testing routes that require a user ID
 var MockApiGWEvent = events.APIGatewayProxyRequest{
 	RequestContext: events.APIGatewayProxyRequestContext{
 		Authorizer: map[string]interface{}{
-			"claims": map[string]interface{}{
-				"cognito:username": "john",
-				"email":            "john@info.co",
-				"email_verified":   "true",
-				"name":             "John",
-				"sub":              "123",
-			},
+			"claims": defaultMockClaims,
 		},
 	},
+}
+
+// GetMockApiGWEvent returns a mock API Gateway event in testing routes that require a user ID
+func GetMockApiGWEvent(includeDefaultClaims bool, claims map[string]interface{}) events.APIGatewayProxyRequest {
+	allClaims := map[string]interface{}{}
+
+	if includeDefaultClaims {
+		for claim, val := range defaultMockClaims {
+			allClaims[claim] = val
+		}
+	}
+
+	// this overrides any default mock claims
+	for claim, val := range claims {
+		allClaims[claim] = val
+	}
+
+	return events.APIGatewayProxyRequest{
+		RequestContext: events.APIGatewayProxyRequestContext{
+			Authorizer: map[string]interface{}{
+				"claims": allClaims,
+			},
+		},
+	}
 }
