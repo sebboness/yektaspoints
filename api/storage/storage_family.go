@@ -7,8 +7,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/sebboness/yektaspoints/models"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 )
@@ -113,21 +113,23 @@ func (s *DynamoDbStorage) GetFamilyUsers(ctx context.Context, family_id string) 
 
 func (s *DynamoDbStorage) UserBelongsToFamily(ctx context.Context, userId string, familyId string) (bool, error) {
 
-	keyEx := expression.Key("family_id").Equal(expression.Value(familyId))
-	filterEx := expression.Name("user_id").Equal(expression.Value(userId))
-	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).WithFilter(filterEx).Build()
-
+	familyIdAttr, err := attributevalue.Marshal(familyId)
 	if err != nil {
-		return false, fmt.Errorf("failed to build query expression: %w", err)
+		return false, fmt.Errorf("failed to marshal family_id key: %w", err)
+	}
+	userIdAttr, err := attributevalue.Marshal(userId)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal user_id key: %w", err)
 	}
 
-	resp, err := s.client.Query(ctx, &dynamodb.QueryInput{
-		TableName:                 aws.String(s.tableFamilyUser),
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		KeyConditionExpression:    expr.KeyCondition(),
-		FilterExpression:          expr.Filter(),
-		ScanIndexForward:          aws.Bool(false),
+	key := map[string]types.AttributeValue{
+		"family_id": familyIdAttr,
+		"user_id":   userIdAttr,
+	}
+
+	resp, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(s.tableFamilyUser),
+		Key:       key,
 	})
 
 	if err != nil {
@@ -135,7 +137,7 @@ func (s *DynamoDbStorage) UserBelongsToFamily(ctx context.Context, userId string
 		return false, apiErr
 	}
 
-	return len(resp.Items) > 0, nil
+	return resp.Item != nil, nil
 }
 
 func (s *DynamoDbStorage) UserHasAccessToChild(ctx context.Context, familyId string, userId string, childId string) (bool, error) {

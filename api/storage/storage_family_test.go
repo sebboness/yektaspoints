@@ -172,7 +172,119 @@ func Test_IFamilyStorage_GetFamilyUsers(t *testing.T) {
 	}
 }
 
-// Tests against real db
+func Test_IFamilyStorage_UserBelongsToFamily(t *testing.T) {
+	type state struct {
+		errGetItem   error
+		itemNotFound bool
+	}
+	type want struct {
+		belongs bool
+		err     string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	throughputErr := &types.ProvisionedThroughputExceededException{}
+
+	cases := []test{
+		{"happy path - belongs", state{}, want{true, ""}},
+		{"happy path - does not belong", state{itemNotFound: true}, want{false, ""}},
+		{"fail - get item", state{errGetItem: errFail}, want{false, "fail"}},
+		{"fail - get item - exceeded throughput", state{errGetItem: throughputErr}, want{false, "ProvisionedThroughputExceededException"}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			output := &dynamodb.GetItemOutput{
+				Item: map[string]types.AttributeValue{
+					"family_id": &types.AttributeValueMemberS{Value: "456"},
+					"user_id":   &types.AttributeValueMemberS{Value: "1"},
+				},
+			}
+
+			if c.state.itemNotFound {
+				output = &dynamodb.GetItemOutput{}
+			}
+
+			if c.state.itemNotFound {
+				output.Item = nil
+			}
+
+			mockDynamoClient := mocks.NewMockDynamoDbClient(t)
+			mockDynamoClient.EXPECT().GetItem(mock.Anything, mock.Anything).Return(output, c.state.errGetItem)
+
+			s := DynamoDbStorage{
+				client: mockDynamoClient,
+			}
+
+			res, err := s.UserBelongsToFamily(context.Background(), "1", "456")
+			tests.AssertError(t, err, c.want.err)
+
+			if c.want.err == "" {
+				assert.Equal(t, c.want.belongs, res)
+			}
+
+			mockDynamoClient.AssertExpectations(t)
+		})
+	}
+}
+
+func Test_IFamilyStorage_UserHasAccessToChild(t *testing.T) {
+	type state struct {
+		errGetItem error
+	}
+	type want struct {
+		belongs bool
+		err     string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{}, want{true, ""}},
+		// {"fail - get item", state{errGetItem: errFail}, want{false, "fail"}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			outputForUser := &dynamodb.GetItemOutput{
+				Item: map[string]types.AttributeValue{},
+			}
+
+			outputForChild := &dynamodb.GetItemOutput{
+				Item: map[string]types.AttributeValue{},
+			}
+
+			mockDynamoClient := mocks.NewMockDynamoDbClient(t)
+
+			mockDynamoClient.EXPECT().GetItem(mock.Anything, mock.Anything).Return(outputForUser, c.state.errGetItem).Once()
+
+			mockDynamoClient.EXPECT().GetItem(mock.Anything, mock.Anything).Return(outputForChild, c.state.errGetItem).Once()
+
+			s := DynamoDbStorage{
+				client: mockDynamoClient,
+			}
+
+			res, err := s.UserHasAccessToChild(context.Background(), "456", "u1", "c1")
+			tests.AssertError(t, err, c.want.err)
+
+			if c.want.err == "" {
+				assert.Equal(t, c.want.belongs, res)
+			}
+
+			mockDynamoClient.AssertExpectations(t)
+		})
+	}
+}
+
+// Tests below test against real db
+// Comment out t.Skip() to run
 
 func TestReal_IFamilyStorage_GetFamilyUsers(t *testing.T) {
 	t.Skip("Skip real test")
@@ -240,6 +352,53 @@ func TestReal_IFamilyStorage_GetFamilyByFamilyID(t *testing.T) {
 
 			if c.want.err == "" {
 				assert.Equal(t, c.state.familyId, res.FamilyID)
+			}
+		})
+	}
+}
+
+func TestReal_IFamilyStorage_UserBelongsToFamily(t *testing.T) {
+	t.Skip("Skip real test")
+
+	type state struct {
+		familyId string
+		userId   string
+	}
+	type want struct {
+		belongs bool
+		err     string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path - belongs", state{
+			familyId: "f4b2ecd3-9b05-4fcb-9502-e676e526e348",
+			userId:   "40e448bc-e7bc-4310-acdf-65e26bd1088a",
+		}, want{true, ""}},
+		{"happy path - user does not belong", state{
+			familyId: "f4b2ecd3-9b05-4fcb-9502-e676e526e348",
+			userId:   "123",
+		}, want{false, ""}},
+		{"happy path - family does not belong", state{
+			familyId: "123",
+			userId:   "40e448bc-e7bc-4310-acdf-65e26bd1088a",
+		}, want{false, ""}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			s, err := NewDynamoDbStorage(Config{Env: "dev"})
+			assert.Nil(t, err)
+
+			res, err := s.UserBelongsToFamily(context.Background(), c.state.userId, c.state.familyId)
+			tests.AssertError(t, err, c.want.err)
+
+			if c.want.err == "" {
+				assert.Equal(t, c.want.belongs, res)
 			}
 		})
 	}
