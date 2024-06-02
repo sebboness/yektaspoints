@@ -196,7 +196,193 @@ func Test_IUserStorage_UpdateUserStatus(t *testing.T) {
 	}
 }
 
-// Tests against real db
+func Test_IUserStorage_ParentHasAccessToChild(t *testing.T) {
+	type state struct {
+		errGetParent      error
+		errGetChild       error
+		parentIdEmpty     bool
+		childIdEmpty      bool
+		parentOtherFamily bool
+		childOtherFamily  bool
+		parentNotParent   bool
+		childNotChild     bool
+	}
+	type want struct {
+		belongs bool
+		err     string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{}, want{true, ""}},
+		{"fail - parent not same family", state{parentOtherFamily: true}, want{false, ""}},
+		{"fail - child not same family", state{childOtherFamily: true}, want{false, ""}},
+		{"fail - parent id empty", state{parentIdEmpty: true}, want{false, "one or all user ids are empty"}},
+		{"fail - child id empty", state{childIdEmpty: true}, want{false, "one or all user ids are empty"}},
+		{"fail - get parent err", state{errGetParent: errFail}, want{false, "failed to get parent user record for parent-1"}},
+		{"fail - get child err", state{errGetChild: errFail}, want{false, "failed to get child user record for child-1"}},
+		{"fail - parent is not parent", state{parentNotParent: true}, want{false, "user parent-1 is not in role parent"}},
+		{"fail - child is not child", state{childNotChild: true}, want{false, "user child-1 is not in role child"}},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+
+			parentId := "parent-1"
+			parentFamilyId := "family-1"
+			childFamilyId := "family-1"
+
+			childId := "child-1"
+			parentsRole := "parent"
+			childsRole := "child"
+
+			if c.state.parentIdEmpty {
+				parentId = ""
+			}
+			if c.state.parentOtherFamily {
+				parentFamilyId = "blah"
+			}
+			if c.state.parentNotParent {
+				parentsRole = "blah"
+			}
+			if c.state.childIdEmpty {
+				childId = ""
+			}
+			if c.state.childOtherFamily {
+				childFamilyId = "blah"
+			}
+			if c.state.childNotChild {
+				childsRole = "blah"
+			}
+
+			outputGetParent := &dynamodb.QueryOutput{
+				Items: []map[string]types.AttributeValue{
+					{
+						"family_ids": &types.AttributeValueMemberL{Value: []types.AttributeValue{&types.AttributeValueMemberS{Value: parentFamilyId}}},
+						"user_id":    &types.AttributeValueMemberS{Value: "parent-1"},
+						"roles":      &types.AttributeValueMemberL{Value: []types.AttributeValue{&types.AttributeValueMemberS{Value: parentsRole}}},
+					},
+				},
+			}
+
+			outputGetChild := &dynamodb.QueryOutput{
+				Items: []map[string]types.AttributeValue{
+					{
+						"family_ids": &types.AttributeValueMemberL{Value: []types.AttributeValue{&types.AttributeValueMemberS{Value: childFamilyId}}},
+						"user_id":    &types.AttributeValueMemberS{Value: "child-1"},
+						"roles":      &types.AttributeValueMemberL{Value: []types.AttributeValue{&types.AttributeValueMemberS{Value: childsRole}}},
+					},
+				},
+			}
+
+			mockDynamoClient := mocks.NewMockDynamoDbClient(t)
+
+			if !c.state.parentIdEmpty && !c.state.childIdEmpty {
+				mockDynamoClient.EXPECT().Query(mock.Anything, mock.Anything).Return(outputGetParent, c.state.errGetParent).Once()
+
+				if c.state.errGetParent == nil {
+					mockDynamoClient.EXPECT().Query(mock.Anything, mock.Anything).Return(outputGetChild, c.state.errGetChild).Once()
+				}
+			}
+
+			s := DynamoDbStorage{
+				client: mockDynamoClient,
+			}
+
+			res, err := s.ParentHasAccessToChild(context.Background(), parentId, childId)
+			tests.AssertError(t, err, c.want.err)
+
+			if c.want.err == "" {
+				assert.Equal(t, c.want.belongs, res)
+			}
+
+			mockDynamoClient.AssertExpectations(t)
+		})
+	}
+}
+
+// Tests below test against real db
+// Comment out t.Skip() to run
+
+func TestReal_IUserStorage_GetUserByID(t *testing.T) {
+	t.Skip("Skip real test")
+
+	type state struct {
+		userId string
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path - exists", state{userId: "98a1c330-4051-701a-57c1-e8debd152f2b"}, want{""}},
+		{"happy path - does not exist", state{userId: "123"}, want{"resource not found: user"}},
+	}
+
+	for _, c := range cases {
+		s, err := NewDynamoDbStorage(Config{Env: "dev"})
+		assert.Nil(t, err)
+
+		user, err := s.GetUserByID(context.Background(), c.state.userId)
+		tests.AssertError(t, err, c.want.err)
+
+		if err == nil {
+			assert.NotNil(t, user)
+		} else {
+			assert.Empty(t, user.UserID)
+		}
+	}
+}
+
+func TestReal_IUserStorage_ParentHasAccessToChild(t *testing.T) {
+	t.Skip("Skip real test")
+
+	type state struct {
+		parentId string
+		childId  string
+	}
+	type want struct {
+		hasAccess bool
+		err       string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{
+			"happy path - has access",
+			state{
+				childId:  "98a1c330-4051-701a-57c1-e8debd152f2b",
+				parentId: "58214350-c071-704a-82b0-1b83f248d1bd",
+			},
+			want{true, ""},
+		},
+	}
+
+	for _, c := range cases {
+		s, err := NewDynamoDbStorage(Config{Env: "dev"})
+		assert.Nil(t, err)
+
+		hasAccess, err := s.ParentHasAccessToChild(context.Background(), c.state.parentId, c.state.childId)
+		tests.AssertError(t, err, c.want.err)
+
+		if err == nil {
+			assert.Equal(t, c.want.hasAccess, hasAccess)
+		}
+	}
+}
 
 func TestReal_IUserStorage_UpdateUserStatus(t *testing.T) {
 	t.Skip("Skip real test")

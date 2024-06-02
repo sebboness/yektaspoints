@@ -16,7 +16,6 @@ import (
 type IFamilyStorage interface {
 	GetFamilyMembersByUserIDs(ctx context.Context, family_id string, user_ids []string) (models.Family, error)
 	GetFamilyUsers(ctx context.Context, family_id string) ([]models.FamilyUser, error)
-	UserHasAccessToChild(ctx context.Context, family_id string, user_id string, child_id string) (bool, error)
 	UserBelongsToFamily(ctx context.Context, user_id string, family_id string) (bool, error)
 }
 
@@ -138,31 +137,4 @@ func (s *DynamoDbStorage) UserBelongsToFamily(ctx context.Context, userId string
 	}
 
 	return resp.Item != nil, nil
-}
-
-func (s *DynamoDbStorage) UserHasAccessToChild(ctx context.Context, familyId string, userId string, childId string) (bool, error) {
-	if userId == "" || childId == "" {
-		return false, apierr.New(apierr.BadRequest).WithError("one or all user ids are empty")
-	}
-	if userId == childId {
-		return true, nil
-	}
-
-	belongs, err := s.UserBelongsToFamily(ctx, userId, familyId)
-	if err != nil {
-		return false, err
-	}
-	if !belongs {
-		return false, apierr.New(apierr.BadRequest).WithError(fmt.Sprintf("user id %v does not belong to family_id %v", userId, familyId))
-	}
-
-	belongs, err = s.UserBelongsToFamily(ctx, childId, familyId)
-	if err != nil {
-		return false, err
-	}
-	if !belongs {
-		return false, apierr.New(apierr.BadRequest).WithError(fmt.Sprintf("child id %v does not belong to family_id %v", childId, familyId))
-	}
-
-	return true, nil
 }

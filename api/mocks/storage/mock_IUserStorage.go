@@ -79,6 +79,64 @@ func (_c *MockIUserStorage_GetUserByID_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
+// ParentHasAccessToChild provides a mock function with given fields: ctx, parentId, childId
+func (_m *MockIUserStorage) ParentHasAccessToChild(ctx context.Context, parentId string, childId string) (bool, error) {
+	ret := _m.Called(ctx, parentId, childId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ParentHasAccessToChild")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+		return rf(ctx, parentId, childId)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = rf(ctx, parentId, childId)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, parentId, childId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockIUserStorage_ParentHasAccessToChild_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ParentHasAccessToChild'
+type MockIUserStorage_ParentHasAccessToChild_Call struct {
+	*mock.Call
+}
+
+// ParentHasAccessToChild is a helper method to define mock.On call
+//   - ctx context.Context
+//   - parentId string
+//   - childId string
+func (_e *MockIUserStorage_Expecter) ParentHasAccessToChild(ctx interface{}, parentId interface{}, childId interface{}) *MockIUserStorage_ParentHasAccessToChild_Call {
+	return &MockIUserStorage_ParentHasAccessToChild_Call{Call: _e.mock.On("ParentHasAccessToChild", ctx, parentId, childId)}
+}
+
+func (_c *MockIUserStorage_ParentHasAccessToChild_Call) Run(run func(ctx context.Context, parentId string, childId string)) *MockIUserStorage_ParentHasAccessToChild_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockIUserStorage_ParentHasAccessToChild_Call) Return(_a0 bool, _a1 error) *MockIUserStorage_ParentHasAccessToChild_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockIUserStorage_ParentHasAccessToChild_Call) RunAndReturn(run func(context.Context, string, string) (bool, error)) *MockIUserStorage_ParentHasAccessToChild_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SaveUser provides a mock function with given fields: ctx, user
 func (_m *MockIUserStorage) SaveUser(ctx context.Context, user models.User) error {
 	ret := _m.Called(ctx, user)

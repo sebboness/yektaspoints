@@ -232,57 +232,6 @@ func Test_IFamilyStorage_UserBelongsToFamily(t *testing.T) {
 	}
 }
 
-func Test_IFamilyStorage_UserHasAccessToChild(t *testing.T) {
-	type state struct {
-		errGetItem error
-	}
-	type want struct {
-		belongs bool
-		err     string
-	}
-	type test struct {
-		name string
-		state
-		want
-	}
-
-	cases := []test{
-		{"happy path", state{}, want{true, ""}},
-		// {"fail - get item", state{errGetItem: errFail}, want{false, "fail"}},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			outputForUser := &dynamodb.GetItemOutput{
-				Item: map[string]types.AttributeValue{},
-			}
-
-			outputForChild := &dynamodb.GetItemOutput{
-				Item: map[string]types.AttributeValue{},
-			}
-
-			mockDynamoClient := mocks.NewMockDynamoDbClient(t)
-
-			mockDynamoClient.EXPECT().GetItem(mock.Anything, mock.Anything).Return(outputForUser, c.state.errGetItem).Once()
-
-			mockDynamoClient.EXPECT().GetItem(mock.Anything, mock.Anything).Return(outputForChild, c.state.errGetItem).Once()
-
-			s := DynamoDbStorage{
-				client: mockDynamoClient,
-			}
-
-			res, err := s.UserHasAccessToChild(context.Background(), "456", "u1", "c1")
-			tests.AssertError(t, err, c.want.err)
-
-			if c.want.err == "" {
-				assert.Equal(t, c.want.belongs, res)
-			}
-
-			mockDynamoClient.AssertExpectations(t)
-		})
-	}
-}
-
 // Tests below test against real db
 // Comment out t.Skip() to run
 
