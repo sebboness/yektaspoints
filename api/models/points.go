@@ -22,6 +22,11 @@ type PointStatus string
 const PointStatusWaiting = "WAITING"
 const PointStatusSettled = "SETTLED"
 
+var ValidPointRequestDecisions = []PointRequestDecision{
+	PointRequestDecisionApprove,
+	PointRequestDecisionDeny,
+}
+
 type Point struct {
 	ID           string       `json:"id" dynamodbav:"id"`
 	UserID       string       `json:"user_id" dynamodbav:"user_id"`
