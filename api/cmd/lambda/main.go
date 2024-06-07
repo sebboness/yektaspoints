@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
 	awslambda "github.com/aws/aws-lambda-go/lambda"
@@ -24,24 +25,12 @@ var userCtrl *userHandlers.UserController
 
 var ginLambda *ginadapter.GinLambda
 var logger *log.Logger
+var _env string
 
-// Handler is the main entry point for Lambda. Receives a proxy request and
-// returns a proxy response
-func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
+func initialize(ctx context.Context) {
 	logger = log.NewLogger("mypoints_lambda")
 
-	_env := env.GetEnv("ENV")
-
-	logger.WithContext(ctx).WithFields(map[string]any{
-		"env":              _env,
-		"method":           req.HTTPMethod,
-		"path":             req.Path,
-		"path_parameters":  req.PathParameters,
-		"query_parameters": req.QueryStringParameters,
-		"request_id":       req.RequestContext.RequestID,
-		"authorizer":       req.RequestContext.Authorizer,
-	}).Infof("starting lambda")
+	_env = env.GetEnv("ENV")
 
 	// initialize auth user controller
 	if authCtrl == nil {
@@ -96,6 +85,51 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 
 		userCtrl = _c
 	}
+}
+
+// LambdaHandler is the main entry point for Lambda. Receives a proxy request and
+// returns a proxy response
+func startWebApi() error {
+
+	initialize(context.TODO())
+
+	logger.Infof(fmt.Sprintf("APPNAME=%v", env.GetEnv("APPNAME")))
+
+	logger.WithFields(map[string]any{
+		"env": _env,
+	}).Infof("starting web api")
+
+	logger.Infof("gin cold start")
+	r := gin.Default()
+
+	RegisterRoutes(r)
+
+	// prepare context with authorizer info provided in lambda event
+	// ctx = handlers.PrepareAuthorizedContext(ctx, req)
+
+	port := env.GetEnv("PORT")
+	if port == "" {
+		port = "10010"
+	}
+
+	return r.Run(fmt.Sprintf("localhost:%v", port))
+}
+
+// LambdaHandler is the main entry point for Lambda. Receives a proxy request and
+// returns a proxy response
+func LambdaHandler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
+	initialize(ctx)
+
+	logger.WithContext(ctx).WithFields(map[string]any{
+		"env":              _env,
+		"method":           req.HTTPMethod,
+		"path":             req.Path,
+		"path_parameters":  req.PathParameters,
+		"query_parameters": req.QueryStringParameters,
+		"request_id":       req.RequestContext.RequestID,
+		"authorizer":       req.RequestContext.Authorizer,
+	}).Infof("starting lambda")
 
 	if ginLambda == nil {
 		logger.Infof("gin cold start")
@@ -113,5 +147,11 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 }
 
 func main() {
-	awslambda.Start(Handler)
+	if env.GetEnv("RUN_LOCAL") == "true" {
+		print("Starting up web api")
+		startWebApi()
+	} else {
+		print("Starting up Lambda")
+		awslambda.Start(LambdaHandler)
+	}
 }

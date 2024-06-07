@@ -15,11 +15,14 @@ import (
 )
 
 type approvePointsRequest struct {
-	PointID     string `json:"point_id"`
+	// From request
 	Decision    string `json:"decision"`
 	ParentNotes string `json:"parent_notes,omitempty"`
-	ParentID    string `json:"-"`
-	ChildID     string `json:"-"`
+
+	// Set in code
+	PointID  string `json:"-"`
+	ParentID string `json:"-"`
+	ChildID  string `json:"-"`
 }
 
 type approvePointsResponse struct {
@@ -40,9 +43,17 @@ func (c *PointsController) ApprovePointsHandler(cgin *gin.Context) {
 	}
 
 	// get child id from request
-	req.ChildID = cgin.Param("child_id")
+	req.ChildID = cgin.Param("user_id")
 	if req.ChildID == "" {
-		apiErr := apierr.New(apierr.InvalidInput).WithError("child_id is a required query parameter")
+		apiErr := apierr.New(apierr.InvalidInput).WithError("user_id is a required query parameter")
+		cgin.JSON(apiErr.StatusCode(), handlers.ErrorResult(apiErr))
+		return
+	}
+
+	// get point id from request
+	req.PointID = cgin.Param("point_id")
+	if req.PointID == "" {
+		apiErr := apierr.New(apierr.InvalidInput).WithError("point_id is a required query parameter")
 		cgin.JSON(apiErr.StatusCode(), handlers.ErrorResult(apiErr))
 		return
 	}
@@ -98,7 +109,7 @@ func (c *PointsController) handleApprovePoints(ctx context.Context, req *approve
 	point.Request.ParentNotes = req.ParentNotes
 
 	if err := c.pointsDB.SavePoint(ctx, point); err != nil {
-		return resp, fmt.Errorf("failed to save point: %w", err)
+		return resp, fmt.Errorf("failed to approve point request: %w", err)
 	}
 
 	point.ParseTimes()
@@ -110,14 +121,18 @@ func (c *PointsController) handleApprovePoints(ctx context.Context, req *approve
 }
 
 func validateApprovePoints(req *approvePointsRequest) error {
-	if req.ParentID == "" {
-		return apierr.New(fmt.Errorf("%w: missing user ID", apierr.Unauthorized))
-	}
-
 	apierr := apierr.New(fmt.Errorf("%w: failed to validate request", apierr.InvalidInput))
+
+	if req.ParentID == "" {
+		apierr.AppendError("missing parent id")
+	}
 
 	if !slices.Contains(models.ValidPointRequestDecisions, models.PointRequestDecision(req.Decision)) {
 		apierr.AppendError(fmt.Sprintf("invalid decision %v", req.Decision))
+	}
+
+	if len(req.ParentNotes) >= 500 {
+		apierr.AppendError("parent notes should be no longer than 500 characters")
 	}
 
 	if len(apierr.Errors()) > 0 {

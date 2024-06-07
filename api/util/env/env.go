@@ -30,6 +30,7 @@ func parseEnvVars() {
 	// Load from .env files
 	godotenv.Load(".env." + env)
 	godotenv.Load() // The Original .env
+
 }
 
 // GetEnv returns the environment variable for the given key (variable name)

@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 CUR_DIR = $(shell pwd)
 LAMBDA_DIR = $(CUR_DIR)/cmd/lambda
 
@@ -13,8 +15,18 @@ test:
 --build-lambda:
 	cd $(LAMBDA_DIR) \
 	&& echo "we're on $$(pwd)" \
-	&& echo 'cleaning lambda...' && find . -type f -not \( -name '*go' -or -name '*go' \) -delete \
+	&& echo 'cleaning lambda dir...' && find . -type f -not \( -name '*go' -or -name '*go' \) -delete \
 	&& echo 'building lambda...' && $(GOVARS) go build -tags lambda.norpc -o ./bootstrap -ldflags "$(LDFLAGS)" . \
 	&& echo 'zipping lambda...' && chmod 755 * && zip -FS bootstrap.zip bootstrap
 
+--build-web-api:
+	cd $(LAMBDA_DIR) \
+	&& echo "we're on $$(pwd)" \
+	&& echo 'cleaning lambda dir...' && find . -type f -not \( -name '*go' -or -name '*go' \) -delete \
+	&& echo 'building web api...' && $(GOVARS) go build -tags lambda.norpc -o ./webapi -ldflags "$(LDFLAGS)" . \
+
 build: --build-lambda
+
+run-local: --build-web-api
+	. $(CUR_DIR)/scripts/init_env.sh \
+	&& go run $(LAMBDA_DIR)
