@@ -1,3 +1,5 @@
+include .env.local
+
 SHELL := /bin/bash
 
 CUR_DIR = $(shell pwd)
@@ -28,5 +30,6 @@ test:
 build: --build-lambda
 
 run-local: --build-web-api
-	. $(CUR_DIR)/scripts/init_env.sh \
-	&& go run $(LAMBDA_DIR)
+	export ENV=${ENV}
+	export RUN_LOCAL=${RUN_LOCAL}
+	go run $(LAMBDA_DIR)

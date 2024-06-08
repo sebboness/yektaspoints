@@ -1,6 +1,7 @@
 package env
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -17,10 +18,13 @@ func parseEnvVars() {
 	for _, e := range os.Environ() {
 		if i := strings.Index(e, "="); i >= 0 {
 			envVars[e[:i]] = e[i+1:]
+			// println(fmt.Sprintf("%v = %v", e[:i], envVars[e[:i]]))
 		}
 	}
 
 	env := GetEnv("ENV")
+	println(fmt.Sprintf("env=%v", env))
+	println(fmt.Sprintf("RUN_LOCAL=%v", GetEnv("RUN_LOCAL")))
 	if env == "" {
 		env = "local"
 		os.Setenv("ENV", "local")
@@ -30,7 +34,6 @@ func parseEnvVars() {
 	// Load from .env files
 	godotenv.Load(".env." + env)
 	godotenv.Load() // The Original .env
-
 }
 
 // GetEnv returns the environment variable for the given key (variable name)
