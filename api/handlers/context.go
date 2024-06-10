@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
+	"github.com/sebboness/yektaspoints/util/jwt"
 )
 
 type ctxKey string
@@ -27,6 +28,12 @@ type AuthorizerInfo struct {
 	Claims map[string]interface{} `json:"claims"`
 }
 
+type AuthContext interface {
+	GetAuthorizerInfo(c *gin.Context) AuthorizerInfo
+}
+
+var jwtParser jwt.JwtParser
+
 func PrepareAuthorizedContext(ctx context.Context, req events.APIGatewayProxyRequest) context.Context {
 	authorizer := AuthorizerInfo{}
 
@@ -44,19 +51,53 @@ func PrepareAuthorizedContext(ctx context.Context, req events.APIGatewayProxyReq
 }
 
 func GetAuthorizerInfo(c *gin.Context) AuthorizerInfo {
-	if c.Request != nil {
-		ctx := c.Request.Context()
-		info := ctx.Value(CtxKeyAuthInfo)
+	info := AuthorizerInfo{}
 
-		authInfoJson, _ := json.Marshal(info)
-		logger.Infof("GetAuthorizerInfo authInfo?: " + string(authInfoJson))
-
-		if info != nil {
-			return info.(AuthorizerInfo)
-		}
+	if c.Request == nil {
+		return info
 	}
 
-	return AuthorizerInfo{}
+	ctx := c.Request.Context()
+	_info := ctx.Value(CtxKeyAuthInfo)
+
+	authInfoJson, _ := json.Marshal(info)
+	logger.Infof("GetAuthorizerInfo authInfo?: " + string(authInfoJson))
+
+	if _info != nil {
+		return _info.(AuthorizerInfo)
+	}
+
+	// if we got here, check if token is in authorization header (if running web api)
+	// if env.GetEnv("RUN_AS_WEB_API") == "true" {
+	// 	reqToken := getTokenFromHeader(c.Request)
+
+	// 	if jwtParser == nil {
+	// 		_jwtParser, err := jwt.NewJwtParser()
+	// 		if err != nil {
+	// 			logger.Errorf("failed to initialize jwt parser: %v", err.Error())
+	// 			return AuthorizerInfo{}
+	// 		}
+
+	// 		jwtParser = _jwtParser
+	// 	}
+
+	// 	claims, err := jwtParser.GetJwtClaims(reqToken)
+	// 	if err != nil {
+	// 		logger.Errorf("failed to initialize jwt parser: %v", err.Error())
+	// 	}
+
+	// 	logger.Infof("claims = %v", claims)
+	// 	info = AuthorizerInfo{
+	// 		Claims: claims,
+	// 	}
+
+	// 	// Store claims in context
+	// 	c.Request = c.Request.Clone(context.WithValue(ctx, CtxKeyAuthInfo, info))
+
+	// 	logger.Infof("authorized info = %v", info)
+	// }
+
+	return info
 }
 
 func (i AuthorizerInfo) HasInfo() bool {

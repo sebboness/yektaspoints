@@ -147,7 +147,9 @@ func LambdaHandler(ctx context.Context, req events.APIGatewayProxyRequest) (even
 }
 
 func main() {
-	if env.GetEnv("RUN_LOCAL") == "true" {
+	println("welcome to points4us!")
+
+	if env.GetEnv("RUN_AS_WEB_API") == "true" {
 		print("Starting up web api")
 		startWebApi()
 	} else {

@@ -1,7 +1,3 @@
-include .env.local
-
-SHELL := /bin/bash
-
 CUR_DIR = $(shell pwd)
 LAMBDA_DIR = $(CUR_DIR)/cmd/lambda
 
@@ -28,8 +24,3 @@ test:
 	&& echo 'building web api...' && $(GOVARS) go build -tags lambda.norpc -o ./webapi -ldflags "$(LDFLAGS)" . \
 
 build: --build-lambda
-
-run-local: --build-web-api
-	export ENV=${ENV}
-	export RUN_LOCAL=${RUN_LOCAL}
-	go run $(LAMBDA_DIR)

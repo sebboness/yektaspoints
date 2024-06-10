@@ -1,7 +1,6 @@
 package env
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 var envVars = make(map[string]string)
 
 func init() {
+	println("init from env.go")
 	parseEnvVars()
 }
 
@@ -18,13 +18,10 @@ func parseEnvVars() {
 	for _, e := range os.Environ() {
 		if i := strings.Index(e, "="); i >= 0 {
 			envVars[e[:i]] = e[i+1:]
-			// println(fmt.Sprintf("%v = %v", e[:i], envVars[e[:i]]))
 		}
 	}
 
 	env := GetEnv("ENV")
-	println(fmt.Sprintf("env=%v", env))
-	println(fmt.Sprintf("RUN_LOCAL=%v", GetEnv("RUN_LOCAL")))
 	if env == "" {
 		env = "local"
 		os.Setenv("ENV", "local")
