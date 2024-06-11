@@ -30,7 +30,7 @@ func (c *FamilyController) GetFamilyHandler(cgin *gin.Context) {
 		return
 	}
 
-	authInfo := handlers.GetAuthorizerInfo(cgin)
+	authInfo := c.AuthContext.GetAuthorizerInfo(cgin)
 	req := &getFamilyHandlerRequest{
 		UserID:   authInfo.GetUserID(),
 		FamilyID: familyID,

@@ -23,7 +23,7 @@ type getUserResponse struct {
 // GetUserHandler returns user data from the currently logged-in user.
 func (c *UserController) GetUserHandler(cgin *gin.Context) {
 
-	authInfo := handlers.GetAuthorizerInfo(cgin)
+	authInfo := c.AuthContext.GetAuthorizerInfo(cgin)
 	if !authInfo.HasInfo() {
 		cgin.JSON(http.StatusUnauthorized, handlers.ErrorResult(apierr.Unauthorized))
 		return

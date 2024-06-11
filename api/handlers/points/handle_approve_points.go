@@ -58,7 +58,7 @@ func (c *PointsController) ApprovePointsHandler(cgin *gin.Context) {
 		return
 	}
 
-	authInfo := handlers.GetAuthorizerInfo(cgin)
+	authInfo := c.AuthContext.GetAuthorizerInfo(cgin)
 	req.ParentID = authInfo.GetUserID()
 
 	resp, err := c.handleApprovePoints(cgin.Request.Context(), &req)

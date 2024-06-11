@@ -15,7 +15,13 @@ import (
 func WithRolesAny(roles []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		authInfo := handlers.GetAuthorizerInfo(c)
+		authContext, err := handlers.GetAuthContext()
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, result.ErrorResult(fmt.Errorf("failed to get auth context: %w", err)))
+			return
+		}
+
+		authInfo := authContext.GetAuthorizerInfo(c)
 
 		matches := false
 		for _, role := range roles {

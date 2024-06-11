@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
+	"github.com/sebboness/yektaspoints/util/env"
 	"github.com/sebboness/yektaspoints/util/jwt"
 )
 
@@ -50,54 +50,13 @@ func PrepareAuthorizedContext(ctx context.Context, req events.APIGatewayProxyReq
 	return context.WithValue(ctx, CtxKeyAuthInfo, authorizer)
 }
 
-func GetAuthorizerInfo(c *gin.Context) AuthorizerInfo {
-	info := AuthorizerInfo{}
-
-	if c.Request == nil {
-		return info
+// GetAuthContext returns a new AuthContext
+func GetAuthContext() (AuthContext, error) {
+	if env.GetEnv("RUN_AS_WEB_API") == "true" {
+		return NewApiAuthContext()
+	} else {
+		return NewLambdaAuthContext()
 	}
-
-	ctx := c.Request.Context()
-	_info := ctx.Value(CtxKeyAuthInfo)
-
-	authInfoJson, _ := json.Marshal(info)
-	logger.Infof("GetAuthorizerInfo authInfo?: " + string(authInfoJson))
-
-	if _info != nil {
-		return _info.(AuthorizerInfo)
-	}
-
-	// if we got here, check if token is in authorization header (if running web api)
-	// if env.GetEnv("RUN_AS_WEB_API") == "true" {
-	// 	reqToken := getTokenFromHeader(c.Request)
-
-	// 	if jwtParser == nil {
-	// 		_jwtParser, err := jwt.NewJwtParser()
-	// 		if err != nil {
-	// 			logger.Errorf("failed to initialize jwt parser: %v", err.Error())
-	// 			return AuthorizerInfo{}
-	// 		}
-
-	// 		jwtParser = _jwtParser
-	// 	}
-
-	// 	claims, err := jwtParser.GetJwtClaims(reqToken)
-	// 	if err != nil {
-	// 		logger.Errorf("failed to initialize jwt parser: %v", err.Error())
-	// 	}
-
-	// 	logger.Infof("claims = %v", claims)
-	// 	info = AuthorizerInfo{
-	// 		Claims: claims,
-	// 	}
-
-	// 	// Store claims in context
-	// 	c.Request = c.Request.Clone(context.WithValue(ctx, CtxKeyAuthInfo, info))
-
-	// 	logger.Infof("authorized info = %v", info)
-	// }
-
-	return info
 }
 
 func (i AuthorizerInfo) HasInfo() bool {

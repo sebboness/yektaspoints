@@ -13,6 +13,10 @@ import (
 
 var logger = log.Get()
 
+type BaseController struct {
+	AuthContext AuthContext
+}
+
 type Result struct {
 	Status  string   `json:"status"`
 	Errors  []string `json:"errors"`

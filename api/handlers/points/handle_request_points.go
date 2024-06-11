@@ -37,7 +37,7 @@ func (c *PointsController) RequestPointsHandler(cgin *gin.Context) {
 		return
 	}
 
-	authInfo := handlers.GetAuthorizerInfo(cgin)
+	authInfo := c.AuthContext.GetAuthorizerInfo(cgin)
 	req.UserID = authInfo.GetUserID()
 
 	resp, err := c.handleRequestPoints(cgin.Request.Context(), &req)

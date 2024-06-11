@@ -24,7 +24,7 @@ type getPointsSummaryHandlerResponse struct {
 
 func (c *PointsController) GetPointsSummaryHandler(cgin *gin.Context) {
 
-	// authInfo := handlers.GetAuthorizerInfo(cgin)
+	// authInfo := c.AuthContext.GetAuthorizerInfo(cgin)
 	// TODO: Implement a way to check that the requested user (a parent) has access to retrieve the points for the user
 	//       identified in this request via the user_id query parameter (their child).
 
