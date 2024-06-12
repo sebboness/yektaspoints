@@ -9,6 +9,7 @@ import (
 )
 
 type LambdaController struct {
+	BaseController
 	auth     auth.AuthController
 	pointsDB storage.IPointsStorage
 }
@@ -26,7 +27,15 @@ func NewLambdaController(ctx context.Context, env string) (*LambdaController, er
 		return nil, fmt.Errorf("failed to initialize auth controller: %w", err)
 	}
 
+	authContext, err := GetAuthContext()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize auth context: %w", err)
+	}
+
 	return &LambdaController{
+		BaseController: BaseController{
+			AuthContext: authContext,
+		},
 		auth:     authController,
 		pointsDB: pointsDB,
 	}, nil

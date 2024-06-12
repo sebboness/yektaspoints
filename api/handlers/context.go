@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/util/env"
 	"github.com/sebboness/yektaspoints/util/jwt"
@@ -33,22 +31,6 @@ type AuthContext interface {
 }
 
 var jwtParser jwt.JwtParser
-
-func PrepareAuthorizedContext(ctx context.Context, req events.APIGatewayProxyRequest) context.Context {
-	authorizer := AuthorizerInfo{}
-
-	if len(req.RequestContext.Authorizer) > 0 {
-		if claimsObj, ok := req.RequestContext.Authorizer["claims"]; ok {
-			if claims, ok := claimsObj.(map[string]interface{}); ok {
-				authorizer.Claims = claims
-			}
-		}
-	} else {
-		// logger.Infof("PrepareAuthorizedContext B")
-	}
-
-	return context.WithValue(ctx, CtxKeyAuthInfo, authorizer)
-}
 
 // GetAuthContext returns a new AuthContext
 func GetAuthContext() (AuthContext, error) {

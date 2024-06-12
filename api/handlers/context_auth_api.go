@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sebboness/yektaspoints/util/env"
 	"github.com/sebboness/yektaspoints/util/jwt"
 )
 
@@ -16,7 +17,10 @@ type ApiAuthContext struct {
 }
 
 func NewApiAuthContext() (AuthContext, error) {
-	jwtParser, err := jwt.NewJwtParser()
+	region := env.GetEnv("AWS_REGION")
+	userPoolId := env.GetEnv("COGNITO_USER_POOL_ID")
+
+	jwtParser, err := jwt.NewAwsJwtParser(region, userPoolId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize jwt parser: %v", err.Error())
 	}
@@ -34,23 +38,24 @@ func (a *ApiAuthContext) GetAuthorizerInfo(c *gin.Context) AuthorizerInfo {
 	}
 
 	ctx := c.Request.Context()
+	_info := ctx.Value(CtxKeyAuthInfo)
+
+	// return info if already set
+	if _info != nil {
+		return _info.(AuthorizerInfo)
+	}
 
 	// if we got here, check if token is in authorization header (if running web api)
 	reqToken := a.getTokenFromHeader(c.Request)
-
-	if jwtParser == nil {
-		_jwtParser, err := jwt.NewJwtParser()
-		if err != nil {
-			logger.Errorf("failed to initialize jwt parser: %v", err.Error())
-			return AuthorizerInfo{}
-		}
-
-		jwtParser = _jwtParser
+	if reqToken == "" {
+		return info
 	}
 
-	claims, err := jwtParser.GetJwtClaims(reqToken)
+	// parse claims
+	claims, err := a.JwtParser.GetJwtClaims(reqToken)
 	if err != nil {
-		logger.Errorf("failed to initialize jwt parser: %v", err.Error())
+		logger.Errorf("failed to get jwt claims: %v", err.Error())
+		return info
 	}
 
 	logger.Infof("claims = %v", claims)
@@ -69,6 +74,10 @@ func (a *ApiAuthContext) GetAuthorizerInfo(c *gin.Context) AuthorizerInfo {
 // getTokenFromHeader returns the bearer token from the Authorization header
 func (a *ApiAuthContext) getTokenFromHeader(r *http.Request) string {
 	reqToken := r.Header.Get("Authorization")
+	if reqToken == "" {
+		return ""
+	}
+
 	splitToken := strings.Split(reqToken, "Bearer ")
 	return splitToken[1]
 }
