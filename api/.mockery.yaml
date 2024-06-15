@@ -1,6 +1,11 @@
 inpackage: False
 with-expecter: True
 packages:
+  github.com/sebboness/yektaspoints/handlers:
+    config:
+      dir: "mocks/handlers"
+    interfaces:
+      AuthContext:
   github.com/sebboness/yektaspoints/storage:
     config:
       dir: "mocks/storage"

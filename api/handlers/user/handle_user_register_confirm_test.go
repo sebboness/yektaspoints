@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
 	authmocks "github.com/sebboness/yektaspoints/mocks/auth"
+	handlerMocks "github.com/sebboness/yektaspoints/mocks/handlers"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 
 	apierr "github.com/sebboness/yektaspoints/util/error"
@@ -46,18 +46,13 @@ func Test_UserRegisterConfirmHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 
 			ctx := context.Background()
+			mockAuthContext := handlerMocks.NewMockAuthContext(t)
 
-			evt := events.APIGatewayProxyRequest{
-				RequestContext: events.APIGatewayProxyRequestContext{
-					Authorizer: map[string]interface{}{
-						"claims": map[string]interface{}{
-							"sub": "1",
-						},
-					},
+			authInfo := handlers.AuthorizerInfo{
+				Claims: map[string]interface{}{
+					"sub": "1",
 				},
 			}
-
-			ctx = handlers.PrepareAuthorizedContext(ctx, evt)
 
 			req := &userRegisterConfirmRequest{
 				Code:     "123456",
@@ -74,11 +69,15 @@ func Test_UserRegisterConfirmHandler(t *testing.T) {
 			if !c.state.invalidBody {
 				mockAuther.EXPECT().ConfirmRegistration(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 				mockUserDB.EXPECT().UpdateUserStatus(mock.Anything, mock.Anything, mock.Anything).Return(c.state.updateErr).Once()
+				mockAuthContext.EXPECT().GetAuthorizerInfo(mock.Anything).Return(authInfo)
 			} else {
 				evtBodyStr = `{"":`
 			}
 
 			ctrl := UserController{
+				BaseController: handlers.BaseController{
+					AuthContext: mockAuthContext,
+				},
 				auth:   mockAuther,
 				userDB: mockUserDB,
 			}

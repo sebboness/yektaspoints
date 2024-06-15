@@ -12,7 +12,11 @@ import (
 )
 
 type getUserPointsHandlerRequest struct {
+	// UserID is for the user that owns the points (child)
 	UserID string `json:"-"`
+
+	// User ID that makes the request (parent)
+	RequestingUserID string `json:"-"`
 }
 
 type getUserPointsHandlerResponse struct {
@@ -21,10 +25,6 @@ type getUserPointsHandlerResponse struct {
 
 func (c *PointsController) GetUserPointsHandler(cgin *gin.Context) {
 
-	// authInfo := c.AuthContext.GetAuthorizerInfo(cgin)
-	// TODO: Implement a way to check that the requested user (a parent) has access to retrieve the points for the user
-	//       identified in this request via the user_id query parameter (their child).
-
 	userID := cgin.Param("user_id")
 	if userID == "" {
 		apiErr := apierr.New(apierr.InvalidInput).WithError("user_id is a required query parameter")
@@ -32,8 +32,11 @@ func (c *PointsController) GetUserPointsHandler(cgin *gin.Context) {
 		return
 	}
 
+	authInfo := c.AuthContext.GetAuthorizerInfo(cgin)
+
 	req := &getUserPointsHandlerRequest{
-		UserID: userID,
+		UserID:           userID,
+		RequestingUserID: authInfo.GetUserID(),
 	}
 
 	resp, err := c.handleGetUserPoints(cgin.Request.Context(), req)
@@ -55,6 +58,19 @@ func (c *PointsController) handleGetUserPoints(ctx context.Context, req *getUser
 
 	if req.UserID == "" {
 		return resp, apierr.New(apierr.AccessDenied).WithError("missing user id")
+	}
+
+	// check that the requested user (a parent) has access to data owned by user (a child)
+	hasAccess, err := c.userDB.ParentHasAccessToChild(ctx, req.RequestingUserID, req.UserID)
+	if err != nil {
+		return resp, fmt.Errorf("failed to check access permissions: %w", err)
+	}
+	if !hasAccess {
+		logger.WithFields(map[string]any{
+			"requesting_user_id": req.RequestingUserID,
+			"user_id":            req.UserID,
+		})
+		return resp, fmt.Errorf("user does not have permissions to get points from user: %w", err)
 	}
 
 	points, err := c.pointsDB.GetPointsByUserID(ctx, req.UserID, models.QueryPointsFilter{})

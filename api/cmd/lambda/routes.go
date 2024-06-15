@@ -35,7 +35,7 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 		r.GET("/v1/family", familyCtrl.GetFamilyHandler, mw.WithRolesAny(groupsChildParent))
 
 		// Points
-		r.GET("/v1/points/:point_id", pointsCtrl.GetUserPointsHandler, mw.WithRolesAny(groupsChildParent))
+		// r.GET("/v1/points/:point_id", pointsCtrl.GetUserPointsHandler, mw.WithRolesAny(groupsChildParent))
 		r.GET("/v1/points/summary/:user_id", pointsCtrl.GetPointsSummaryHandler, mw.WithRolesAny(groupsChildParent))
 		r.POST("/v1/points", pointsCtrl.RequestPointsHandler, mw.WithRolesAny(groupsChild))
 

@@ -96,7 +96,7 @@ func SuccessResult(data any) *result.Result {
 }
 
 // Used in tests
-var defaultMockClaims = map[string]interface{}{
+var DefaultMockAuthClaims = map[string]interface{}{
 	"cognito:username": "john",
 	"email":            "john@info.co",
 	"email_verified":   "true",
@@ -108,7 +108,7 @@ var defaultMockClaims = map[string]interface{}{
 var MockApiGWEvent = events.APIGatewayProxyRequest{
 	RequestContext: events.APIGatewayProxyRequestContext{
 		Authorizer: map[string]interface{}{
-			"claims": defaultMockClaims,
+			"claims": DefaultMockAuthClaims,
 		},
 	},
 }
@@ -118,7 +118,7 @@ func GetMockApiGWEvent(includeDefaultClaims bool, claims map[string]interface{})
 	allClaims := map[string]interface{}{}
 
 	if includeDefaultClaims {
-		for claim, val := range defaultMockClaims {
+		for claim, val := range DefaultMockAuthClaims {
 			allClaims[claim] = val
 		}
 	}

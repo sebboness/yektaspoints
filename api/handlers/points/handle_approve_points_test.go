@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
+	handlerMocks "github.com/sebboness/yektaspoints/mocks/handlers"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util/tests"
@@ -59,13 +60,23 @@ func Test_Controller_ApprovePointsHandler(t *testing.T) {
 			evtBody, _ := json.Marshal(req)
 			evtBodyStr := string(evtBody)
 
+			mockAuthContext := handlerMocks.NewMockAuthContext(t)
 			mockPointsDB := mocks.NewMockIPointsStorage(t)
 			mockUserDB := mocks.NewMockIUserStorage(t)
 
+			passedRequestChecks := !c.state.invalidBody && !c.state.missingPointId && !c.state.missingUserId
 			passedInitialChecks := !c.state.invalidBody && !c.state.missingPointId && !c.state.missingUserId && !c.state.validationError
 
 			if c.state.invalidBody {
 				evtBodyStr = `{"user_id":`
+			}
+
+			authInfo := handlers.AuthorizerInfo{
+				Claims: handlers.DefaultMockAuthClaims,
+			}
+
+			if passedRequestChecks {
+				mockAuthContext.EXPECT().GetAuthorizerInfo(mock.Anything).Return(authInfo)
 			}
 
 			if passedInitialChecks {
@@ -76,11 +87,15 @@ func Test_Controller_ApprovePointsHandler(t *testing.T) {
 			}
 
 			ctrl := PointsController{
+				BaseController: handlers.BaseController{
+					AuthContext: mockAuthContext,
+				},
 				pointsDB: mockPointsDB,
 				userDB:   mockUserDB,
 			}
 
-			ctx := handlers.PrepareAuthorizedContext(context.Background(), handlers.MockApiGWEvent)
+			// ctx := handlers.PrepareAuthorizedContext(context.Background(), handlers.MockApiGWEvent)
+			ctx := context.Background()
 
 			w := httptest.NewRecorder()
 
