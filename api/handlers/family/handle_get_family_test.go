@@ -119,6 +119,7 @@ func Test_Controller_GetFamilyHandler(t *testing.T) {
 			}
 
 			familyDB.AssertExpectations(t)
+			mockAuthContext.AssertExpectations(t)
 		})
 	}
 }

@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/util/env"
-	"github.com/sebboness/yektaspoints/util/jwt"
 )
 
 type ctxKey string
@@ -30,13 +29,13 @@ type AuthContext interface {
 	GetAuthorizerInfo(c *gin.Context) AuthorizerInfo
 }
 
-var jwtParser jwt.JwtParser
-
 // GetAuthContext returns a new AuthContext
 func GetAuthContext() (AuthContext, error) {
 	if env.GetEnv("RUN_AS_WEB_API") == "true" {
+		logger.Infof("auth context is via web api")
 		return NewApiAuthContext()
 	} else {
+		logger.Infof("auth context is via lambda")
 		return NewLambdaAuthContext()
 	}
 }
@@ -65,7 +64,18 @@ func (i AuthorizerInfo) GetEmail() string {
 
 func (i AuthorizerInfo) GetGroups() []string {
 	groupStr := i.ValueOrEmpty(claimKeyGroups)
-	return strings.Split(groupStr, ",")
+
+	if groupStr == "" {
+		return []string{}
+	}
+	if strings.HasPrefix(groupStr, "[") && strings.HasSuffix(groupStr, "]") {
+		// assume string is something like "[admin parent]"
+		return strings.Split(groupStr[1:len(groupStr)-1], " ")
+	} else {
+		// assume string is something like "admin,parent"
+		return strings.Split(groupStr, ",")
+	}
+
 }
 
 func (i AuthorizerInfo) GetName() string {

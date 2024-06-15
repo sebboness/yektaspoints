@@ -58,15 +58,12 @@ func (a *ApiAuthContext) GetAuthorizerInfo(c *gin.Context) AuthorizerInfo {
 		return info
 	}
 
-	logger.Infof("claims = %v", claims)
 	info = AuthorizerInfo{
 		Claims: claims,
 	}
 
 	// Store claims in context
 	c.Request = c.Request.Clone(context.WithValue(ctx, CtxKeyAuthInfo, info))
-
-	logger.Infof("authorized info = %v", info)
 
 	return info
 }

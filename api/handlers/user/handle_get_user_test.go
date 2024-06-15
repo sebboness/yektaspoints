@@ -88,6 +88,7 @@ func Test_Controller_GetUserHandler(t *testing.T) {
 				}
 			}
 
+			mockAuthContext.AssertExpectations(t)
 			mockUserDB.AssertExpectations(t)
 		})
 	}

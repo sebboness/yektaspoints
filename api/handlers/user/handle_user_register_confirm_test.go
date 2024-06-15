@@ -92,6 +92,7 @@ func Test_UserRegisterConfirmHandler(t *testing.T) {
 			result := tests.AssertResult(t, w.Body)
 			tests.AssertResultError(t, result, c.want.err)
 
+			mockAuthContext.AssertExpectations(t)
 			mockAuther.AssertExpectations(t)
 			mockUserDB.AssertExpectations(t)
 		})

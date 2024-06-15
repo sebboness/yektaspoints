@@ -87,6 +87,7 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 				assert.NotNil(t, result.Data)
 			}
 
+			mockAuthContext.AssertExpectations(t)
 			mockPointsDB.AssertExpectations(t)
 		})
 	}

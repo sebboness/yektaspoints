@@ -24,7 +24,9 @@ func WithRolesAny(roles []string) gin.HandlerFunc {
 		authInfo := authContext.GetAuthorizerInfo(c)
 
 		matches := false
+		logger.Infof("one of roles required: %v; auth roles: %v", roles, authInfo.GetGroups())
 		for _, role := range roles {
+			logger.Infof("auth roles (%v) contains %v? %v", authInfo.GetGroups(), role, slices.Contains(authInfo.GetGroups(), role))
 			if slices.Contains(authInfo.GetGroups(), role) {
 				matches = true
 				break
@@ -32,6 +34,7 @@ func WithRolesAny(roles []string) gin.HandlerFunc {
 		}
 
 		if !matches {
+			logger.Infof("hit here")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, result.ErrorResult(fmt.Errorf("user not a parent")))
 			return
 		}

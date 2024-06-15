@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
@@ -26,9 +25,6 @@ func (a *LambdaAuthContext) GetAuthorizerInfo(c *gin.Context) AuthorizerInfo {
 	ctx := c.Request.Context()
 	_info := ctx.Value(CtxKeyAuthInfo)
 
-	authInfoJson, _ := json.Marshal(info)
-	logger.Infof("GetAuthorizerInfo authInfo?: " + string(authInfoJson))
-
 	if _info != nil {
 		return _info.(AuthorizerInfo)
 	}
@@ -46,8 +42,6 @@ func PrepareAuthorizedContext(ctx context.Context, req events.APIGatewayProxyReq
 				authorizer.Claims = claims
 			}
 		}
-	} else {
-		// logger.Infof("PrepareAuthorizedContext B")
 	}
 
 	return context.WithValue(ctx, CtxKeyAuthInfo, authorizer)

@@ -122,6 +122,7 @@ func Test_Controller_ApprovePointsHandler(t *testing.T) {
 				assert.NotNil(t, result.Data)
 			}
 
+			mockAuthContext.AssertExpectations(t)
 			mockPointsDB.AssertExpectations(t)
 			mockUserDB.AssertExpectations(t)
 		})
