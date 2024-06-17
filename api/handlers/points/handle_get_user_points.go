@@ -34,6 +34,8 @@ func (c *PointsController) GetUserPointsHandler(cgin *gin.Context) {
 
 	authInfo := c.AuthContext.GetAuthorizerInfo(cgin)
 
+	logger.Infof("GetUserPointsHandler, claims: %v", authInfo.Claims)
+
 	req := &getUserPointsHandlerRequest{
 		UserID:           userID,
 		RequestingUserID: authInfo.GetUserID(),

@@ -80,8 +80,8 @@ export class MyPointsApi extends Api {
         return this.get(`v1/points/summary/${userID}`);
     }
 
-    public postRequestPoints(payload: RequestPointsRequest): Promise<ResultT<RequestPointsResponse>> {
-        return this.post("v1/points", {
+    public postRequestPoints(userID: string, payload: RequestPointsRequest): Promise<ResultT<RequestPointsResponse>> {
+        return this.post(`v1/user/${userID}/points`, {
             payload,
         });
     }

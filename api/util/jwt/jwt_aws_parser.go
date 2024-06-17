@@ -50,10 +50,6 @@ func (p *AwsJwtParser) GetJwtClaims(tokenValue string) (map[string]interface{}, 
 		if err := json.Unmarshal(tokenJson, &claims); err != nil {
 			return claims, fmt.Errorf("error unmarshalling token claims: %v", err.Error())
 		}
-
-		logger.Infof("token = %v", token)
-		logger.Infof("claims = %v", claims)
-
 	}
 
 	return claims, nil

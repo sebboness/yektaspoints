@@ -14,6 +14,7 @@ import (
 // If no match is found, the request returns a 401; Otherwise the request continues.
 func WithRolesAny(roles []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		logger.Infof("WithRolesAny, roles: %v", roles)
 
 		authContext, err := handlers.GetAuthContext()
 		if err != nil {

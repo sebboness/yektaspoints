@@ -16,7 +16,7 @@ import {
 import { getUserPointSummary } from "@/slices/pointsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
-import RequestPointsDialog, { RequestPointsDialogInterface, requestPointsDialogID } from "./RequestPointsDialog";
+import RequestPointsDialog, { RequestPointsDialogInterface } from "./RequestPointsDialog";
 import PointRequestList from "./PointRequestList";
 import PointsList from "./PointsList";
 
@@ -32,18 +32,6 @@ const UserSummary = () => {
     const user = useAppSelector((state) => state.auth.user);
     const sum = useAppSelector((state) => state.points.userSummary);
     const userID = user ? user.user_id : "";
-    
-    // const openRequestPointsDialog = (e: React.MouseEvent<HTMLButtonElement>) => {
-    //     if (typeof document !== "undefined") {
-    //         const dialog = document.getElementById(requestPointsDialogID) as HTMLDialogElement;
-    //         if (dialog) {
-    //             dialog.showModal();
-    //         }
-    //     }
-
-    //     e.preventDefault();
-    //     return false;
-    // };
 
     useEffect(() => {
         if (userID) {
