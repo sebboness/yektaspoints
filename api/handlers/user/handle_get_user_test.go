@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
+	handlerMocks "github.com/sebboness/yektaspoints/mocks/handlers"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 	"github.com/sebboness/yektaspoints/models"
 	apierr "github.com/sebboness/yektaspoints/util/error"
@@ -41,35 +41,35 @@ func Test_Controller_GetUserHandler(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
+			mockAuthContext := handlerMocks.NewMockAuthContext(t)
 			mockUserDB := mocks.NewMockIUserStorage(t)
-
-			ctrl := UserController{
-				userDB: mockUserDB,
-			}
 
 			ctx := context.Background()
 
-			evt := events.APIGatewayProxyRequest{
-				RequestContext: events.APIGatewayProxyRequestContext{
-					Authorizer: map[string]interface{}{
-						"claims": map[string]interface{}{
-							"cognito:username": "john",
-							"email":            "john@info.co",
-							"email_verified":   "true",
-							"name":             "John",
-							"sub":              "1",
-						},
-					},
+			authInfo := handlers.AuthorizerInfo{
+				Claims: map[string]interface{}{
+					"cognito:username": "john",
+					"email":            "john@info.co",
+					"email_verified":   "true",
+					"name":             "John",
+					"sub":              "1",
 				},
 			}
 
 			if c.state.hasNoAuth {
-				evt.RequestContext.Authorizer = nil
+				authInfo = handlers.AuthorizerInfo{}
 			} else {
 				mockUserDB.EXPECT().GetUserByID(mock.Anything, mock.Anything).Return(models.User{UserID: "1"}, c.state.getUserErr).Once()
 			}
 
-			ctx = handlers.PrepareAuthorizedContext(ctx, evt)
+			mockAuthContext.EXPECT().GetAuthorizerInfo(mock.Anything).Return(authInfo)
+
+			ctrl := UserController{
+				BaseController: handlers.BaseController{
+					AuthContext: mockAuthContext,
+				},
+				userDB: mockUserDB,
+			}
 
 			w := httptest.NewRecorder()
 			cgin, _ := gin.CreateTestContext(w)
@@ -88,6 +88,7 @@ func Test_Controller_GetUserHandler(t *testing.T) {
 				}
 			}
 
+			mockAuthContext.AssertExpectations(t)
 			mockUserDB.AssertExpectations(t)
 		})
 	}

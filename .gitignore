@@ -41,5 +41,6 @@ terraform.rc
 
 # project specific
 */cmd/lambda/**/bootstrap
+*/cmd/lambda/**/webapi
 */cmd/lambda/**/*.zip
 *_local_test.go

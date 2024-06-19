@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
+	handlerMocks "github.com/sebboness/yektaspoints/mocks/handlers"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util/tests"
@@ -48,8 +48,12 @@ func Test_Controller_GetFamilyHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 
 			familyDB := mocks.NewMockIFamilyStorage(t)
+			mockAuthContext := handlerMocks.NewMockAuthContext(t)
 
 			ctrl := FamilyController{
+				BaseController: handlers.BaseController{
+					AuthContext: mockAuthContext,
+				},
 				familyDB: familyDB,
 			}
 
@@ -68,30 +72,26 @@ func Test_Controller_GetFamilyHandler(t *testing.T) {
 				familyUsers[0].UserID = "2"
 			}
 
-			if !c.state.familyIdMissing && !c.state.familyIdEmpty && !c.state.invalidUser {
-				familyDB.EXPECT().GetFamilyUsers(mock.Anything, mock.Anything).Return(familyUsers, nil).Once()
-				familyDB.EXPECT().GetFamilyMembersByUserIDs(mock.Anything, mock.Anything, mock.Anything).Return(family, c.state.err).Once()
-			} else if !c.state.familyIdMissing && !c.state.familyIdEmpty {
-				familyDB.EXPECT().GetFamilyUsers(mock.Anything, mock.Anything).Return(familyUsers, nil).Once()
-			}
-
-			ctx := context.Background()
-
-			evt := events.APIGatewayProxyRequest{
-				RequestContext: events.APIGatewayProxyRequestContext{
-					Authorizer: map[string]interface{}{
-						"claims": map[string]interface{}{
-							"sub": "1",
-						},
-					},
+			authInfo := handlers.AuthorizerInfo{
+				Claims: map[string]interface{}{
+					"sub": "1",
 				},
 			}
 
 			if c.state.familyIdMissing {
-				evt.RequestContext.Authorizer = nil
+				authInfo = handlers.AuthorizerInfo{}
 			}
 
-			ctx = handlers.PrepareAuthorizedContext(ctx, evt)
+			if !c.state.familyIdMissing && !c.state.familyIdEmpty && !c.state.invalidUser {
+				mockAuthContext.EXPECT().GetAuthorizerInfo(mock.Anything).Return(authInfo)
+				familyDB.EXPECT().GetFamilyUsers(mock.Anything, mock.Anything).Return(familyUsers, nil).Once()
+				familyDB.EXPECT().GetFamilyMembersByUserIDs(mock.Anything, mock.Anything, mock.Anything).Return(family, c.state.err).Once()
+			} else if !c.state.familyIdMissing && !c.state.familyIdEmpty {
+				mockAuthContext.EXPECT().GetAuthorizerInfo(mock.Anything).Return(authInfo)
+				familyDB.EXPECT().GetFamilyUsers(mock.Anything, mock.Anything).Return(familyUsers, nil).Once()
+			}
+
+			ctx := context.Background()
 
 			endpoint := "/v1/family?family_id=456"
 			if c.state.familyIdMissing {
@@ -119,6 +119,7 @@ func Test_Controller_GetFamilyHandler(t *testing.T) {
 			}
 
 			familyDB.AssertExpectations(t)
+			mockAuthContext.AssertExpectations(t)
 		})
 	}
 }

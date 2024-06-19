@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
+	handlerMocks "github.com/sebboness/yektaspoints/mocks/handlers"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 	"github.com/sebboness/yektaspoints/util/tests"
@@ -51,24 +52,30 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 			evtBody, _ := json.Marshal(req)
 			evtBodyStr := string(evtBody)
 
+			mockAuthContext := handlerMocks.NewMockAuthContext(t)
 			mockPointsDB := mocks.NewMockIPointsStorage(t)
 
+			authInfo := handlers.AuthorizerInfo{
+				Claims: handlers.DefaultMockAuthClaims,
+			}
+
 			if !c.state.invalidBody {
+				mockAuthContext.EXPECT().GetAuthorizerInfo(mock.Anything).Return(authInfo)
 				mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Once()
 			} else {
 				evtBodyStr = `{"user_id":`
 			}
 
 			ctrl := PointsController{
+				BaseController: handlers.BaseController{
+					AuthContext: mockAuthContext,
+				},
 				pointsDB: mockPointsDB,
 			}
 
-			ctx := handlers.PrepareAuthorizedContext(context.Background(), handlers.MockApiGWEvent)
-
 			w := httptest.NewRecorder()
 			cgin, _ := gin.CreateTestContext(w)
-			cgin.Request = httptest.NewRequest("POST", "/points", bytes.NewReader([]byte(evtBodyStr))).WithContext(ctx)
-			handlers.PrepareAuthorizedContext(ctx, handlers.MockApiGWEvent)
+			cgin.Request = httptest.NewRequest("POST", "/points", bytes.NewReader([]byte(evtBodyStr)))
 
 			ctrl.RequestPointsHandler(cgin)
 
@@ -80,6 +87,7 @@ func Test_Controller_RequestPointsHandler(t *testing.T) {
 				assert.NotNil(t, result.Data)
 			}
 
+			mockAuthContext.AssertExpectations(t)
 			mockPointsDB.AssertExpectations(t)
 		})
 	}

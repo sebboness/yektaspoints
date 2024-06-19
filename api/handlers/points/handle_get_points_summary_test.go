@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sebboness/yektaspoints/handlers"
+	handlerMocks "github.com/sebboness/yektaspoints/mocks/handlers"
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util/tests"
@@ -40,10 +41,16 @@ func Test_Controller_GetPointsSummaryHandler(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			pointsDB := mocks.NewMockIPointsStorage(t)
+			mockAuthContext := handlerMocks.NewMockAuthContext(t)
+			mockUserDB := mocks.NewMockIUserStorage(t)
+			mockPointsDB := mocks.NewMockIPointsStorage(t)
 
 			ctrl := PointsController{
-				pointsDB: pointsDB,
+				BaseController: handlers.BaseController{
+					AuthContext: mockAuthContext,
+				},
+				pointsDB: mockPointsDB,
+				userDB:   mockUserDB,
 			}
 
 			points := []models.Point{
@@ -52,19 +59,19 @@ func Test_Controller_GetPointsSummaryHandler(t *testing.T) {
 				{ID: "3", UserID: "a", Points: 1},
 			}
 
-			if !c.state.missingUser {
-				pointsDB.EXPECT().GetPointsByUserID(mock.Anything, mock.Anything, mock.Anything).Return(points, c.state.err).Once()
+			authInfo := handlers.AuthorizerInfo{
+				Claims: handlers.DefaultMockAuthClaims,
 			}
-
-			ctx := context.Background()
-
-			evt := handlers.MockApiGWEvent
 
 			if c.state.missingUser {
-				evt.RequestContext.Authorizer = nil
+				authInfo = handlers.AuthorizerInfo{}
 			}
 
-			ctx = handlers.PrepareAuthorizedContext(ctx, evt)
+			if !c.state.missingUser {
+				mockAuthContext.EXPECT().GetAuthorizerInfo(mock.Anything).Return(authInfo)
+				mockUserDB.EXPECT().ParentHasAccessToChild(mock.Anything, mock.Anything, mock.Anything).Return(true, nil).Once()
+				mockPointsDB.EXPECT().GetPointsByUserID(mock.Anything, mock.Anything, mock.Anything).Return(points, c.state.err).Once()
+			}
 
 			w := httptest.NewRecorder()
 			cgin, _ := gin.CreateTestContext(w)
@@ -73,7 +80,7 @@ func Test_Controller_GetPointsSummaryHandler(t *testing.T) {
 				cgin.AddParam("user_id", "a")
 			}
 
-			cgin.Request = httptest.NewRequest("GET", "/", nil).WithContext(ctx)
+			cgin.Request = httptest.NewRequest("GET", "/", nil)
 
 			ctrl.GetPointsSummaryHandler(cgin)
 
@@ -85,7 +92,9 @@ func Test_Controller_GetPointsSummaryHandler(t *testing.T) {
 				assert.NotNil(t, result.Data)
 			}
 
-			pointsDB.AssertExpectations(t)
+			mockAuthContext.AssertExpectations(t)
+			mockPointsDB.AssertExpectations(t)
+			mockUserDB.AssertExpectations(t)
 		})
 	}
 }
@@ -93,6 +102,8 @@ func Test_Controller_GetPointsSummaryHandler(t *testing.T) {
 func Test_Controller_handleGetPointsSummary(t *testing.T) {
 	type state struct {
 		missingUser  bool
+		noAccess     bool
+		noAccessErr  error
 		getPointsErr error
 	}
 	type want struct {
@@ -107,6 +118,8 @@ func Test_Controller_handleGetPointsSummary(t *testing.T) {
 	cases := []test{
 		{"happy path", state{}, want{}},
 		{"fail - missing user ID", state{missingUser: true}, want{"missing user id"}},
+		{"fail - check access error", state{noAccessErr: errFail}, want{"failed to check access permissions"}},
+		{"fail - no access error", state{noAccess: true}, want{"user does not have permissions to get points from user"}},
 		{"fail - get points error", state{getPointsErr: errFail}, want{"failed to get points"}},
 	}
 
@@ -114,10 +127,12 @@ func Test_Controller_handleGetPointsSummary(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 
 			ctx := context.Background()
-			pointsDB := mocks.NewMockIPointsStorage(t)
+			mockPointsDB := mocks.NewMockIPointsStorage(t)
+			mockUserDB := mocks.NewMockIUserStorage(t)
 
 			ctrl := PointsController{
-				pointsDB: pointsDB,
+				pointsDB: mockPointsDB,
+				userDB:   mockUserDB,
 			}
 
 			if !c.state.missingUser {
@@ -144,7 +159,11 @@ func Test_Controller_handleGetPointsSummary(t *testing.T) {
 					}
 				}
 
-				pointsDB.EXPECT().GetPointsByUserID(mock.Anything, mock.Anything, mock.Anything).Return(points, c.state.getPointsErr).Once()
+				mockUserDB.EXPECT().ParentHasAccessToChild(mock.Anything, mock.Anything, mock.Anything).Return(!c.state.noAccess, c.state.noAccessErr).Once()
+
+				if !c.state.noAccess && c.state.noAccessErr == nil {
+					mockPointsDB.EXPECT().GetPointsByUserID(mock.Anything, mock.Anything, mock.Anything).Return(points, c.state.getPointsErr).Once()
+				}
 			}
 
 			req := &getPointsSummaryHandlerRequest{
@@ -164,7 +183,8 @@ func Test_Controller_handleGetPointsSummary(t *testing.T) {
 				assert.Equal(t, 0, res.PointsLostLast7Days)
 			}
 
-			pointsDB.AssertExpectations(t)
+			mockPointsDB.AssertExpectations(t)
+			mockUserDB.AssertExpectations(t)
 		})
 	}
 }

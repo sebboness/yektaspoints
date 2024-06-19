@@ -33,7 +33,7 @@ func (c *UserController) UserRegisterConfirmHandler(cgin *gin.Context) {
 		return
 	}
 
-	authInfo := handlers.GetAuthorizerInfo(cgin)
+	authInfo := c.AuthContext.GetAuthorizerInfo(cgin)
 	req.UserID = authInfo.GetUserID()
 
 	err = c.handleUserRegisterConfirm(cgin.Request.Context(), &req)

@@ -12,7 +12,13 @@ import (
 func WithAuthorizedUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		authInfo := handlers.GetAuthorizerInfo(c)
+		authContext, err := handlers.GetAuthContext()
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, result.ErrorResult(fmt.Errorf("failed to get auth context: %w", err)))
+			return
+		}
+
+		authInfo := authContext.GetAuthorizerInfo(c)
 
 		if !authInfo.HasInfo() {
 			// reject request

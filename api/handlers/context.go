@@ -1,13 +1,11 @@
 package handlers
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
+	"github.com/sebboness/yektaspoints/util/env"
 )
 
 type ctxKey string
@@ -27,36 +25,19 @@ type AuthorizerInfo struct {
 	Claims map[string]interface{} `json:"claims"`
 }
 
-func PrepareAuthorizedContext(ctx context.Context, req events.APIGatewayProxyRequest) context.Context {
-	authorizer := AuthorizerInfo{}
-
-	if len(req.RequestContext.Authorizer) > 0 {
-		if claimsObj, ok := req.RequestContext.Authorizer["claims"]; ok {
-			if claims, ok := claimsObj.(map[string]interface{}); ok {
-				authorizer.Claims = claims
-			}
-		}
-	} else {
-		// logger.Infof("PrepareAuthorizedContext B")
-	}
-
-	return context.WithValue(ctx, CtxKeyAuthInfo, authorizer)
+type AuthContext interface {
+	GetAuthorizerInfo(c *gin.Context) AuthorizerInfo
 }
 
-func GetAuthorizerInfo(c *gin.Context) AuthorizerInfo {
-	if c.Request != nil {
-		ctx := c.Request.Context()
-		info := ctx.Value(CtxKeyAuthInfo)
-
-		authInfoJson, _ := json.Marshal(info)
-		logger.Infof("GetAuthorizerInfo authInfo?: " + string(authInfoJson))
-
-		if info != nil {
-			return info.(AuthorizerInfo)
-		}
+// GetAuthContext returns a new AuthContext
+func GetAuthContext() (AuthContext, error) {
+	if env.GetEnv("RUN_AS_WEB_API") == "true" {
+		logger.Infof("auth context is via web api")
+		return NewApiAuthContext()
+	} else {
+		logger.Infof("auth context is via lambda")
+		return NewLambdaAuthContext()
 	}
-
-	return AuthorizerInfo{}
 }
 
 func (i AuthorizerInfo) HasInfo() bool {
@@ -83,7 +64,18 @@ func (i AuthorizerInfo) GetEmail() string {
 
 func (i AuthorizerInfo) GetGroups() []string {
 	groupStr := i.ValueOrEmpty(claimKeyGroups)
-	return strings.Split(groupStr, ",")
+
+	if groupStr == "" {
+		return []string{}
+	}
+	if strings.HasPrefix(groupStr, "[") && strings.HasSuffix(groupStr, "]") {
+		// assume string is something like "[admin parent]"
+		return strings.Split(groupStr[1:len(groupStr)-1], " ")
+	} else {
+		// assume string is something like "admin,parent"
+		return strings.Split(groupStr, ",")
+	}
+
 }
 
 func (i AuthorizerInfo) GetName() string {

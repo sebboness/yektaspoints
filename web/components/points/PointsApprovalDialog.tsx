@@ -1,84 +1,100 @@
 "use client";
 
-// import moment from "moment";
-import React, { useRef } from "react";
+import moment from "moment";
+import React, { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 // import pointsSlice, { PointsSlice } from "@/slices/pointsSlice";
-// import { useAppDispatch } from "@/store/hooks";
+// import { useAppDispatch, useAppSelector } from "@/store/hooks";
 // import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-// import { MyPointsApi } from "@/lib/api/MyPointsApi";
-// import { Point } from "@/lib/models/Points";
+import { MyPointsApi } from "@/lib/api/MyPointsApi";
+import { Point, PointDecisionApprove, PointDecisionDeny } from "@/lib/models/Points";
 // import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-// import { getTokenRetriever } from "@/store/store";
+import { getTokenRetriever } from "@/store/store";
 
-// const ln = () => `[${moment().toISOString()}] PointsApprovalDialog: `;
+const ln = () => `[${moment().toISOString()}] PointsApprovalDialog: `;
 
 const formSchema = yup.object({
-    points: yup.number().integer().min(0).max(1000),
-    notes: yup.string().required().min(5).max(256),
+    decision: yup.string().nullable().oneOf([PointDecisionApprove, PointDecisionDeny]),
+    point_id: yup.string().required().min(0).max(1000),
+    parent_notes: yup.string().required().min(5).max(256),
 });
 
-export const requestPointsDialogID = "request_points_dialog";
+export const approvePointsRequestDialogID = "approve_points_request_dialog";
 
-// type Props = {
-//     point: Point
-// };
+export interface PointsApprovalDialogInterface {
+    open(point: Point): void;
+}
 
-// type FormData = {
-//     pointId: string;
-//     decision: string;
-//     notes?: string;
-// };
+type FormData = {
+    point_id: string;
+    decision?: string | null;
+    parent_notes: string | null;
+};
 
-const PointsApprovalDialog = () => {
+const PointsApprovalDialog = React.forwardRef((props, ref) => {
+
+    const [mounted, setMounted] = useState(false);
 
     const dialogRef = useRef<HTMLDialogElement>(null);
 
+    useImperativeHandle(ref, () => ({
+        close: () => close(),
+        open: (point: Point) => open(point),
+    }));
+
     // const dispatch = useAppDispatch();
     // const authState = useAppSelector((state) => state.auth);
-    // const api = MyPointsApi.getInstance();
+    const api = MyPointsApi.getInstance();
     
-    // const [loading, setLoading] = useState(false);
-    // const [decision, setDecision] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [decision, setDecision] = useState("");
+    const [point, setPoint] = useState<Point|undefined>(undefined);
 
     // Setup form validation variables and methods
     const { 
-        // register,
-        // handleSubmit,
+        register,
+        handleSubmit,
         reset,
         // watch,
-        // formState: { errors },
+        formState: { errors },
     } = useForm({
         resolver: yupResolver(formSchema)
     });
 
-    // const onSubmit = async (data: FormData) => {  
-    // setLoading(true);      
-    // console.log(`${ln()}submitted data`, data);
+    const onSubmit = async (data: FormData) => {  
+        setLoading(true);      
+        console.log(`${ln()}submitted data`, data);
 
-    // const result = await api
-    //     .withToken(getTokenRetriever())
-    //     .postRequestPoints({
-    //         points: data.points || 0,
-    //         notes: data.notes,
-    //     })
+        if (!point)
+            return;
 
-    // if (result.data) {
-    //     console.log(`${ln()}approve/deny point request`, result.data);
-    //     dispatch(PointsSlice.actions.addPointToRequesting(result.data.point_summary));
-    //     close();
-    // } else {
-    //     console.log(`${ln()}error approve/deny point request`, result);
-    // }
+        const result = await api
+            .withToken(getTokenRetriever())
+            .approveRequestPoints({
+                decision: data.decision || "",
+                parent_notes: data.parent_notes,
+                point_id: point.id,
+                user_id: point.user_id,
+            });
 
-    // setLoading(false);
-    // };
+        if (result.status === "SUCCESS") {
+            console.log(`${ln()}approve/deny point request`, result);
+            // dispatch(PointsSlice.actions.addPointToRequesting(result.data.point_summary));
+            close();
+        } else {
+            console.log(`${ln()}error approve/deny point request`, result);
+        }
+
+        setLoading(false);
+    };
 
     const close = () => {
         reset();
+
+        setPoint(undefined);
 
         if (dialogRef.current)
             dialogRef.current.close();
@@ -91,8 +107,22 @@ const PointsApprovalDialog = () => {
         return false;
     };
 
+    const open = (point: Point) => {
+        console.log("opened approval dialog", point);
+        if (dialogRef.current) {
+            setPoint(point);
+            dialogRef.current.showModal();
+        }
+    };
+    
+    // Ensure component is mounted
+    useEffect(() => setMounted(true), []);
+    if (!mounted) {
+        return null;
+    }
+
     return (
-        <dialog id={requestPointsDialogID} className="modal" ref={dialogRef}>
+        <dialog id={approvePointsRequestDialogID} className="modal" ref={dialogRef}>
             <div className="modal-box bg-gradient-135 from-pink-200 to-lime-100 border border-zinc-500">
                 <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={doClose}>✕</button>
                 
@@ -100,36 +130,53 @@ const PointsApprovalDialog = () => {
                 <div className="divide-y divide-blue-200">
                     <div>
                         <h3 className="font-bold text-lg">[NAME] requested pointes</h3>
-                        <p className="py-4 text-center text-2xl">10 points</p>
-                        <p className="text-lg">[REASON...]</p>
+                        <p className="py-4 text-center text-2xl">
+                            {point
+                                ? `${point.points} point${point.points == 1 ? "" : "s"}`
+                                : ""}
+                        </p>
+                        <p className="text-lg">
+                            <strong>Reason: </strong>
+                            {point
+                                ? (point.request.reason || "No reason given")
+                                : ""}
+                        </p>
                     </div>
 
                     <div>
-                        {/* <form method="dialog" onSubmit={handleSubmit(onSubmit)}>
-                            <input type="hidden" { ...register("pointId")} value={props.point.id}/>
+                        <form method="dialog" onSubmit={handleSubmit(onSubmit)}>
+                            <input type="hidden" { ...register("point_id")} value={point ? point.id : ""}/>
                             <input type="hidden" { ...register("decision")} value={decision}/>
                             <div className="form-control">
-                                <textarea className="textarea textarea-bordered" placeholder="Optional: Notes for [NAME]" { ...register("notes")}></textarea>
-                                <label className={`label ${errors.notes ? "visible" : "invisible"}`}>
+                                <textarea className="textarea textarea-bordered" placeholder="Optional: Notes for [NAME]" { ...register("parent_notes")}></textarea>
+                                <label className={`label ${errors.parent_notes ? "visible" : "invisible"}`}>
                                     <a href="#" className="label-text-alt link link-hover text-red-600"></a>
                                 </label>
                             </div>
 
                             <div className="modal-action">
                                 {loading
-                                    ? <>
-                                        <button className={`btn btn-primary ${loading ? "btn-disabled" : ""}`} onClick={setDecision("APPROVE")}>Approve</button>
-                                        <button className={`btn btn-primary ${loading ? "btn-disabled" : ""}`} onClick={setDecision("DENY ")}>Deny</button>
+                                    ? <>Loading...</>
+                                    : <>
+                                        <button
+                                            className={`btn btn-primary ${loading ? "btn-disabled" : ""}`}
+                                            onClick={() => setDecision(PointDecisionApprove)}
+                                        >Approve</button>
+                                        <button
+                                            className={`btn btn-primary ${loading ? "btn-disabled" : ""}`}
+                                            onClick={() => setDecision(PointDecisionDeny)}
+                                        >Deny</button>
                                         <a className="btn btn-secondary" onClick={doClose}>Cancel</a>
-                                    </>
-                                    : <>Loading...</>}
+                                    </>}
                             </div>
-                        </form> */}
+                        </form>
                     </div>
                 </div>
             </div>
         </dialog>
     );
-};
+});
+
+PointsApprovalDialog.displayName = "PointsApprovalDialog";
 
 export default PointsApprovalDialog;

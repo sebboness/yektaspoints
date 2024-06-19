@@ -1,7 +1,5 @@
-export enum PointDecision {
-    APPROVE = "APPROVE",
-    DENY = "DENY",
-};
+export const PointDecisionApprove = "APPROVE";
+export const PointDecisionDeny = "DENY";
 
 export enum PointStatus {
     SETTLED = "SETTLED",
@@ -58,6 +56,13 @@ export type UserPoints = {
     recent_points: PointSummary[]
 };
 
+export type ApprovePointsRequest = {
+    point_id: string
+    decision: string
+    parent_notes: string | null
+    user_id: string
+};
+
 export type RequestPointsRequest = {
     points: number;
     reason: string;
@@ -81,3 +86,19 @@ export const mapPointToSummary = (p: Point): PointSummary => ({
 
 export const mapPointsToSummaries = (points: Point[]): PointSummary[] => 
     Object.values(points).map((p => mapPointToSummary(p)));
+
+export const mapSummaryToLitePoint = (ps: PointSummary): Point => ({
+    id: ps.id,
+    request: {
+        decided_by_user_id: ps.decided_by_user_id,
+        decision: ps.decision,
+        parent_notes: ps.parent_notes,
+        reason: ps.reason,
+        type: ps.type,
+    },
+    points: ps.points,
+    status: "",
+    created_on: "",
+    updated_on: ps.updated_on,
+    user_id: "",
+});

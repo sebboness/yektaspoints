@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/sebboness/yektaspoints/models"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 )
@@ -15,6 +16,7 @@ import (
 type IFamilyStorage interface {
 	GetFamilyMembersByUserIDs(ctx context.Context, family_id string, user_ids []string) (models.Family, error)
 	GetFamilyUsers(ctx context.Context, family_id string) ([]models.FamilyUser, error)
+	UserBelongsToFamily(ctx context.Context, user_id string, family_id string) (bool, error)
 }
 
 func (s *DynamoDbStorage) GetFamilyMembersByUserIDs(ctx context.Context, family_id string, user_ids []string) (models.Family, error) {
@@ -106,4 +108,33 @@ func (s *DynamoDbStorage) GetFamilyUsers(ctx context.Context, family_id string) 
 	}
 
 	return familyUsers, nil
+}
+
+func (s *DynamoDbStorage) UserBelongsToFamily(ctx context.Context, userId string, familyId string) (bool, error) {
+
+	familyIdAttr, err := attributevalue.Marshal(familyId)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal family_id key: %w", err)
+	}
+	userIdAttr, err := attributevalue.Marshal(userId)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal user_id key: %w", err)
+	}
+
+	key := map[string]types.AttributeValue{
+		"family_id": familyIdAttr,
+		"user_id":   userIdAttr,
+	}
+
+	resp, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(s.tableFamilyUser),
+		Key:       key,
+	})
+
+	if err != nil {
+		apiErr := apierr.GetAwsError(err)
+		return false, apiErr
+	}
+
+	return resp.Item != nil, nil
 }

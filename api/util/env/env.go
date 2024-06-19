@@ -10,6 +10,7 @@ import (
 var envVars = make(map[string]string)
 
 func init() {
+	println("init from env.go")
 	parseEnvVars()
 }
 

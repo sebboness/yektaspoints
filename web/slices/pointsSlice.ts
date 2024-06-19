@@ -13,7 +13,7 @@ export const getUserPoints = createAsyncThunk("getUserPoints", async (userID: st
     try {
         const result = await api
             .withToken(getTokenRetriever())
-            .getPointsByUser(userID);
+            .getUserPoints(userID);
 
         if (result.data)
             return result.data;
@@ -29,7 +29,7 @@ export const getUserPointSummary = createAsyncThunk("getUserPointSummary", async
     try {
         const result = await api
             .withToken(getTokenRetriever())
-            .getPointSummaryByUser(userID);
+            .getUserPointsSummary(userID);
 
         if (result.data)
             return result.data;
