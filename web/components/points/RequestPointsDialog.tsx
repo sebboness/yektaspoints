@@ -98,7 +98,7 @@ const RequestPointsDialog = React.forwardRef((props, ref) => {
         console.log("open");
         if (dialogRef.current)
             dialogRef.current.showModal();
-    }
+    };
     
     // Ensure component is mounted
     useEffect(() => setMounted(true), []);
@@ -141,5 +141,7 @@ const RequestPointsDialog = React.forwardRef((props, ref) => {
         </dialog>
     );
 });
+
+RequestPointsDialog.displayName = "RequestPointsDialog";
 
 export default RequestPointsDialog;

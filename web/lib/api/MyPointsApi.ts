@@ -6,7 +6,7 @@ import { ApprovePointsRequest, PointsList, RequestPointsRequest, RequestPointsRe
 // Define base URIs for different environments
 const baseUris: {[key: string]: string} = {
     "test":    "http://localhost",
-    "local":   "https://mypoints-api-dev.hexonite.net",
+    "local":   "http://localhost:10010",
     "dev":     "https://mypoints-api-dev.hexonite.net",
     "staging": "https://mypoints-api-staging.hexonite.net",
     "prod":    "https://api.points4us.com",
@@ -71,17 +71,9 @@ export class MyPointsApi extends Api {
     ////
     // Points
     ////
-    
-    public getPointsByUser(userID: string): Promise<ResultT<PointsList>> {
-        return this.get(`v1/points/user/${userID}`);
-    }
 
-    public getPointSummaryByUser(userID: string): Promise<ResultT<UserPoints>> {
-        return this.get(`v1/points/summary/${userID}`);
-    }
-
-    public postRequestPoints(userID: string, payload: RequestPointsRequest): Promise<ResultT<RequestPointsResponse>> {
-        return this.post(`v1/user/${userID}/points`, {
+    public postRequestPoints(payload: RequestPointsRequest): Promise<ResultT<RequestPointsResponse>> {
+        return this.post("v1/points ", {
             payload,
         });
     }
@@ -90,5 +82,17 @@ export class MyPointsApi extends Api {
         return this.put(`v1/points/${payload.point_id}/approve`, {
             payload,
         });
+    }
+
+    ////
+    // User points
+    ////
+    
+    public getUserPoints(userID: string): Promise<ResultT<PointsList>> {
+        return this.get(`v1/user/${userID}/points`);
+    }
+
+    public getUserPointsSummary(userID: string): Promise<ResultT<UserPoints>> {
+        return this.get(`v1/user/${userID}/points-summary`);
     }
 }

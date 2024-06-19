@@ -18,11 +18,11 @@ type approvePointsRequest struct {
 	// From request
 	Decision    string `json:"decision"`
 	ParentNotes string `json:"parent_notes,omitempty"`
+	ChildID     string `json:"user_id"`
 
 	// Set in code
 	PointID  string `json:"-"`
 	ParentID string `json:"-"`
-	ChildID  string `json:"-"`
 }
 
 type approvePointsResponse struct {
@@ -39,14 +39,6 @@ func (c *PointsController) ApprovePointsHandler(cgin *gin.Context) {
 	if err != nil {
 		err = fmt.Errorf("failed to unmarshal json body: %w", err)
 		cgin.JSON(http.StatusBadRequest, handlers.ErrorResult(err))
-		return
-	}
-
-	// get child id from request
-	req.ChildID = cgin.Param("user_id")
-	if req.ChildID == "" {
-		apiErr := apierr.New(apierr.InvalidInput).WithError("user_id is a required query parameter")
-		cgin.JSON(apiErr.StatusCode(), handlers.ErrorResult(apiErr))
 		return
 	}
 

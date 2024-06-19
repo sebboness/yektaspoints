@@ -35,13 +35,13 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 		r.GET("/v1/family", familyCtrl.GetFamilyHandler, mw.WithRolesAny(groupsChildParent))
 
 		// Points
-		// r.GET("/v1/points/:point_id", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetUserPointsHandler)
-		r.GET("/v1/points/summary/:user_id", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetPointsSummaryHandler)
+		// r.GET("/v1/points/:point_id", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetPointsHandler)
 		r.POST("/v1/points", mw.WithRolesAny(groupsChild), pointsCtrl.RequestPointsHandler)
+		r.PUT("/v1/points/:point_id/approve", mw.WithRolesAny(groupsParent), pointsCtrl.ApprovePointsHandler)
 
 		// Points (User)
-		r.GET("/v1/points/user/:user_id", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetUserPointsHandler)
-		r.POST("/v1/points/user/:user_id/approve/:point_id", mw.WithRolesAny(groupsParent), pointsCtrl.ApprovePointsHandler)
+		r.GET("/v1/user/:user_id/points", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetUserPointsHandler)
+		r.GET("/v1/user/:user_id/points-summary", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetPointsSummaryHandler)
 
 		// User
 		r.GET("/v1/user", userCtrl.GetUserHandler)

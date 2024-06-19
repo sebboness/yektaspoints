@@ -22,7 +22,6 @@ func Test_Controller_ApprovePointsHandler(t *testing.T) {
 	type state struct {
 		validationError bool
 		invalidBody     bool
-		missingUserId   bool
 		missingPointId  bool
 		errSavePoint    error
 	}
@@ -38,7 +37,6 @@ func Test_Controller_ApprovePointsHandler(t *testing.T) {
 
 	cases := []test{
 		{"happy path", state{}, want{"", 200}},
-		{"fail - missing user id param", state{missingUserId: true}, want{"user_id is a required query parameter", 400}},
 		{"fail - missing point id param", state{missingPointId: true}, want{"point_id is a required query parameter", 400}},
 		{"fail - invalid body", state{invalidBody: true}, want{"failed to unmarshal json body", 400}},
 		{"fail - validation error", state{validationError: true}, want{"invalid input", 400}},
@@ -49,6 +47,7 @@ func Test_Controller_ApprovePointsHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 
 			req := &approvePointsRequest{
+				ChildID:  "child-1",
 				PointID:  "point-1",
 				Decision: "APPROVE",
 			}
@@ -64,8 +63,8 @@ func Test_Controller_ApprovePointsHandler(t *testing.T) {
 			mockPointsDB := mocks.NewMockIPointsStorage(t)
 			mockUserDB := mocks.NewMockIUserStorage(t)
 
-			passedRequestChecks := !c.state.invalidBody && !c.state.missingPointId && !c.state.missingUserId
-			passedInitialChecks := !c.state.invalidBody && !c.state.missingPointId && !c.state.missingUserId && !c.state.validationError
+			passedRequestChecks := !c.state.invalidBody && !c.state.missingPointId
+			passedInitialChecks := !c.state.invalidBody && !c.state.missingPointId && !c.state.validationError
 
 			if c.state.invalidBody {
 				evtBodyStr = `{"user_id":`
@@ -101,14 +100,11 @@ func Test_Controller_ApprovePointsHandler(t *testing.T) {
 
 			cgin, _ := gin.CreateTestContext(w)
 
-			if !c.state.missingUserId {
-				cgin.AddParam("user_id", "child-1")
-			}
 			if !c.state.missingPointId {
 				cgin.AddParam("point_id", "point-1")
 			}
 
-			cgin.Request = httptest.NewRequest("POST", "/", bytes.NewReader([]byte(evtBodyStr))).WithContext(ctx)
+			cgin.Request = httptest.NewRequest("PUT", "/", bytes.NewReader([]byte(evtBodyStr))).WithContext(ctx)
 
 			handlers.PrepareAuthorizedContext(ctx, handlers.MockApiGWEvent)
 
