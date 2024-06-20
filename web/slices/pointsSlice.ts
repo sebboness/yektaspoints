@@ -1,9 +1,9 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { Point, PointSummary, UserPoints } from "@/lib/models/Points";
 
+import { getTokenRetriever } from "@/store/store";
 import { ErrorAsResult } from "@/lib/api/Result";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
-import { getTokenRetriever } from "@/store/store";
 import moment from "moment";
 
 const ln = () => `[${moment().toISOString()}] pointsSlice: `;

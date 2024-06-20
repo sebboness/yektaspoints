@@ -93,16 +93,16 @@ func Test_Controller_GetFamilyHandler(t *testing.T) {
 
 			ctx := context.Background()
 
-			endpoint := "/v1/family?family_id=456"
-			if c.state.familyIdMissing {
-				endpoint = "/v1/family"
-			} else if c.state.familyIdEmpty {
-				endpoint = "/v1/family?family_id="
-			}
-
 			w := httptest.NewRecorder()
 			cgin, _ := gin.CreateTestContext(w)
-			cgin.Request = httptest.NewRequest("GET", endpoint, nil).WithContext(ctx)
+
+			if c.state.familyIdEmpty {
+				cgin.AddParam("family_id", "")
+			} else if !c.state.familyIdMissing {
+				cgin.AddParam("family_id", "456")
+			}
+
+			cgin.Request = httptest.NewRequest("GET", "/", nil).WithContext(ctx)
 
 			ctrl.GetFamilyHandler(cgin)
 

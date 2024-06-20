@@ -59,11 +59,11 @@ export class Api {
             // Attach auth token to headers if it is set
             if (this.tokenGetter) {
                 headers["Authorization"] = this.tokenGetter.getTokenType() + " " + this.tokenGetter.getToken();
-                console.info(`${this.logName()}authorization header`); //: ${headers["Authorization"]}`);
+                console.info(`${this.logName()}authorization header has token? ${!!this.tokenGetter.getToken()}`); //: ${headers["Authorization"]}`);
                 isAuthedReq = true;
 
-                // reset tokenGetter for each call
-                this.tokenGetter = undefined;
+                // TODO check this: reset tokenGetter for each call
+                // this.tokenGetter = undefined;
             }
 
             // Build call url

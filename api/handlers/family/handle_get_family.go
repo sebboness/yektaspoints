@@ -23,7 +23,7 @@ type getFamilyHandlerResponse struct {
 
 func (c *FamilyController) GetFamilyHandler(cgin *gin.Context) {
 
-	familyID, _ := cgin.GetQuery("family_id")
+	familyID := cgin.Param("family_id")
 	if familyID == "" {
 		apiErr := apierr.New(apierr.InvalidInput).WithError("family_id is a required query parameter")
 		cgin.JSON(apiErr.StatusCode(), handlers.ErrorResult(apiErr))

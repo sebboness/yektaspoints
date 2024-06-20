@@ -32,7 +32,7 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 		r.GET("/v1/health", lambdaCtrl.HealthCheckHandler)
 
 		// family
-		r.GET("/v1/family", familyCtrl.GetFamilyHandler, mw.WithRolesAny(groupsChildParent))
+		r.GET("/v1/family/:family_id", familyCtrl.GetFamilyHandler, mw.WithRolesAny(groupsChildParent))
 
 		// Points
 		// r.GET("/v1/points/:point_id", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetPointsHandler)

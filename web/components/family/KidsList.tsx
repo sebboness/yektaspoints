@@ -1,39 +1,52 @@
 "use client";
 
-import React, { useState } from "react";
 import Link from "next/link";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
+import { useAppDispatch, useAppStore } from "@/store/hooks";
+import { Family } from "@/lib/models/Family";
+import { useState } from "react";
 
-type Kid = {
-    id: string;
-    name: string;
-};
+type Props = {
+    initialFamily: Family;
+}
 
-const initialKids: Kid[] = [
-    {
-        id: "123",
-        name: "Yekta",
-    },
-];
+const KidsList = ({ initialFamily }: Props) => {
+    const router = useRouter();
+    const dispatch = useAppDispatch();
+    const store = useAppStore();
 
-const KidsList = () => {
-    // const user = useAppSelector((state) => state.auth.user);
-    const [kids, setKids] = useState(initialKids);
+    const [family, setFamily] = useState<Family>(initialFamily);
+    const [loading, setLoading] = useState(false);
 
-    console.log("setKids", setKids);
+    /**
+     * Navigates to a family detail page for the given family ID
+     * @param familyId The family ID
+     */
+    const goToFamily = (familyId: string) => {
+        router.push(`/family/${familyId}`);
+    };
+
+    console.log("KidsList initialFamily", family);
+    console.log("KidsList initialFamily children", family.children);
+
+    Object.entries(family.children);
 
     return (
         <div className="list-container">
-            {kids.map((x, i) => (
-                <div key={i} className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
+
+            {Object.entries(family.children).map((kvp, i) => {
+                const child = kvp[1];
+
+                return <div key={i} className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
                     <div className="flex flex-row items-center space-x-4">
                         <UserCircleIcon className="bg-indigo-700 rounded-full p-2 h-12 w-12 text-indigo-200" />
                         <div>
-                            <Link className="text-lg md:text-2xl" href={`/family/${x.id}`}>{x.name}</Link>
+                            <Link className="text-lg md:text-2xl" href={`/family/${family.family_id}/${child.user_id}`}>{child.name}</Link>
                         </div>
                     </div>
-                </div>)
-            )}
+                </div>;
+            })}
         </div>
     );
 };

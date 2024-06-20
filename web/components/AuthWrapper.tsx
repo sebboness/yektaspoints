@@ -11,10 +11,6 @@ type Props = {
    children?: React.ReactNode;
 };
 
-export const Some = async () => {
-    return (<></>);
-};
-
 export const AuthWrapper = ({ children }: Props) => {
     // // const store = useAppStore();
     // const userLoggedIn = false;
@@ -77,8 +73,8 @@ export const AuthWrapper = ({ children }: Props) => {
     // }
 
     return <>
-        {children}
         <AuthChecker />
         <AuthCheckerClient />
+        {children}
     </>;
 };

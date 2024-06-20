@@ -2,6 +2,7 @@ import { AuthCookieBody, TokenData, UserData } from "@/lib/auth/Auth";
 import { ErrorAsResult, SUCCESS } from "@/lib/api/Result";
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
+import { RootState } from "@/store/store";
 import { LocalApi } from "@/lib/api/LocalApi";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { TokenGetter } from "@/lib/api/Api";
@@ -16,7 +17,25 @@ const clearAuthCookie = createAsyncThunk("auth/clearAuthCookie", async (params, 
     const api = LocalApi.getInstance();
     const resp = await api.deleteAuthCookie();
     return resp.status === SUCCESS;
-})
+});
+
+/**
+ * Gets user data from api with currently logged in auth token
+ */
+export const getUser = createAsyncThunk("getUser", async (params, thunkApi) => {
+    const api = MyPointsApi.getInstance();
+    try {
+        const state = thunkApi.getState() as RootState;
+        const result = await api.getUser();
+
+        if (result.data)
+            return result.data;
+        else
+            throw result;
+    } catch (err: any) {
+        throw ErrorAsResult(err);
+    }
+});
 
 /**
  * Sets auth cookie for token and user
@@ -25,7 +44,7 @@ export const setAuthCookie = createAsyncThunk("auth/setAuthCookie", async (authC
     const api = LocalApi.getInstance();
     const resp = await api.setAuthCookie(authCookie);
     return resp.status === SUCCESS;
-})
+});
 
 /**
  * Gets a token getter that returns the token that was passed into it.
@@ -33,15 +52,15 @@ export const setAuthCookie = createAsyncThunk("auth/setAuthCookie", async (authC
  */
 export const getSimpleTokenRetriever = (token: string): TokenGetter => {
     return {
-        getToken() {return token; },
-        getTokenType()  { return "Bearer"; },
+        getToken() { return token; },
+        getTokenType() { return "Bearer"; },
     };
-}
+};
 
 type LoginOptions = {
     username: string;
     password: string;
-}
+};
 
 export const login = createAsyncThunk("auth/login", async (options: LoginOptions, thunkApi) => {
     const api = MyPointsApi.getInstance();
@@ -75,6 +94,8 @@ export const AuthSlice = createSlice({
         setAuthToken: (state, action: PayloadAction<TokenData | undefined>) => {
             console.log(`${logName()}setAuthToken: token`, action.payload);
             state.token = action.payload;
+            MyPointsApi.getInstance()
+                .withToken(getSimpleTokenRetriever(action.payload?.id_token || ""));
         },
 
         setUserData: (state, action: PayloadAction<UserData | undefined>) => {
@@ -95,6 +116,10 @@ export const AuthSlice = createSlice({
         builder.addCase(setAuthCookie.rejected, (state, action) => {
             console.log(`${logName()}setAuthCookie rejected`, action.error);
             state.authCookieSet = false;
+        });
+        
+        builder.addCase(getUser.fulfilled, (state, action) => {
+            state.user = action.payload;
         });
     },
 });
