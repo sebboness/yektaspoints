@@ -51,15 +51,21 @@ export class Api {
             const opts = options || {};
             const headers: HeadersInit = {
                 "Content-Type": "json/application",
-                // "Origin": "http://localhost:3000",
             };
+
+            // On server side, we need to set the Origin header in order not to
+            // get a forbidden response from the points API
+            if (process.env.ORIGIN) {
+                console.info(`${this.logName()}setting origin header to ${process.env.ORIGIN}`);
+                headers["Origin"] = process.env.ORIGIN;
+            }
 
             let isAuthedReq = false;
 
             // Attach auth token to headers if it is set
             if (this.tokenGetter) {
                 headers["Authorization"] = this.tokenGetter.getTokenType() + " " + this.tokenGetter.getToken();
-                console.info(`${this.logName()}authorization header has token? ${!!this.tokenGetter.getToken()}`); //: ${headers["Authorization"]}`);
+                console.info(`${this.logName()}authorization header has token? ${!!this.tokenGetter.getToken()}`);
                 isAuthedReq = true;
 
                 // TODO check this: reset tokenGetter for each call

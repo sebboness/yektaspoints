@@ -2,7 +2,7 @@ import { Api, TokenGetter } from "./Api";
 import { Result, ResultT } from "./Result";
 import { TokenData, UserData } from "../auth/Auth";
 import { ApprovePointsRequest, PointsList, RequestPointsRequest, RequestPointsResponse, UserPoints } from "../models/Points";
-import { Family } from "../models/Family";
+import { FamilyResponse } from "../models/Family";
 
 // Define base URIs for different environments
 const baseUris: {[key: string]: string} = {
@@ -71,7 +71,7 @@ export class MyPointsApi extends Api {
     // Family
     ////
 
-    public getFamily(familyId: string): Promise<ResultT<Family>> {
+    public getFamily(familyId: string): Promise<ResultT<FamilyResponse>> {
         return this.get(`v1/family/${familyId}`);
     }
 

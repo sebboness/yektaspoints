@@ -70,6 +70,7 @@ export async function middleware(req: NextRequest) {
 
     // If a redirection is required based on the middleware headers
     if (redirectTo) {
+        console.log(`${ln()}redirecting to ${redirectTo}`)
         res = NextResponse.redirect(new URL(redirectTo, req.url), {
             status: HttpStatus.TemporaryRedirect, // Use the appropriate HTTP status code for the redirect
         });

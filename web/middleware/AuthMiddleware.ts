@@ -112,6 +112,7 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
 
         // Set token data cookie
         if (tokenData) {
+            console.log(`${ln()}setting token? ${tokenData.id_token.substring(0, 20)}`)
             authCookie.setTokenData(response, req.nextUrl.hostname, tokenData);
         }
 
@@ -137,7 +138,7 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
             response.headers.set(xRedirectToHeader, "/access-denied");
         }
         
-        console.log(`${ln()}redirect to? ${response.headers.has(xRedirectToHeader) ? response.headers.get(xRedirectToHeader) : ""}`);        
+        console.log(`${ln()}${response.headers.has(xRedirectToHeader) ? ("redirect to " + response.headers.get(xRedirectToHeader)) : "no redirects"}`);        
 
         return response;
     }

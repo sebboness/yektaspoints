@@ -69,6 +69,7 @@ export const PointsSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(getUserPoints.fulfilled, (state, action) => {
+            console.log(`${ln()}getUserPoints fulfilled. points`, action.payload.points.length);
             state.userPoints = action.payload.points;
         });
         builder.addCase(getUserPoints.rejected, (state, action) => {

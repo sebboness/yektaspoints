@@ -43,7 +43,7 @@ export const FamilySlice = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(getFamily.fulfilled, (state, action) => {
-            state.families[action.payload.family_id] = action.payload;
+            state.families[action.payload.family.family_id] = action.payload.family;
         });
         builder.addCase(getFamily.rejected, (state, action) => {
             console.log(`${ln()}getFamily rejected`, action.error);

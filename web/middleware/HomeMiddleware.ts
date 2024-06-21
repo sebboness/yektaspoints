@@ -37,7 +37,7 @@ export default async function HomeMiddleware(req: NextRequest): Promise<NextResp
             response.headers.set(xRedirectToHeader, "/admin");
         }
         
-        console.log(`${ln()}redirect to? ${response.headers.has(xRedirectToHeader) ? response.headers.get(xRedirectToHeader) : ""}`);        
+        console.log(`${ln()}${response.headers.has(xRedirectToHeader) ? ("redirect to " + response.headers.get(xRedirectToHeader)) : "no redirects"}`);    
 
         return response;
     }

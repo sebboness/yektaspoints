@@ -1,11 +1,13 @@
 import React from "react";
 import { cookies } from "next/headers";
+import moment from "moment";
 
 import { AuthWrapper } from "@/components/AuthWrapper";
-import CardSingleBody from "@/components/common/CardSingleBody";
 import KidsList from "@/components/family/KidsList";
 import authCookie from "@/lib/auth/AuthCookie";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
+
+const ln = () => `[${moment().toISOString()}] Family: `;
 
 type Props = {
     params: {
@@ -16,6 +18,8 @@ type Props = {
 export default async function Family(props: Props) {
 
     const token = authCookie.getTokenData(cookies());
+    console.log(`${ln()}token? ${token ? (token.id_token.substring(0, 20)) : "NONE"}`)
+
     const api = MyPointsApi.getInstance().withToken(token?.id_token)
     const familyResult = await api.getFamily(props.params.familyId);
 
@@ -29,9 +33,7 @@ export default async function Family(props: Props) {
             <section>
                 <div className="w-screen gap-8 grid grid-cols-1 p-12">
                     <div className="container mx-auto">
-                        <CardSingleBody>
-                            <KidsList initialFamily={familyResult.data} />
-                        </CardSingleBody>
+                        <KidsList familyId={props.params.familyId} initialFamily={familyResult.data.family} />
                     </div>
                 </div>
             </section>

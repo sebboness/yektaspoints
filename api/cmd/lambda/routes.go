@@ -26,26 +26,25 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 	r.POST("/v1/user/register", userCtrl.UserRegisterHandler)
 	r.POST("/v1/user/register/confirm", userCtrl.UserRegisterConfirmHandler)
 
-	authedUserRoutes := r.Group("/v1")
-	authedUserRoutes.Use(mw.WithAuthorizedUser())
-	{
-		r.GET("/v1/health", lambdaCtrl.HealthCheckHandler)
+	authedRoutes := r.Group("/v1", mw.WithAuthorizedUser())
 
-		// family
-		r.GET("/v1/family/:family_id", familyCtrl.GetFamilyHandler, mw.WithRolesAny(groupsChildParent))
+	// health
+	authedRoutes.GET("/health", lambdaCtrl.HealthCheckHandler)
 
-		// Points
-		// r.GET("/v1/points/:point_id", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetPointsHandler)
-		r.POST("/v1/points", mw.WithRolesAny(groupsChild), pointsCtrl.RequestPointsHandler)
-		r.PUT("/v1/points/:point_id/approve", mw.WithRolesAny(groupsParent), pointsCtrl.ApprovePointsHandler)
+	// family
+	authedRoutes.GET("/family/:family_id", familyCtrl.GetFamilyHandler, mw.WithRolesAny(groupsChildParent))
 
-		// Points (User)
-		r.GET("/v1/user/:user_id/points", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetUserPointsHandler)
-		r.GET("/v1/user/:user_id/points-summary", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetPointsSummaryHandler)
+	// Points
+	// authedRoutes.GET("/v1/points/:point_id", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetPointsHandler)
+	authedRoutes.POST("/points", mw.WithRolesAny(groupsChild), pointsCtrl.RequestPointsHandler)
+	authedRoutes.PUT("/points/:point_id/approve", mw.WithRolesAny(groupsParent), pointsCtrl.ApprovePointsHandler)
 
-		// User
-		r.GET("/v1/user", userCtrl.GetUserHandler)
-	}
+	// Points (User)
+	authedRoutes.GET("/user/:user_id/points", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetUserPointsHandler)
+	authedRoutes.GET("/user/:user_id/points-summary", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetPointsSummaryHandler)
+
+	// User
+	authedRoutes.GET("/user", userCtrl.GetUserHandler)
 
 	return r
 }

@@ -16,3 +16,7 @@ export type FamilyMember = {
     name: string
     user_id: string
 };
+
+export type FamilyResponse = {
+    family: Family
+};
