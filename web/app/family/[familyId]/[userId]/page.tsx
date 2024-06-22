@@ -23,14 +23,11 @@ export default async function ChildDetailPage(props: Props) {
     console.log(`${ln()}B`);
 
     const pointsResult = await api.getUserPoints(props.params.userId);
-    const isSSR = typeof window === "undefined";
 
     if (pointsResult.status !== "SUCCESS")
         throw new Error(pointsResult.errors.join("; "));
     if (pointsResult.data === undefined || pointsResult.data === null)
         throw new Error("invalid getFamily result: " + JSON.stringify(pointsResult));
-
-    console.log("isSSR?", isSSR);
 
     return (
         <AuthWrapper>
@@ -38,7 +35,6 @@ export default async function ChildDetailPage(props: Props) {
                 <ChildsPoints
                     childUserId={props.params.userId}
                     initialPoints={pointsResult.data.points}
-                    isSSR={isSSR}
                 />
             </div>
         </AuthWrapper>

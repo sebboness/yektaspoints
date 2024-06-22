@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
@@ -20,21 +21,20 @@ const ln = () => `[${moment().toISOString()}] ChildsPoints: `;
 type Props = {
     childUserId: string;
     initialPoints: Point[];
-    isSSR: boolean;
 };
 
-const ChildsPoints = ({ childUserId, initialPoints, isSSR }: Props) => {
+const ChildsPoints = ({ childUserId, initialPoints }: Props) => {
 
     const approvalDialog = useRef<PointsApprovalDialogInterface>();
     const dispatch = useAppDispatch();
     const store = useAppStore();
 
-    const storePoints = store.getState().points.userPoints;
+    const userId = useParams()["user_id"] || "none";
+    const familyId = useParams()["family_id"] || "none";
 
-    console.log(`${ln()}store points`, storePoints.length);
-    console.log(`${ln()}initial points`, initialPoints.length);
+    const storePoints = store.getState().points.userPoints;
     
-    const [points] = useState<Point[]>(isSSR ? initialPoints : storePoints);
+    const [points] = useState<Point[]>(storePoints);
     const [loading, setLoading] = useState(false);
 
     const settledPoints = points.filter(x => x.status === PointStatus.SETTLED && x.request.type !== PointRequestType.CASHOUT);
@@ -43,7 +43,7 @@ const ChildsPoints = ({ childUserId, initialPoints, isSSR }: Props) => {
 
     const handleOnRequestClick = (p: PointSummary) => {
         const point = mapSummaryToLitePoint(p);
-        point.user_id = childUserId;
+        point.user_id = userId;
         console.log("point", point);
         console.log("approvalDialog.current", approvalDialog.current);
         approvalDialog.current?.open(point);
@@ -53,7 +53,7 @@ const ChildsPoints = ({ childUserId, initialPoints, isSSR }: Props) => {
         setLoading(true);
         console.log(`${ln()}dispatching getUserPoints`);
 
-        dispatch(getUserPoints(childUserId));
+        dispatch(getUserPoints(userId));
         setLoading(false);
 
         // const fetchedPoints = store.getState().points.userPoints;

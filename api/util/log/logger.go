@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/sebboness/yektaspoints/util/env"
 	"github.com/sirupsen/logrus"
@@ -91,17 +92,23 @@ func (l *Logger) AddFields(fields map[string]any) *Logger {
 	return l
 }
 
+var mapMutex = sync.RWMutex{}
+
 // WithField uses a temporary map of fields that is cleared after each log output
 func (l *Logger) WithField(key string, value any) *Logger {
+	mapMutex.Lock()
 	l.tempFields[key] = value
+	mapMutex.Unlock()
 	return l
 }
 
 // WithFields uses a temporary map of fields that is cleared after each log output
 func (l *Logger) WithFields(fields map[string]any) *Logger {
+	mapMutex.Lock()
 	for k, v := range fields {
 		l.tempFields[k] = v
 	}
+	mapMutex.Unlock()
 	return l
 }
 

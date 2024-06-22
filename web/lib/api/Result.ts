@@ -36,7 +36,6 @@ export function NewSuccessResult<T> (data: T, msg: string | null = null, statusC
     };
 };
 
-
 /**
  * Returns an error result containing information of the given error object
  * @param err The error object which could be a result object or any other kind of error
@@ -48,3 +47,14 @@ export const ErrorAsResult = <T>(err: ResultT<T> | never): ResultT<T> => {
     else
         return NewErrorResultT(JSON.stringify(err));
 };
+
+/**
+ * Throws an error if the given result is not a successful one.
+ * @param result The result to check
+ */
+export const ThrowIfNotSuccess = (result: Result): void => {
+    if (result.status !== "SUCCESS")
+        throw new Error(result.errors.join("; "));
+    if ((result as ResultT<object>).data === undefined || (result as ResultT<object>).data === null)
+        throw new Error("invalid result: " + JSON.stringify(result));
+}

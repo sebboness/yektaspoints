@@ -1,6 +1,6 @@
 import moment from "moment";
 
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { Family } from "@/lib/models/Family";
 import { ErrorAsResult } from "@/lib/api/Result";
@@ -35,11 +35,10 @@ export const FamilySlice = createSlice({
     name: "family",
     initialState,
     reducers: {
-        // addPointToRequesting: (state, action: PayloadAction<PointSummary>) => {
-        //     state.userSummary.recent_requests.unshift(action.payload);
-        //     console.log(`${ln()}addPointToRequesting payload`, action.payload);
-        //     console.log(`${ln()}addPointToRequesting new recent point reqs`, state.userSummary.recent_requests);
-        // },
+        setFamilies: (state, action: PayloadAction<MapType<Family>>) => {
+            console.log(`${ln()}setFamilies`, action.payload);
+            state.families = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(getFamily.fulfilled, (state, action) => {

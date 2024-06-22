@@ -11,8 +11,8 @@ import moment from "moment";
 import { xRedirectToHeader } from "./config";
 
 const ln = () => `[${moment().toISOString()}] AuthMiddleware: `;
-const parentsBasePath = ["/family"];
-const childrenBasePath = ["/points"];
+const parentsBasePath = ["/family", "/app/parents"];
+const childrenBasePath = ["/points", "/app/mypoints"];
 const adminBasePath = ["/admin"];
 
 export default async function AuthMiddleware(req: NextRequest): Promise<NextResponse> {
