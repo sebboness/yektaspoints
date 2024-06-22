@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { AuthWrapper } from "@/components/AuthWrapper";
 import authCookie from "@/lib/auth/AuthCookie";
 import FamilyList from "@/components/family/FamilyList";
+import Link from "next/link";
 
 export default async function Family() {
 
@@ -12,11 +13,20 @@ export default async function Family() {
         ? userData.family_ids
         : [];
 
+    // for testing
+    const testLink = process.env.NEXT_PUBLIC_ENV === "local"
+        ? <>
+            Go to <Link href={"/family/test"}>Test</Link>
+            <br />
+        </>
+        : <></>;
+
     return (
         <AuthWrapper>        
             <section>
                 <div className="w-screen gap-8 grid grid-cols-1 p-12">
                     <div className="container mx-auto">
+                        {testLink}
                         <FamilyList initialFamilyIds={familyIds} />
                     </div>                    
                 </div>

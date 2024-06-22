@@ -18,7 +18,8 @@ type Props = {
 export default async function Family(props: Props) {
 
     const token = authCookie.getTokenData(cookies());
-    console.log(`${ln()}token? ${token ? (token.id_token.substring(0, 20)) : "NONE"}`)
+    console.log(`${ln()}token? ${token ? (token.id_token.substring(token.id_token.length - 20)) : "NONE"}`);
+    console.log(`${ln()}B`);
 
     const api = MyPointsApi.getInstance().withToken(token?.id_token)
     const familyResult = await api.getFamily(props.params.familyId);

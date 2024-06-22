@@ -1,10 +1,13 @@
 import React from "react";
+import moment from "moment";
 
 import { AuthWrapper } from "@/components/AuthWrapper";
 import ChildsPoints from "@/components/family/ChildsPoints";
 import { cookies } from "next/headers";
 import authCookie from "@/lib/auth/AuthCookie";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
+
+const ln = () => `[${moment().toISOString()}] ChildDetailPage: `;
 
 type Props = {
     params: {
@@ -15,7 +18,10 @@ type Props = {
 export default async function ChildDetailPage(props: Props) {
 
     const token = authCookie.getTokenData(cookies());
-    const api = MyPointsApi.getInstance().withToken(token?.id_token)
+    const api = MyPointsApi.getInstance().withToken(token?.id_token);
+    console.log(`${ln()}token? ${token ? (token.id_token.substring(token.id_token.length - 20)) : "NONE"}`);
+    console.log(`${ln()}B`);
+
     const pointsResult = await api.getUserPoints(props.params.userId);
     const isSSR = typeof window === "undefined";
 

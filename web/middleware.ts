@@ -80,6 +80,7 @@ export async function middleware(req: NextRequest) {
     middlewareCookies.forEach((c) => {
         console.log(`${ln()}setting cookie ${c.name}`);
         res.cookies.set(c);
+        req.cookies.set(c);
     });
 
     // If no redirection is needed, proceed to the next middleware or route handler

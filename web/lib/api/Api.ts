@@ -1,6 +1,7 @@
 import moment from "moment";
 
 import { NewErrorResultT, ResultT } from "./Result";
+import { randomAlphaNumericString } from "../StringUtils";
 
 export type QueryParams = {[key: string]: string[]} | undefined;
 
@@ -21,14 +22,16 @@ export interface TokenGetter {
 
 export class Api {
     baseUri: string;
+    uid: string;
     tokenGetter?: TokenGetter;
 
     constructor(baseUri: string) {
         this.baseUri = baseUri;
+        this.uid = randomAlphaNumericString(4);
     }
 
     public logName(): string {
-        return `[${moment().toISOString()}] API[${this.baseUri}]: `;
+        return `[${moment().toISOString()}] API[${this.uid}|${this.baseUri}]: `;
     }
 
     private getCallUrl(baseUri: string, endpoint: string, queryParams: QueryParams): string {
@@ -36,6 +39,8 @@ export class Api {
         if (queryParams) {
             const parts: Array<string> = [];
             for (const [k, v] of Object.entries(queryParams)) {
+                if (v === undefined || v === null)
+                    continue;
                 const key = encodeURIComponent(k);
                 const val = encodeURIComponent(v.join(","));
                 parts.push(`${key}=${val}`);
@@ -53,13 +58,6 @@ export class Api {
                 "Content-Type": "json/application",
             };
 
-            // On server side, we need to set the Origin header in order not to
-            // get a forbidden response from the points API
-            if (process.env.ORIGIN) {
-                console.info(`${this.logName()}setting origin header to ${process.env.ORIGIN}`);
-                headers["Origin"] = process.env.ORIGIN;
-            }
-
             let isAuthedReq = false;
 
             // Attach auth token to headers if it is set
@@ -75,12 +73,26 @@ export class Api {
             // Build call url
             const url = this.getCallUrl(this.baseUri, endpoint, opts.queryParams);
 
+            let noCache = false;
+
+            // On server side, we need to set the Origin header in order not to
+            // get a forbidden response from the points API.
+            // Also, prevent caching server-side.
+            if (process.env.ORIGIN) {
+                console.info(`${this.logName()}setting origin header to ${process.env.ORIGIN}`);
+                headers["Origin"] = process.env.ORIGIN;
+                noCache = true;
+            }
+
             // Initialize fetch request
             const reqOps: RequestInit = {
                 method,
                 headers,
                 credentials: "include",
             };
+
+            if (noCache)
+                reqOps.cache = "no-store";
 
             // Add payload
             if (opts.payload) {

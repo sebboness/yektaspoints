@@ -112,7 +112,8 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
 
         // Set token data cookie
         if (tokenData) {
-            console.log(`${ln()}setting token? ${tokenData.id_token.substring(0, 20)}`)
+            console.log(`${ln()}setting token? ${tokenData.id_token.substring(tokenData.id_token.length - 20)}`);
+            console.log(`${ln()}A`);
             authCookie.setTokenData(response, req.nextUrl.hostname, tokenData);
         }
 
