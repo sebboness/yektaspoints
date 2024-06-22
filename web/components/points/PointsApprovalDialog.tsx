@@ -4,15 +4,16 @@ import moment from "moment";
 import React, { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 // import pointsSlice, { PointsSlice } from "@/slices/pointsSlice";
 // import { useAppDispatch, useAppSelector } from "@/store/hooks";
-// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { Point, PointDecisionApprove, PointDecisionDeny } from "@/lib/models/Points";
-// import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { getTokenRetriever } from "@/store/store";
+import { FamilyMember } from "@/lib/models/Family";
 
 const ln = () => `[${moment().toISOString()}] PointsApprovalDialog: `;
 
@@ -25,7 +26,7 @@ const formSchema = yup.object({
 export const approvePointsRequestDialogID = "approve_points_request_dialog";
 
 export interface PointsApprovalDialogInterface {
-    open(point: Point): void;
+    open(point: Point, child: FamilyMember): void;
 }
 
 type FormData = {
@@ -42,16 +43,15 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
 
     useImperativeHandle(ref, () => ({
         close: () => close(),
-        open: (point: Point) => open(point),
+        open: (point: Point, child: FamilyMember) => open(point, child),
     }));
 
-    // const dispatch = useAppDispatch();
-    // const authState = useAppSelector((state) => state.auth);
     const api = MyPointsApi.getInstance();
     
     const [loading, setLoading] = useState(false);
     const [decision, setDecision] = useState("");
     const [point, setPoint] = useState<Point|undefined>(undefined);
+    const [child, setChild] = useState<FamilyMember|undefined>(undefined);
 
     // Setup form validation variables and methods
     const { 
@@ -71,30 +71,31 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
         if (!point)
             return;
 
-        const result = await api
-            .withToken(getTokenRetriever())
-            .approveRequestPoints({
-                decision: data.decision || "",
-                parent_notes: data.parent_notes,
-                point_id: point.id,
-                user_id: point.user_id,
-            });
+        // const result = await api
+        //     .withToken(getTokenRetriever())
+        //     .approveRequestPoints({
+        //         decision: data.decision || "",
+        //         parent_notes: data.parent_notes,
+        //         point_id: point.id,
+        //         user_id: point.user_id,
+        //     });
 
-        if (result.status === "SUCCESS") {
-            console.log(`${ln()}approve/deny point request`, result);
-            // dispatch(PointsSlice.actions.addPointToRequesting(result.data.point_summary));
-            close();
-        } else {
-            console.log(`${ln()}error approve/deny point request`, result);
-        }
+        // if (result.status === "SUCCESS") {
+        //     console.log(`${ln()}approve/deny point request`, result);
+        //     // dispatch(PointsSlice.actions.addPointToRequesting(result.data.point_summary));
+        //     close();
+        // } else {
+        //     console.log(`${ln()}error approve/deny point request`, result);
+        // }
 
-        setLoading(false);
+        // setLoading(false);
     };
 
     const close = () => {
         reset();
 
         setPoint(undefined);
+        setChild(undefined);
 
         if (dialogRef.current)
             dialogRef.current.close();
@@ -107,10 +108,11 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
         return false;
     };
 
-    const open = (point: Point) => {
+    const open = (point: Point, child: FamilyMember) => {
         console.log("opened approval dialog", point);
         if (dialogRef.current) {
             setPoint(point);
+            setChild(child);
             dialogRef.current.showModal();
         }
     };
@@ -129,7 +131,7 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
 
                 <div className="divide-y divide-blue-200">
                     <div>
-                        <h3 className="font-bold text-lg">[NAME] requested pointes</h3>
+                        <h3 className="font-bold text-lg">{child ? child.name : ""} requested pointes</h3>
                         <p className="py-4 text-center text-2xl">
                             {point
                                 ? `${point.points} point${point.points == 1 ? "" : "s"}`
@@ -156,18 +158,26 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
 
                             <div className="modal-action">
                                 {loading
-                                    ? <>Loading...</>
-                                    : <>
-                                        <button
-                                            className={`btn btn-primary ${loading ? "btn-disabled" : ""}`}
-                                            onClick={() => setDecision(PointDecisionApprove)}
-                                        >Approve</button>
-                                        <button
-                                            className={`btn btn-primary ${loading ? "btn-disabled" : ""}`}
-                                            onClick={() => setDecision(PointDecisionDeny)}
-                                        >Deny</button>
-                                        <a className="btn btn-secondary" onClick={doClose}>Cancel</a>
-                                    </>}
+                                    ? <><FontAwesomeIcon icon={faSpinner} spin /> Saving&hellip;</>
+                                    : <></>}
+                                <>
+                                    <button
+                                        className={`btn btn-primary ${loading ? "btn-disabled" : ""}`}
+                                        onClick={() => {
+                                            setDecision(PointDecisionApprove);
+                                            
+                                        }}
+                                    >Approve</button>
+                                    <button
+                                        className={`btn btn-primary ${loading ? "btn-disabled" : ""}`}
+                                        onClick={() => setDecision(PointDecisionDeny)}
+                                    >Deny</button>
+                                    <a
+                                        className={`btn btn-secondary ${loading ? "btn-disabled" : ""}`}
+                                        onClick={doClose}>
+                                        Cancel
+                                    </a>
+                                </>
                             </div>
                         </form>
                     </div>

@@ -8,7 +8,7 @@ import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 import { mapPointsToSummaries, mapSummaryToLitePoint, Point, PointRequestType, PointStatus, PointSummary } from "@/lib/models/Points";
 import { getUserPoints } from "@/slices/pointsSlice";
-import { useAppDispatch, useAppStore } from "@/store/hooks";
+import { useAppDispatch, useAppSelector, useAppStore } from "@/store/hooks";
 
 import PointsApprovalDialog, { PointsApprovalDialogInterface } from "../points/PointsApprovalDialog";
 import CashoutList from "../points/CashoutList";
@@ -27,15 +27,20 @@ const ChildsPoints = ({ childUserId, initialPoints }: Props) => {
 
     const approvalDialog = useRef<PointsApprovalDialogInterface>();
     const dispatch = useAppDispatch();
-    const store = useAppStore();
 
     const userId = useParams()["user_id"] || "none";
     const familyId = useParams()["family_id"] || "none";
 
-    const storePoints = store.getState().points.userPoints;
-    
-    const [points] = useState<Point[]>(storePoints);
-    const [loading, setLoading] = useState(false);
+    const store = useAppSelector((state) => ({
+        points: state.points.userPoints,
+        family: state.family.families[familyId],
+        child: state.family.families[familyId].children[userId],
+    }));
+
+    const [loading, setLoading] = useState(true);
+
+    const points = store.points;
+    const child = store.child;
 
     const settledPoints = points.filter(x => x.status === PointStatus.SETTLED && x.request.type !== PointRequestType.CASHOUT);
     const requestedPoints = points.filter(x => x.status === PointStatus.WAITING);
@@ -46,7 +51,7 @@ const ChildsPoints = ({ childUserId, initialPoints }: Props) => {
         point.user_id = userId;
         console.log("point", point);
         console.log("approvalDialog.current", approvalDialog.current);
-        approvalDialog.current?.open(point);
+        approvalDialog.current?.open(point, child);
     };
 
     useEffect(() => {
@@ -55,13 +60,7 @@ const ChildsPoints = ({ childUserId, initialPoints }: Props) => {
 
         dispatch(getUserPoints(userId));
         setLoading(false);
-
-        // const fetchedPoints = store.getState().points.userPoints;
-        // if (fetchedPoints) {
-        //     console.log(`${ln()}setting user points`, fetchedPoints);
-        //     setPoints(fetchedPoints);
-        // };
-    }, []);
+    }, [dispatch]);
 
     return (
         <>
@@ -70,7 +69,7 @@ const ChildsPoints = ({ childUserId, initialPoints }: Props) => {
                 <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 border border-zinc-500 mb-8">
                     <div className="card-body">
                         <SectionTitle>
-                            [Name]&apos;s points&nbsp;
+                            {child.name}&apos;s points&nbsp;
                             {loading
                                 ? <FontAwesomeIcon icon={faSpinner} spin />
                                 : <></>}
@@ -86,7 +85,7 @@ const ChildsPoints = ({ childUserId, initialPoints }: Props) => {
                 <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 mb-16 border border-zinc-500">
                     <div className="card-body">
                         <SectionTitle>
-                            [Name]&apos;s requests&nbsp;
+                            {child.name}&apos;s requests&nbsp;
                             {loading
                                 ? <FontAwesomeIcon icon={faSpinner} spin />
                                 : <></>}
@@ -101,7 +100,7 @@ const ChildsPoints = ({ childUserId, initialPoints }: Props) => {
                 <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 border border-zinc-500">
                     <div className="card-body">
                         <SectionTitle>
-                            [Name]&apos;s cashout history&nbsp;
+                            {child.name}&apos;s cashout history&nbsp;
                             {loading
                                 ? <FontAwesomeIcon icon={faSpinner} spin />
                                 : <></>}
