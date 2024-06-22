@@ -1,25 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import moment from "moment";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 
 import { getFamily } from "@/slices/familySlice";
 import { useAppDispatch, useAppStore } from "@/store/hooks";
 import { Family } from "@/lib/models/Family";
+
 import CardSingleBody from "../common/CardSingleBody";
 import SectionTitle from "../common/SectionTitle";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 const ln = () => `[${moment().toISOString()}] KidsList: `;
 
 type Props = {
     familyId: string
     initialFamily: Family;
-}
+};
 
 const KidsList = ({ initialFamily, familyId }: Props) => {
     const router = useRouter();

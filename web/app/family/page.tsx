@@ -1,10 +1,10 @@
 import React from "react";
 import { cookies } from "next/headers";
+import Link from "next/link";
 
 import { AuthWrapper } from "@/components/AuthWrapper";
 import authCookie from "@/lib/auth/AuthCookie";
 import FamilyList from "@/components/family/FamilyList";
-import Link from "next/link";
 
 export default async function Family() {
 

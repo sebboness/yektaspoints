@@ -2,18 +2,18 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import moment from "moment";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 import { mapPointsToSummaries, mapSummaryToLitePoint, Point, PointRequestType, PointStatus, PointSummary } from "@/lib/models/Points";
 import { getUserPoints } from "@/slices/pointsSlice";
-import { useAppDispatch, useAppSelector, useAppStore } from "@/store/hooks";
+import { useAppDispatch, useAppStore } from "@/store/hooks";
 
 import PointsApprovalDialog, { PointsApprovalDialogInterface } from "../points/PointsApprovalDialog";
 import CashoutList from "../points/CashoutList";
 import PointRequestList from "../points/PointRequestList";
 import PointsList from "../points/PointsList";
 import SectionTitle from "../common/SectionTitle";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 const ln = () => `[${moment().toISOString()}] ChildsPoints: `;
 
@@ -29,12 +29,12 @@ const ChildsPoints = ({ childUserId, initialPoints, isSSR }: Props) => {
     const dispatch = useAppDispatch();
     const store = useAppStore();
 
-    const storePoints = store.getState().points.userPoints
+    const storePoints = store.getState().points.userPoints;
 
     console.log(`${ln()}store points`, storePoints.length);
     console.log(`${ln()}initial points`, initialPoints.length);
     
-    const [points, setPoints] = useState<Point[]>(isSSR ? initialPoints : storePoints);
+    const [points] = useState<Point[]>(isSSR ? initialPoints : storePoints);
     const [loading, setLoading] = useState(false);
 
     const settledPoints = points.filter(x => x.status === PointStatus.SETTLED && x.request.type !== PointRequestType.CASHOUT);

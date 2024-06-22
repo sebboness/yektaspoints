@@ -8,11 +8,11 @@ export const randomAlphaNumericString = (length: number): string => {
         throw "length must be a positive integer greater than 1";
 
     let outString: string = "";
-    let inOptions: string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const inOptions: string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
     for (let i = 0; i < length; i++) {
         outString += inOptions.charAt(Math.floor(Math.random() * inOptions.length));
     }
 
     return outString;
-}
+};

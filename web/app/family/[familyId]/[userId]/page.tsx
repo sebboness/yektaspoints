@@ -1,9 +1,9 @@
 import React from "react";
 import moment from "moment";
+import { cookies } from "next/headers";
 
 import { AuthWrapper } from "@/components/AuthWrapper";
 import ChildsPoints from "@/components/family/ChildsPoints";
-import { cookies } from "next/headers";
 import authCookie from "@/lib/auth/AuthCookie";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 

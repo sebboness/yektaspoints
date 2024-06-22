@@ -21,7 +21,7 @@ export default async function Family(props: Props) {
     console.log(`${ln()}token? ${token ? (token.id_token.substring(token.id_token.length - 20)) : "NONE"}`);
     console.log(`${ln()}B`);
 
-    const api = MyPointsApi.getInstance().withToken(token?.id_token)
+    const api = MyPointsApi.getInstance().withToken(token?.id_token);
     const familyResult = await api.getFamily(props.params.familyId);
 
     if (familyResult.status !== "SUCCESS")
