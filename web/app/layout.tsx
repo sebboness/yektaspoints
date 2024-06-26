@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import type { Metadata } from "next";
 
 import { Providers } from "./provider";
+import { AuthWrapper } from "@/components/AuthWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -46,9 +47,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </head>
             <body className={inter.className + " notebook h-screen"}>
                 <main className="overflow-hidden font-primary">
-                    <Providers>
-                        {children}
-                    </Providers>
+                        <Providers>
+                            <AuthWrapper>
+                                {children}
+                            </AuthWrapper>
+                        </Providers>
                 </main>
                 <script src="https://kit.fontawesome.com/67e614e582.js" crossOrigin="anonymous" async></script>
             </body>

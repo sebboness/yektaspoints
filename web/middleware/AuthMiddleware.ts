@@ -4,7 +4,7 @@ import { ParseToken, TokenData, UserData } from "@/lib/auth/Auth";
 import { FAILURE } from "@/lib/api/Result";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { Roles } from "@/lib/auth/Roles";
-import authCookie from "@/lib/auth/AuthCookie";
+import authCookie, { TokenHeaderName } from "@/lib/auth/AuthCookie";
 import { cookies } from "next/headers";
 import { getSimpleTokenRetriever } from "@/slices/authSlice";
 import moment from "moment";
@@ -18,10 +18,6 @@ const adminBasePath = ["/admin"];
 export default async function AuthMiddleware(req: NextRequest): Promise<NextResponse> {
 
     const path = req.nextUrl.pathname;
-    // console.log(`${ln()}basePath: ${req.nextUrl.basePath}`);
-    // console.log(`${ln()}href: ${req.nextUrl.href}`);
-    // console.log(`${ln()}pathname: ${req.nextUrl.pathname}`);
-    // console.log(`${ln()}origin:   ${req.nextUrl.hostname}`);
     
     if (
         !parentsBasePath.some((p) => path.startsWith(p)) &&
@@ -115,6 +111,7 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
             console.log(`${ln()}setting token? ${tokenData.id_token.substring(tokenData.id_token.length - 20)}`);
             console.log(`${ln()}A`);
             authCookie.setTokenData(response, req.nextUrl.hostname, tokenData);
+            response.headers.set(TokenHeaderName, tokenData.id_token);
         }
 
         // Set user data cookie and check

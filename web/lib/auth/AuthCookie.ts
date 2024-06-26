@@ -10,6 +10,7 @@ const ln = () => `[${moment().toISOString()}] AuthCookie: `;
 export const TokenCookieName = "mypoints_web_auth";
 export const RefreshCookieName = "mypoints_web_rt";
 export const UserCookieName = "mypoints_web_usr";
+export const TokenHeaderName = "X-Points4Us-Api-Token";
 
 class AuthCookie {
     constructor() {

@@ -92,7 +92,7 @@ func (l *Logger) AddFields(fields map[string]any) *Logger {
 	return l
 }
 
-var mapMutex = sync.RWMutex{}
+var mapMutex = sync.Mutex{}
 
 // WithField uses a temporary map of fields that is cleared after each log output
 func (l *Logger) WithField(key string, value any) *Logger {
@@ -170,12 +170,14 @@ func (l *Logger) addLoggerFields(fields map[string]any) {
 
 func (l *Logger) getLoggerFields() map[string]any {
 	if l.ctx != nil && l.ctx.Value(ctxFieldsKey) != nil {
+		mapMutex.Lock()
 		addedFields := l.ctx.Value(ctxFieldsKey).(map[string]any)
 		if len(l.tempFields) > 0 {
 			for k, v := range l.tempFields {
 				addedFields[k] = v
 			}
 		}
+		mapMutex.Unlock()
 
 		return addedFields
 	}

@@ -8,7 +8,7 @@ import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { TokenGetter } from "@/lib/api/Api";
 import moment from "moment";
 
-const logName = () => `[${moment().toISOString()}] authSlice: `;
+const ln = () => `[${moment().toISOString()}] authSlice: `;
 
 /**
  * Clears auth cookie
@@ -92,20 +92,20 @@ export const AuthSlice = createSlice({
     initialState,
     reducers: {
         setAuthToken: (state, action: PayloadAction<TokenData | undefined>) => {
-            console.log(`${logName()}setAuthToken: token`, action.payload);
+            console.log(`${ln()}setAuthToken: token`, action.payload);
             state.token = action.payload;
             MyPointsApi.getInstance()
                 .withToken(getSimpleTokenRetriever(action.payload?.id_token || ""));
         },
 
         setUserData: (state, action: PayloadAction<UserData | undefined>) => {
-            console.log(`${logName()}setUserData: user`, action.payload);
+            console.log(`${ln()}setUserData: user`, action.payload);
             state.user = action.payload;
         },
     },
     extraReducers: (builder) => {
         builder.addCase(login.rejected, (state, action) => {
-            console.log(`${logName()}login rejected`, action.error);
+            console.log(`${ln()}login rejected`, action.error);
             state.token = undefined;
             state.user = undefined;
         });
@@ -114,7 +114,7 @@ export const AuthSlice = createSlice({
             state.authCookieSet = action.payload;
         });
         builder.addCase(setAuthCookie.rejected, (state, action) => {
-            console.log(`${logName()}setAuthCookie rejected`, action.error);
+            console.log(`${ln()}setAuthCookie rejected`, action.error);
             state.authCookieSet = false;
         });
         

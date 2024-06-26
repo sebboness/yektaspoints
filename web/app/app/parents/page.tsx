@@ -1,25 +1,22 @@
 import React from "react";
 import moment from "moment";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 
 import ParentsApp from "@/components/app/ParentsApp";
-import authCookie from "@/lib/auth/AuthCookie";
+import { TokenHeaderName } from "@/lib/auth/AuthCookie";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { ThrowIfNotSuccess } from "@/lib/api/Result";
 import { MapType } from "@/lib/models/Common";
 import { Family } from "@/lib/models/Family";
-import { AuthWrapper } from "@/components/AuthWrapper";
 
 const ln = () => `[${moment().toISOString()}] ParentsAppLanding: `;
 
 const ParentsAppLanding = async () => {
 
-    const tokenData = authCookie.getTokenData(cookies());
-    const api = MyPointsApi.getInstance().withToken(tokenData?.id_token);
+    const token = headers().get(TokenHeaderName) || "none";
+    console.log(`${ln()}token? ${token ? (token.substring(token.length - 20)) : "NONE"}`);
 
-    console.log(`${ln()}token? ${tokenData ? (tokenData.id_token.substring(tokenData.id_token.length - 20)) : "NONE"}`);
-    console.log(`${ln()}B`);
-
+    const api = MyPointsApi.getInstance().withToken(token);
     const userResult = await api.getUser();
     ThrowIfNotSuccess(userResult);
 
@@ -34,9 +31,7 @@ const ParentsAppLanding = async () => {
     }
 
     return (
-        <AuthWrapper>
-            <ParentsApp user={user} families={families} />
-        </AuthWrapper>
+        <ParentsApp user={user} families={families} />
     );
 };
 
