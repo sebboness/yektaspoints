@@ -10,14 +10,33 @@ import moment from "moment";
 
 const ln = () => `[${moment().toISOString()}] authSlice: `;
 
+let refreshTimer: NodeJS.Timeout | undefined;
+
 /**
  * Clears auth cookie
  */
 const clearAuthCookie = createAsyncThunk("auth/clearAuthCookie", async (params, thunkApi) => {
-    const api = LocalApi.getInstance();
-    const resp = await api.deleteAuthCookie();
-    return resp.status === SUCCESS;
+    try {
+        const api = LocalApi.getInstance();
+        const resp = await api.deleteAuthCookie();
+        return resp.status === SUCCESS;
+    }
+    catch (err) {
+        // log a warning but return true nonetheless to clear data in slice
+        console.warn(`${ln()}error clearing auth cookie`);
+        return true;
+    }
 });
+
+const startRefreshTimer = (refreshInMs: number) => {
+    // clear original timout first
+    if (refreshTimer)
+        clearTimeout(refreshTimer);
+
+    refreshTimer = setTimeout(() => {
+
+    }, refreshInMs);
+}
 
 /**
  * Gets user data from api with currently logged in auth token
@@ -62,6 +81,11 @@ type LoginOptions = {
     password: string;
 };
 
+type RefreshOptions = {
+    username: string;
+    refreshToken: string;
+};
+
 export const login = createAsyncThunk("auth/login", async (options: LoginOptions, thunkApi) => {
     const api = MyPointsApi.getInstance();
     try {
@@ -71,7 +95,22 @@ export const login = createAsyncThunk("auth/login", async (options: LoginOptions
             return result.data!;
         }
         else
-            throw result;
+            thunkApi.dispatch(clearAuthCookie());
+    } catch (err: any) {
+        throw ErrorAsResult(err);
+    }
+});
+
+export const refresh = createAsyncThunk("auth/refresh", async (options: RefreshOptions, thunkApi) => {
+    const api = MyPointsApi.getInstance();
+    try {
+        const result = await api.refreshToken(options.username, options.refreshToken);
+        if (result.status === SUCCESS) {
+            thunkApi.dispatch(AuthSlice.actions.setAuthToken(result.data!));
+            return result.data!;
+        }
+        else
+            thunkApi.dispatch(clearAuthCookie());
     } catch (err: any) {
         throw ErrorAsResult(err);
     }
@@ -104,8 +143,20 @@ export const AuthSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
+        builder.addCase(clearAuthCookie.fulfilled, (state, action) => {
+            console.log(`${ln()}clearAuthCookie fulfilled`);
+            state.token = undefined;
+            state.user = undefined;
+        });
+
         builder.addCase(login.rejected, (state, action) => {
             console.log(`${ln()}login rejected`, action.error);
+            state.token = undefined;
+            state.user = undefined;
+        });
+
+        builder.addCase(refresh.rejected, (state, action) => {
+            console.log(`${ln()}refresh rejected`, action.error);
             state.token = undefined;
             state.user = undefined;
         });
