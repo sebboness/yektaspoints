@@ -105,6 +105,18 @@ class AuthCookie {
         });
     }
 
+    setTokenDataToHeader(headers: Headers, tokenData: TokenData) {
+        // remove unused access_token key
+        delete tokenData["access_token"];
+        const tokenJson = JSON.stringify(tokenData);
+        const env = process.env.ENV;
+
+        console.info(`${ln()}setTokenDataToHeader ${TokenHeaderName} header on ${env}`); // with value ${tokenJson}`);
+
+        // Set token data header
+        headers.set(TokenHeaderName, tokenJson);
+    }
+
     setUserData(res: NextResponse, domain: string, userData: UserData) {
         const userJson = JSON.stringify(userData);
         const env = process.env.ENV;
@@ -147,6 +159,23 @@ class AuthCookie {
         }
 
         tokenData.refresh_token = refreshTokenCookie.value;
+
+        return tokenData;
+    }
+
+    getTokenDataFromHeader(headers: Headers): TokenData | undefined {
+        const tokenJson = headers.get(TokenHeaderName);
+        
+        console.info(`${ln()}header ${TokenCookieName} set? ${tokenJson !== undefined}`);
+
+        if (!tokenJson)
+            return undefined;
+
+        const tokenData = JSON.parse(tokenJson) as TokenData;
+        if (!tokenData.id_token) {
+            console.info("token header not a valid TokenData object: " + tokenJson);
+            return undefined;
+        }
 
         return tokenData;
     }

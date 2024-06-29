@@ -3,7 +3,7 @@ import moment from "moment";
 import { headers } from "next/headers";
 
 import ParentsApp from "@/components/app/ParentsApp";
-import { TokenHeaderName } from "@/lib/auth/AuthCookie";
+import authCookie, { TokenHeaderName } from "@/lib/auth/AuthCookie";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { ThrowIfNotSuccess } from "@/lib/api/Result";
 import { MapType } from "@/lib/models/Common";
@@ -13,7 +13,8 @@ const ln = () => `[${moment().toISOString()}] ParentsAppLanding: `;
 
 const ParentsAppLanding = async () => {
 
-    const token = headers().get(TokenHeaderName) || "none";
+    const tokenData = authCookie.getTokenDataFromHeader(headers());
+    const token = tokenData ? tokenData.id_token : "none";
     console.log(`${ln()}token? ${token ? (token.substring(token.length - 20)) : "NONE"}`);
 
     const api = MyPointsApi.getInstance().withToken(token);

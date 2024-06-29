@@ -6,7 +6,7 @@ export const TokenDataElId = "__mp.td__";
 export const UserDataElId = "__mp.ud__";
 
 export type TokenData = {
-    access_token: string;
+    access_token?: string;
     id_token: string;
     refresh_token: string;
     expires_in: number;
@@ -40,6 +40,7 @@ type JwtData = {[key: string]: never};
 export const ParseToken = (token: string): UserData | undefined => {
     try {
         const data = jwtDecode(token) as JwtData;
+        console.log("ParseToken, exp?", data["exp"]);
         return {
             email: data["email"],
             family_ids: [],
