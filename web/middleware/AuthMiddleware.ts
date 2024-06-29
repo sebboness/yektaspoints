@@ -4,24 +4,20 @@ import { ParseToken, TokenData, UserData } from "@/lib/auth/Auth";
 import { FAILURE } from "@/lib/api/Result";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { Roles } from "@/lib/auth/Roles";
-import authCookie from "@/lib/auth/AuthCookie";
+import authCookie, { TokenHeaderName } from "@/lib/auth/AuthCookie";
 import { cookies } from "next/headers";
 import { getSimpleTokenRetriever } from "@/slices/authSlice";
 import moment from "moment";
 import { xRedirectToHeader } from "./config";
 
 const ln = () => `[${moment().toISOString()}] AuthMiddleware: `;
-const parentsBasePath = ["/family"];
-const childrenBasePath = ["/points"];
+const parentsBasePath = ["/family", "/app/parents"];
+const childrenBasePath = ["/points", "/app/mypoints"];
 const adminBasePath = ["/admin"];
 
 export default async function AuthMiddleware(req: NextRequest): Promise<NextResponse> {
 
     const path = req.nextUrl.pathname;
-    // console.log(`${ln()}basePath: ${req.nextUrl.basePath}`);
-    // console.log(`${ln()}href: ${req.nextUrl.href}`);
-    // console.log(`${ln()}pathname: ${req.nextUrl.pathname}`);
-    // console.log(`${ln()}origin:   ${req.nextUrl.hostname}`);
     
     if (
         !parentsBasePath.some((p) => path.startsWith(p)) &&
@@ -36,6 +32,7 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
         let userData: UserData | undefined;
         let tokenData: TokenData | undefined;
         let isLoginRedirect = false;
+        let expiresAt: number | undefined;
 
         // Check cookies
         tokenData = authCookie.getTokenData(cookies());
@@ -55,6 +52,7 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
             } else {
                 // User data is parsed, and now let's check token against auth API
                 const username = userData.username;
+                expiresAt = userData.exp;
 
                 let getUserResp = await MyPointsApi.getInstance()
                     .withToken(getSimpleTokenRetriever(tokenData.id_token))
@@ -97,6 +95,9 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
                             console.log(`${ln()}token and user data all good!`);
                             userData = getUserResp.data;
                             tokenData = refreshResp.data;
+
+                            const newToken = ParseToken(refreshResp.data.id_token);
+                            expiresAt = newToken ? newToken.exp : undefined;
                         }
                     }
                 } else {
@@ -112,11 +113,16 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
 
         // Set token data cookie
         if (tokenData) {
+            console.log(`${ln()}setting token? ${tokenData.id_token.substring(tokenData.id_token.length - 20)}`);
+            console.log(`${ln()}A`);
+            authCookie.setTokenDataToHeader(response.headers, tokenData);
             authCookie.setTokenData(response, req.nextUrl.hostname, tokenData);
         }
 
         // Set user data cookie and check
         if (userData) {
+            console.log(`${ln()}expiresAt ${expiresAt}`);
+            userData.exp = expiresAt || 0;
             authCookie.setUserData(response, req.nextUrl.hostname, userData);
         }
 
@@ -137,7 +143,7 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
             response.headers.set(xRedirectToHeader, "/access-denied");
         }
         
-        console.log(`${ln()}redirect to? ${response.headers.has(xRedirectToHeader) ? response.headers.get(xRedirectToHeader) : ""}`);        
+        console.log(`${ln()}${response.headers.has(xRedirectToHeader) ? ("redirect to " + response.headers.get(xRedirectToHeader)) : "no redirects"}`);        
 
         return response;
     }

@@ -1,9 +1,9 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { Point, PointSummary, UserPoints } from "@/lib/models/Points";
 
+import { getTokenRetriever } from "@/store/store";
 import { ErrorAsResult } from "@/lib/api/Result";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
-import { getTokenRetriever } from "@/store/store";
 import moment from "moment";
 
 const ln = () => `[${moment().toISOString()}] pointsSlice: `;
@@ -69,6 +69,7 @@ export const PointsSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(getUserPoints.fulfilled, (state, action) => {
+            console.log(`${ln()}getUserPoints fulfilled. points`, action.payload.points.length);
             state.userPoints = action.payload.points;
         });
         builder.addCase(getUserPoints.rejected, (state, action) => {

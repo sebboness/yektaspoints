@@ -2,6 +2,7 @@ import { Api, TokenGetter } from "./Api";
 import { Result, ResultT } from "./Result";
 import { TokenData, UserData } from "../auth/Auth";
 import { ApprovePointsRequest, PointsList, RequestPointsRequest, RequestPointsResponse, UserPoints } from "../models/Points";
+import { FamilyResponse } from "../models/Family";
 
 // Define base URIs for different environments
 const baseUris: {[key: string]: string} = {
@@ -31,8 +32,14 @@ export class MyPointsApi extends Api {
         return MyPointsApi.instance;
     }
 
-    public withToken(tokenGetter: TokenGetter): MyPointsApi {
-        this.tokenGetter = tokenGetter;
+    public withToken(tokenOrGetter?: TokenGetter | string): MyPointsApi {
+        if (typeof tokenOrGetter === "string")
+            this.tokenGetter = {
+                getToken: () => tokenOrGetter,
+                getTokenType: () => "Bearer",
+            };
+        else
+            this.tokenGetter = tokenOrGetter;
         return this;
     }
 
@@ -58,6 +65,14 @@ export class MyPointsApi extends Api {
                 refresh_token,
             }
         });
+    }
+
+    ////
+    // Family
+    ////
+
+    public getFamily(familyId: string): Promise<ResultT<FamilyResponse>> {
+        return this.get(`v1/family/${familyId}`);
     }
 
     ////

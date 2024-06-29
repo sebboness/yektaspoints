@@ -28,16 +28,16 @@ export default async function HomeMiddleware(req: NextRequest): Promise<NextResp
 
         if (user.roles.some((r) => r === Roles.Parent)) {
             // User is parent, so redirect to family landing page
-            response.headers.set(xRedirectToHeader, "/family");
+            response.headers.set(xRedirectToHeader, "/app/parents");
         } else if (user.roles.some((r) => r === Roles.Child)) {
             // User is child, so redirect to points landing page
-            response.headers.set(xRedirectToHeader, "/points");
+            response.headers.set(xRedirectToHeader, "/app/mypoints");
         } else if (user.roles.some((r) => r === Roles.Admin)) {
             // User is child, so redirect to points landing page
             response.headers.set(xRedirectToHeader, "/admin");
         }
         
-        console.log(`${ln()}redirect to? ${response.headers.has(xRedirectToHeader) ? response.headers.get(xRedirectToHeader) : ""}`);        
+        console.log(`${ln()}${response.headers.has(xRedirectToHeader) ? ("redirect to " + response.headers.get(xRedirectToHeader)) : "no redirects"}`);    
 
         return response;
     }

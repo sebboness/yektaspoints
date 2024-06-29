@@ -76,5 +76,10 @@ func (a *ApiAuthContext) getTokenFromHeader(r *http.Request) string {
 	}
 
 	splitToken := strings.Split(reqToken, "Bearer ")
+	if len(splitToken) < 2 {
+		logger.Warnf("no bearer token found in authorization header")
+		return ""
+	}
+
 	return splitToken[1]
 }

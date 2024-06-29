@@ -10,8 +10,9 @@ import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
-import { AuthSlice, getSimpleTokenRetriever, setAuthCookie } from "@/slices/authSlice";
+import { AuthSlice, getSimpleTokenRetriever, setAuthCookie, startRefreshTimer } from "@/slices/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { ParseToken } from "@/lib/auth/Auth";
 
 const ln = () => `[${moment().toISOString()}] LoginForm: `;
 
@@ -60,13 +61,18 @@ const LoginForm = () => {
         const authResult = await api.authenticate(data.username!, data.password!);
         if (authResult.data) {
             console.log(`${ln()}api logged in. get user...`);
-            setPreparing(true);
             
             const userResult = await api
                 .withToken(getSimpleTokenRetriever(authResult.data.id_token))
                 .getUser();
 
             if (userResult.data) {
+                setPreparing(true);
+                
+                const parsedToken = ParseToken(authResult.data.id_token);
+                const expiresAt = parsedToken ? parsedToken.exp : 0;
+                userResult.data.exp = expiresAt;
+
                 console.log(`${ln()}got user a-ok`, userResult.data);  
                 
                 dispatch(setAuthCookie({
@@ -76,6 +82,7 @@ const LoginForm = () => {
 
                 dispatch(AuthSlice.actions.setAuthToken(authResult.data));
                 dispatch(AuthSlice.actions.setUserData(userResult.data));
+                dispatch(startRefreshTimer(expiresAt));
                 
                 return;
             }

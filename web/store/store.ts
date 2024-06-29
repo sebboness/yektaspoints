@@ -1,12 +1,14 @@
+import { configureStore } from "@reduxjs/toolkit";
 import { TokenGetter } from "@/lib/api/Api";
 import authReducer from "@/slices/authSlice";
-import { configureStore } from "@reduxjs/toolkit";
+import familyReducer from "@/slices/familySlice";
 import pointsReducer from "@/slices/pointsSlice";
 
 export function makeStore() {
     return configureStore({
         reducer: {
             auth: authReducer,
+            family: familyReducer,
             points: pointsReducer,
         },
     })

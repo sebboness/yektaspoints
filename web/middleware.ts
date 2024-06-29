@@ -4,6 +4,7 @@ import { middleware as activatedMiddleware, xRedirectToHeader } from "@/middlewa
 import { HttpStatus } from "./lib/HttpStatusCodes";
 import { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import moment from "moment";
+import { randomAlphaNumericString } from "./lib/StringUtils";
 
 const ln = () => `[${moment().toISOString()}] middleware: `;
 
@@ -28,6 +29,12 @@ export async function middleware(req: NextRequest) {
         if (!result.ok) {
             return result;
         }
+
+        // Set any custom headers set in middleware
+        result.headers.forEach((val, key) => {
+            console.log(`${ln()}received header from middleware ${key}=${val.length > 20 ? val.substring(val.length - 20) : val}`);
+            res.headers.set(key, val);
+        });
 
         // Push middleware headers and cookies to the header array
         middlewareHeader.push(result.headers);
@@ -57,7 +64,6 @@ export async function middleware(req: NextRequest) {
         // Look for the 'x-middleware-request-redirect' header
         const redirect = header.get(xRedirectToHeader);
 
-        
         if (redirect) {
             // If a redirect is found, store the value and break the loop
             console.log(`${ln()}redirect set to ${redirect}`)
@@ -70,10 +76,14 @@ export async function middleware(req: NextRequest) {
 
     // If a redirection is required based on the middleware headers
     if (redirectTo) {
+        console.log(`${ln()}redirecting to ${redirectTo}`);
         res = NextResponse.redirect(new URL(redirectTo, req.url), {
             status: HttpStatus.TemporaryRedirect, // Use the appropriate HTTP status code for the redirect
         });
     }
+
+    // Set url in custom header if needed in server component
+    res.headers.set("x-url", req.url);
 
     // Set response cookies
     middlewareCookies.forEach((c) => {
