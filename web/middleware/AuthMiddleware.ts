@@ -32,6 +32,7 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
         let userData: UserData | undefined;
         let tokenData: TokenData | undefined;
         let isLoginRedirect = false;
+        let expiresAt: number | undefined;
 
         // Check cookies
         tokenData = authCookie.getTokenData(cookies());
@@ -51,6 +52,7 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
             } else {
                 // User data is parsed, and now let's check token against auth API
                 const username = userData.username;
+                expiresAt = userData.exp;
 
                 let getUserResp = await MyPointsApi.getInstance()
                     .withToken(getSimpleTokenRetriever(tokenData.id_token))
@@ -93,6 +95,9 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
                             console.log(`${ln()}token and user data all good!`);
                             userData = getUserResp.data;
                             tokenData = refreshResp.data;
+
+                            const newToken = ParseToken(refreshResp.data.id_token);
+                            expiresAt = newToken ? newToken.exp : undefined;
                         }
                     }
                 } else {
@@ -110,12 +115,14 @@ export default async function AuthMiddleware(req: NextRequest): Promise<NextResp
         if (tokenData) {
             console.log(`${ln()}setting token? ${tokenData.id_token.substring(tokenData.id_token.length - 20)}`);
             console.log(`${ln()}A`);
-            authCookie.setTokenData(response, req.nextUrl.hostname, tokenData);
             authCookie.setTokenDataToHeader(response.headers, tokenData);
+            authCookie.setTokenData(response, req.nextUrl.hostname, tokenData);
         }
 
         // Set user data cookie and check
         if (userData) {
+            console.log(`${ln()}expiresAt ${expiresAt}`);
+            userData.exp = expiresAt || 0;
             authCookie.setUserData(response, req.nextUrl.hostname, userData);
         }
 

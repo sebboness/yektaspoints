@@ -1,4 +1,4 @@
-import { AuthCookieBody, TokenData, UserData } from "@/lib/auth/Auth";
+import { AuthCookieBody, ParseToken, TokenData, UserData } from "@/lib/auth/Auth";
 import { ErrorAsResult, SUCCESS } from "@/lib/api/Result";
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
@@ -11,6 +11,7 @@ import moment from "moment";
 const ln = () => `[${moment().toISOString()}] authSlice: `;
 
 let refreshTimer: NodeJS.Timeout | undefined;
+const refreshBuffer = 3 * 60 * 1000; // refresh in 3 minutes before the actual time out in milliseconds
 
 /**
  * Clears auth cookie
@@ -28,15 +29,40 @@ const clearAuthCookie = createAsyncThunk("auth/clearAuthCookie", async (params, 
     }
 });
 
-const startRefreshTimer = (refreshInMs: number) => {
+export const startRefreshTimer = createAsyncThunk("auth/startRefreshTimer", async (expiresAt: number, thunkApi) => {
+    if (expiresAt <= 0) {
+        console.log(`${ln()}refresh timer expiresAt is not set`);
+        return;
+    }
+
+    console.log(`${ln()}starting refresh timer. overwriting existing timer?`, refreshTimer !== undefined);
+
     // clear original timout first
     if (refreshTimer)
         clearTimeout(refreshTimer);
 
-    refreshTimer = setTimeout(() => {
+    const now = new Date().getTime();
+    const refreshInMs = (expiresAt * 1000) - now - refreshBuffer;
+    console.log(`${ln()}${expiresAt} - ${now} - ${refreshBuffer} = ${refreshInMs}`);
 
+    if (refreshInMs <= 0) {
+        console.log(`${ln()}refreshInMsis too little? ${expiresAt} - ${now} - ${refreshBuffer} = ${refreshInMs}`);
+        return;
+    }
+
+    refreshTimer = setTimeout(async () => {
+        const state = thunkApi.getState() as RootState;
+        const user = state.auth.user;
+        const token = state.auth.token;
+        console.log(`${ln()}dispatching user refresh`, user && token);
+        if (user && token) {
+            await thunkApi.dispatch(refresh({
+                username: user.username,
+                refreshToken: token.refresh_token,
+            }));
+        }
     }, refreshInMs);
-}
+});
 
 /**
  * Gets user data from api with currently logged in auth token
@@ -44,7 +70,6 @@ const startRefreshTimer = (refreshInMs: number) => {
 export const getUser = createAsyncThunk("getUser", async (params, thunkApi) => {
     const api = MyPointsApi.getInstance();
     try {
-        const state = thunkApi.getState() as RootState;
         const result = await api.getUser();
 
         if (result.data)
@@ -104,10 +129,31 @@ export const login = createAsyncThunk("auth/login", async (options: LoginOptions
 export const refresh = createAsyncThunk("auth/refresh", async (options: RefreshOptions, thunkApi) => {
     const api = MyPointsApi.getInstance();
     try {
-        const result = await api.refreshToken(options.username, options.refreshToken);
-        if (result.status === SUCCESS) {
-            thunkApi.dispatch(AuthSlice.actions.setAuthToken(result.data!));
-            return result.data!;
+        const refreshResult = await api.refreshToken(options.username, options.refreshToken);
+        if (refreshResult.status === SUCCESS && refreshResult.data) {
+            const newToken = ParseToken(refreshResult.data.id_token || "");
+            const expiresAt = newToken ? newToken.exp : 0;
+
+            const userResult = await MyPointsApi.getInstance()
+                .withToken(getSimpleTokenRetriever(refreshResult.data.id_token))
+                .getUser();
+
+            if (userResult.status === SUCCESS && userResult.data) {
+                userResult.data.exp = expiresAt;
+
+                thunkApi.dispatch(setAuthCookie({
+                    token: refreshResult.data,
+                    user: userResult.data,
+                }));
+
+                thunkApi.dispatch(AuthSlice.actions.setAuthToken(refreshResult.data));
+                thunkApi.dispatch(AuthSlice.actions.setUserData(userResult.data));
+                thunkApi.dispatch(startRefreshTimer(expiresAt));
+
+                return refreshResult.data!;
+            }
+            else
+                thunkApi.dispatch(clearAuthCookie());
         }
         else
             thunkApi.dispatch(clearAuthCookie());

@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 
 import { TokenData, TokenDataElId, UserData, UserDataElId } from "@/lib/auth/Auth";
-import { AuthSlice } from "@/slices/authSlice";
+import { AuthSlice, startRefreshTimer } from "@/slices/authSlice";
 import { useAppDispatch } from "@/store/hooks";
 
 const getTokenData = (): TokenData | undefined => {
@@ -54,6 +54,7 @@ export const AuthCheckerClient = () => {
             if (userData) {
                 // dispatch to save user state
                 dispatch(AuthSlice.actions.setUserData(userData));
+                dispatch(startRefreshTimer(userData.exp));
             }
 
             if (tokenData) {
