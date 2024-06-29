@@ -2,12 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import moment from "moment";
+import { usePathname, useRouter } from "next/navigation";
 
 import { TokenData, TokenDataElId, UserData, UserDataElId } from "@/lib/auth/Auth";
 import { AuthSlice, startRefreshTimer } from "@/slices/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import usePrevious from "@/lib/hooks/usePrevious";
-import { usePathname, useRouter } from "next/navigation";
 
 const ln = () => `[${moment().toISOString()}] AuthCkeckerClient: `;
 

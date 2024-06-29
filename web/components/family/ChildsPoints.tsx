@@ -6,9 +6,9 @@ import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
-import { mapPointsToSummaries, mapSummaryToLitePoint, Point, PointRequestType, PointStatus, PointSummary } from "@/lib/models/Points";
+import { mapPointsToSummaries, mapSummaryToLitePoint, PointRequestType, PointStatus, PointSummary } from "@/lib/models/Points";
 import { getUserPoints } from "@/slices/pointsSlice";
-import { useAppDispatch, useAppSelector, useAppStore } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 import PointsApprovalDialog, { PointsApprovalDialogInterface } from "../points/PointsApprovalDialog";
 import CashoutList from "../points/CashoutList";
@@ -18,12 +18,7 @@ import SectionTitle from "../common/SectionTitle";
 
 const ln = () => `[${moment().toISOString()}] ChildsPoints: `;
 
-type Props = {
-    childUserId: string;
-    initialPoints: Point[];
-};
-
-const ChildsPoints = ({ childUserId, initialPoints }: Props) => {
+const ChildsPoints = () => {
 
     const approvalDialog = useRef<PointsApprovalDialogInterface>();
     const dispatch = useAppDispatch();

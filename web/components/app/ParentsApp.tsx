@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 
 import { UserData } from "@/lib/auth/Auth";
 import { MapType } from "@/lib/models/Common";
@@ -37,13 +37,13 @@ const ParentsApp = (props: Props) => {
                     <Router>
                         <Routes>
                             <Route path="/app/parents" element={<FamiliesList />} />
-                            <Route path="/app/parents/:family_id/points/:user_id" element={<ChildsPoints childUserId="" initialPoints={[]} />} />
+                            <Route path="/app/parents/:family_id/points/:user_id" element={<ChildsPoints />} />
                         </Routes>
                     </Router>
                 </div>                    
             </div>
         </section>
     );
-}
+};
 
 export default ParentsApp;

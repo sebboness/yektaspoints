@@ -57,4 +57,4 @@ export const ThrowIfNotSuccess = (result: Result): void => {
         throw new Error(result.errors.join("; "));
     if ((result as ResultT<object>).data === undefined || (result as ResultT<object>).data === null)
         throw new Error("invalid result: " + JSON.stringify(result));
-}
+};

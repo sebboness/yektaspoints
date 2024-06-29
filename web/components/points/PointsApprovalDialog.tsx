@@ -10,9 +10,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 
 // import pointsSlice, { PointsSlice } from "@/slices/pointsSlice";
 // import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { MyPointsApi } from "@/lib/api/MyPointsApi";
+// import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { Point, PointDecisionApprove, PointDecisionDeny } from "@/lib/models/Points";
-import { getTokenRetriever } from "@/store/store";
 import { FamilyMember } from "@/lib/models/Family";
 
 const ln = () => `[${moment().toISOString()}] PointsApprovalDialog: `;
@@ -46,7 +45,7 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
         open: (point: Point, child: FamilyMember) => open(point, child),
     }));
 
-    const api = MyPointsApi.getInstance();
+    // const api = MyPointsApi.getInstance();
     
     const [loading, setLoading] = useState(false);
     const [decision, setDecision] = useState("");

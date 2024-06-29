@@ -3,7 +3,7 @@ import moment from "moment";
 import { headers } from "next/headers";
 
 import ParentsApp from "@/components/app/ParentsApp";
-import authCookie, { TokenHeaderName } from "@/lib/auth/AuthCookie";
+import authCookie from "@/lib/auth/AuthCookie";
 import { MyPointsApi } from "@/lib/api/MyPointsApi";
 import { ThrowIfNotSuccess } from "@/lib/api/Result";
 import { MapType } from "@/lib/models/Common";
