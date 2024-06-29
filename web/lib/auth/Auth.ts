@@ -40,7 +40,6 @@ type JwtData = {[key: string]: never};
 export const ParseToken = (token: string): UserData | undefined => {
     try {
         const data = jwtDecode(token) as JwtData;
-        console.log("ParseToken, exp?", data["exp"]);
         return {
             email: data["email"],
             family_ids: [],

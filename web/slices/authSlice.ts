@@ -10,13 +10,26 @@ import moment from "moment";
 
 const ln = () => `[${moment().toISOString()}] authSlice: `;
 
+// Used for refreshing auth tokens
 let refreshTimer: NodeJS.Timeout | undefined;
-const refreshBuffer = 3 * 60 * 1000; // refresh in 3 minutes before the actual time out in milliseconds
+
+// Refresh in 3 minutes before the actual time out in milliseconds
+const refreshBuffer = 3 * 60 * 1000;
+
+type LoginOptions = {
+    username: string;
+    password: string;
+};
+
+type RefreshOptions = {
+    username: string;
+    refreshToken: string;
+};
 
 /**
  * Clears auth cookie
  */
-const clearAuthCookie = createAsyncThunk("auth/clearAuthCookie", async (params, thunkApi) => {
+export const clearAuthCookie = createAsyncThunk("auth/clearAuthCookie", async (params, thunkApi) => {
     try {
         const api = LocalApi.getInstance();
         const resp = await api.deleteAuthCookie();
@@ -24,7 +37,7 @@ const clearAuthCookie = createAsyncThunk("auth/clearAuthCookie", async (params, 
     }
     catch (err) {
         // log a warning but return true nonetheless to clear data in slice
-        console.warn(`${ln()}error clearing auth cookie`);
+        console.warn(`${ln()}error clearing auth cookie: ${err}`);
         return true;
     }
 });
@@ -85,9 +98,16 @@ export const getUser = createAsyncThunk("getUser", async (params, thunkApi) => {
  * Sets auth cookie for token and user
  */
 export const setAuthCookie = createAsyncThunk("auth/setAuthCookie", async (authCookie: AuthCookieBody, thunkApi) => {
-    const api = LocalApi.getInstance();
-    const resp = await api.setAuthCookie(authCookie);
-    return resp.status === SUCCESS;
+    try {
+        const api = LocalApi.getInstance();
+        const resp = await api.setAuthCookie(authCookie);
+        return resp.status === SUCCESS;
+    }
+    catch (err) {
+        // log a warning but return true nonetheless to clear data in slice
+        console.warn(`${ln()}error setting auth cookie: ${err}`);
+        return true;
+    }
 });
 
 /**
@@ -101,16 +121,6 @@ export const getSimpleTokenRetriever = (token: string): TokenGetter => {
     };
 };
 
-type LoginOptions = {
-    username: string;
-    password: string;
-};
-
-type RefreshOptions = {
-    username: string;
-    refreshToken: string;
-};
-
 export const login = createAsyncThunk("auth/login", async (options: LoginOptions, thunkApi) => {
     const api = MyPointsApi.getInstance();
     try {
@@ -122,35 +132,44 @@ export const login = createAsyncThunk("auth/login", async (options: LoginOptions
         else
             thunkApi.dispatch(clearAuthCookie());
     } catch (err: any) {
-        throw ErrorAsResult(err);
+        console.log(`${ln()}login dispatch failed: ${err}`);
+        thunkApi.dispatch(clearAuthCookie());
     }
 });
 
 export const refresh = createAsyncThunk("auth/refresh", async (options: RefreshOptions, thunkApi) => {
     const api = MyPointsApi.getInstance();
     try {
+        // Refresh user token
         const refreshResult = await api.refreshToken(options.username, options.refreshToken);
         if (refreshResult.status === SUCCESS && refreshResult.data) {
+            // Get expiry date
             const newToken = ParseToken(refreshResult.data.id_token || "");
             const expiresAt = newToken ? newToken.exp : 0;
 
+            // Get authenticated user
             const userResult = await MyPointsApi.getInstance()
                 .withToken(getSimpleTokenRetriever(refreshResult.data.id_token))
                 .getUser();
 
             if (userResult.status === SUCCESS && userResult.data) {
+                // Set token expiry date for user
                 userResult.data.exp = expiresAt;
 
+                // Dispatch saving token and user data to cookies
                 thunkApi.dispatch(setAuthCookie({
                     token: refreshResult.data,
                     user: userResult.data,
                 }));
 
+                // Dispatch token and user data to redux
                 thunkApi.dispatch(AuthSlice.actions.setAuthToken(refreshResult.data));
                 thunkApi.dispatch(AuthSlice.actions.setUserData(userResult.data));
+
+                // Start refresh timer
                 thunkApi.dispatch(startRefreshTimer(expiresAt));
 
-                return refreshResult.data!;
+                return refreshResult.data;
             }
             else
                 thunkApi.dispatch(clearAuthCookie());
@@ -158,7 +177,8 @@ export const refresh = createAsyncThunk("auth/refresh", async (options: RefreshO
         else
             thunkApi.dispatch(clearAuthCookie());
     } catch (err: any) {
-        throw ErrorAsResult(err);
+        console.log(`${ln()}refresh dispatch failed: ${err}`);
+        thunkApi.dispatch(clearAuthCookie());
     }
 });
 
@@ -177,14 +197,15 @@ export const AuthSlice = createSlice({
     initialState,
     reducers: {
         setAuthToken: (state, action: PayloadAction<TokenData | undefined>) => {
-            console.log(`${ln()}setAuthToken: token`, action.payload);
+            console.log(`${ln()}setAuthToken: token`);
             state.token = action.payload;
+            state.authCookieSet = true;
             MyPointsApi.getInstance()
                 .withToken(getSimpleTokenRetriever(action.payload?.id_token || ""));
         },
 
         setUserData: (state, action: PayloadAction<UserData | undefined>) => {
-            console.log(`${ln()}setUserData: user`, action.payload);
+            console.log(`${ln()}setUserData: user`);
             state.user = action.payload;
         },
     },
@@ -193,6 +214,7 @@ export const AuthSlice = createSlice({
             console.log(`${ln()}clearAuthCookie fulfilled`);
             state.token = undefined;
             state.user = undefined;
+            state.authCookieSet = false;
         });
 
         builder.addCase(login.rejected, (state, action) => {
