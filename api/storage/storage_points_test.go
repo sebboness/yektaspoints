@@ -11,7 +11,6 @@ import (
 	mocks "github.com/sebboness/yektaspoints/mocks/storage"
 	"github.com/sebboness/yektaspoints/models"
 	"github.com/sebboness/yektaspoints/util"
-	"github.com/sebboness/yektaspoints/util/env"
 	"github.com/sebboness/yektaspoints/util/tests"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
@@ -47,30 +46,26 @@ func Test_DynamoDbStorage_GetPointByID(t *testing.T) {
 
 	for _, c := range cases {
 
-		output := &dynamodb.QueryOutput{
-			Items: []map[string]types.AttributeValue{
-				{
-					"id":      &types.AttributeValueMemberS{Value: "123"},
-					"user_id": &types.AttributeValueMemberS{Value: "456"},
-					"points":  &types.AttributeValueMemberN{Value: "100"},
-				},
+		output := &dynamodb.GetItemOutput{
+			Item: map[string]types.AttributeValue{
+				"id":      &types.AttributeValueMemberS{Value: "123"},
+				"user_id": &types.AttributeValueMemberS{Value: "456"},
+				"points":  &types.AttributeValueMemberN{Value: "100"},
 			},
 		}
 
 		if c.state.failUnmarshal {
-			output.Items = []map[string]types.AttributeValue{
-				{
-					"points": &types.AttributeValueMemberS{Value: "abc"},
-				},
+			output.Item = map[string]types.AttributeValue{
+				"points": &types.AttributeValueMemberS{Value: "abc"},
 			}
 		}
 
 		if c.state.itemNotFound {
-			output.Items = []map[string]types.AttributeValue{}
+			output.Item = nil
 		}
 
 		mockDynamoClient := mocks.NewMockDynamoDbClient(t)
-		mockDynamoClient.EXPECT().Query(mock.Anything, mock.Anything).Return(output, c.state.errGetItem)
+		mockDynamoClient.EXPECT().GetItem(mock.Anything, mock.Anything).Return(output, c.state.errGetItem)
 
 		s := DynamoDbStorage{
 			client: mockDynamoClient,
@@ -261,11 +256,11 @@ func TestReal_DynamoDbStorage_GetPointByID(t *testing.T) {
 	}
 
 	cases := []test{
-		{"happy path", state{id: "af9bfcd5-c708-4158-a2ef-f33b57a86fc9", userId: "d31b6627-cf66-4013-9e35-a46f0cb2e884"}, want{}},
+		{"happy path", state{id: "2iZIuUGIqZL9nh4GIfIFjFMsAwc", userId: "d31b6627-cf66-4013-9e35-a46f0cb2e884"}, want{}},
 	}
 
 	for _, c := range cases {
-		s, err := NewDynamoDbStorage(Config{Env: env.GetEnv("ENV")})
+		s, err := NewDynamoDbStorage(Config{Env: "dev"})
 		assert.Nil(t, err)
 
 		res, err := s.GetPointByID(context.Background(), c.state.userId, c.state.id)
@@ -276,8 +271,8 @@ func TestReal_DynamoDbStorage_GetPointByID(t *testing.T) {
 			assert.Empty(t, c.want.err)
 			assert.Equal(t, c.state.id, res.ID)
 			assert.Equal(t, c.state.userId, res.UserID)
-			assert.Equal(t, 5, res.Points)
-			assert.Equal(t, 5, res.Balance)
+			assert.Equal(t, 3, res.Points)
+			assert.Equal(t, 8, *res.Balance)
 			assert.Equal(t, models.PointRequestTypeAdd, res.Request.Type)
 		}
 	}

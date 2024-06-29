@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/sebboness/yektaspoints/models"
 	apierr "github.com/sebboness/yektaspoints/util/error"
 )
@@ -18,37 +19,40 @@ type IPointsStorage interface {
 	SavePoint(ctx context.Context, point models.Point) error
 }
 
-func (s *DynamoDbStorage) GetPointByID(ctx context.Context, userId, id string) (models.Point, error) {
+func (s *DynamoDbStorage) GetPointByID(ctx context.Context, userId, pointId string) (models.Point, error) {
 	point := models.Point{}
 
-	keyEx := expression.Key("user_id").Equal(expression.Value(userId))
-	filterEx := expression.Name("id").Equal(expression.Value(id))
-	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).WithFilter(filterEx).Build()
-
+	userIdAttr, err := attributevalue.Marshal(userId)
 	if err != nil {
-		return point, fmt.Errorf("failed to build query expression: %w", err)
+		return point, fmt.Errorf("failed to marshal user_id key: %w", err)
+	}
+	pointIdAttr, err := attributevalue.Marshal(pointId)
+	if err != nil {
+		return point, fmt.Errorf("failed to marshal point_id key: %w", err)
 	}
 
-	resp, err := s.client.Query(ctx, &dynamodb.QueryInput{
-		TableName:                 aws.String(s.tablePoints),
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		KeyConditionExpression:    expr.KeyCondition(),
-		FilterExpression:          expr.Filter(),
-		ScanIndexForward:          aws.Bool(false),
+	key := map[string]types.AttributeValue{
+		"user_id": userIdAttr,
+		"id":      pointIdAttr,
+	}
+
+	resp, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(s.tablePoints),
+		Key:       key,
 	})
 
 	if err != nil {
+		logger.WithContext(ctx).AddFields(map[string]any{"user_id": userId, "point_id": pointId})
 		apiErr := apierr.GetAwsError(err)
 		return point, apiErr
 	}
 
-	if len(resp.Items) == 0 {
-		logger.WithContext(ctx).AddFields(map[string]any{"userId": userId, "id": id}).Warnf("item (id:%s) not found", id)
-		return point, apierr.New(apierr.NotFound).WithError(fmt.Sprintf("point (id=%s)", id))
+	if resp.Item == nil {
+		logger.WithContext(ctx).AddFields(map[string]any{"user_id": userId, "point_id": pointId}).Errorf("item (id:%s) not found", pointId)
+		return point, apierr.New(apierr.NotFound).WithError(fmt.Sprintf("point (id=%s)", pointId))
 	}
 
-	err = attributevalue.UnmarshalMap(resp.Items[0], &point)
+	err = attributevalue.UnmarshalMap(resp.Item, &point)
 	if err != nil {
 		return point, fmt.Errorf("failed to unmarshal item: %w", err)
 	}
