@@ -82,6 +82,7 @@ func Test_Controller_ApprovePointsHandler(t *testing.T) {
 				point := models.Point{UserID: "child-1", Status: models.PointStatusWaiting}
 				mockUserDB.EXPECT().ParentHasAccessToChild(mock.Anything, mock.Anything, mock.Anything).Return(true, nil).Once()
 				mockPointsDB.EXPECT().GetPointByID(mock.Anything, mock.Anything, mock.Anything).Return(point, nil).Once()
+				mockPointsDB.EXPECT().GetLatestBalance(mock.Anything, mock.Anything).Return(models.PointBalance{}, nil).Once()
 				mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Once()
 			}
 
@@ -132,6 +133,7 @@ func Test_Controller_handleApprovePoints(t *testing.T) {
 		invalidPointStatus  bool
 		errHasAccess        error
 		errGetPoint         error
+		errGetBalance       error
 		errSavePoint        error
 	}
 	type want struct {
@@ -151,6 +153,7 @@ func Test_Controller_handleApprovePoints(t *testing.T) {
 		{"fail - get point err", state{errGetPoint: errFail}, want{"failed to get point point-1: fail"}},
 		{"fail - point user id mistmatch", state{pointUserIdMismatch: true}, want{"point user id user-1 does not match request child-1"}},
 		{"fail - invalid point status", state{invalidPointStatus: true}, want{"invalid point status SETTLED"}},
+		{"fail - get balance err", state{errGetBalance: errFail}, want{"failed to get latest balance"}},
 		{"fail - save points", state{errSavePoint: errFail}, want{"failed to approve point request: fail"}},
 	}
 
@@ -183,10 +186,14 @@ func Test_Controller_handleApprovePoints(t *testing.T) {
 					point.Status = models.PointStatusSettled
 				}
 				mockPointsDB.EXPECT().GetPointByID(mock.Anything, mock.Anything, mock.Anything).Return(point, c.state.errGetPoint).Once()
-			}
 
-			if !c.state.validationError && c.state.errGetPoint == nil && c.state.errHasAccess == nil && !c.state.noAccess && !c.state.pointUserIdMismatch && !c.state.invalidPointStatus {
-				mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Once()
+				if c.state.errGetPoint == nil && !c.state.pointUserIdMismatch && !c.state.invalidPointStatus {
+					mockPointsDB.EXPECT().GetLatestBalance(mock.Anything, mock.Anything).Return(models.PointBalance{}, c.state.errGetBalance).Once()
+
+					if c.state.errGetBalance == nil {
+						mockPointsDB.EXPECT().SavePoint(mock.Anything, mock.Anything).Return(c.state.errSavePoint).Once()
+					}
+				}
 			}
 
 			ctrl := PointsController{

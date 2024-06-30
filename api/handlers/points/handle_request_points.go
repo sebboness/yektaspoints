@@ -15,7 +15,7 @@ import (
 )
 
 type pointsHandlerRequest struct {
-	Points int    `json:"points"`
+	Points int32  `json:"points"`
 	Reason string `json:"reason"`
 	UserID string `json:"-"`
 }

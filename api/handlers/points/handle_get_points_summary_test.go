@@ -141,7 +141,7 @@ func Test_Controller_handleGetPointsSummary(t *testing.T) {
 				points := []models.Point{}
 				daysBack := 0
 				for {
-					balance := int(20 - daysBack)
+					balance := int32(20 - daysBack)
 					points = append(points, models.Point{
 						Status:    "SETTLED",
 						Points:    1,
@@ -178,9 +178,9 @@ func Test_Controller_handleGetPointsSummary(t *testing.T) {
 
 			tests.AssertError(t, err, c.want.err)
 			if c.want.err == "" {
-				assert.Equal(t, 20, res.Balance)
-				assert.GreaterOrEqual(t, 8, res.PointsLast7Days)
-				assert.Equal(t, 0, res.PointsLostLast7Days)
+				assert.Equal(t, int32(20), res.Balance)
+				assert.GreaterOrEqual(t, int32(8), res.PointsLast7Days)
+				assert.Equal(t, int32(0), res.PointsLostLast7Days)
 			}
 
 			mockPointsDB.AssertExpectations(t)
@@ -203,7 +203,7 @@ func Test_Controller_mapPointsToSummaries(t *testing.T) {
 
 			ctrl := PointsController{}
 
-			bal := func(v int) *int {
+			bal := func(v int32) *int32 {
 				return &v
 			}
 
@@ -227,9 +227,9 @@ func Test_Controller_mapPointsToSummaries(t *testing.T) {
 			up := &models.UserPoints{}
 			ctrl.mapPointsToSummaries(up, from, points)
 
-			assert.Equal(t, 18, up.Balance)
-			assert.Equal(t, 4, up.PointsLast7Days)
-			assert.Equal(t, -1, up.PointsLostLast7Days)
+			assert.Equal(t, int32(18), up.Balance)
+			assert.Equal(t, int32(4), up.PointsLast7Days)
+			assert.Equal(t, int32(-1), up.PointsLostLast7Days)
 
 			assert.Len(t, up.RecentPoints, 3)
 			assert.Len(t, up.RecentRequests, 1)

@@ -55,6 +55,8 @@ func (c *PointsController) ApprovePointsHandler(cgin *gin.Context) {
 
 	resp, err := c.handleApprovePoints(cgin.Request.Context(), &req)
 	if err != nil {
+		logger.Errorf("failed to handle approving points: %v", err.Error())
+
 		if apierr := apierr.IsApiError(err); apierr != nil {
 			cgin.JSON(apierr.StatusCode(), handlers.ErrorResult(apierr))
 			return
@@ -70,6 +72,11 @@ func (c *PointsController) ApprovePointsHandler(cgin *gin.Context) {
 func (c *PointsController) handleApprovePoints(ctx context.Context, req *approvePointsRequest) (approvePointsResponse, error) {
 	resp := approvePointsResponse{}
 
+	logger.WithContext(ctx).WithFields(map[string]any{
+		"parent_id": req.ParentID,
+		"child_id":  req.ChildID,
+	})
+
 	if err := validateApprovePoints(req); err != nil {
 		return resp, err
 	}
@@ -79,19 +86,11 @@ func (c *PointsController) handleApprovePoints(ctx context.Context, req *approve
 		return resp, fmt.Errorf("failed to check user access permissions: %w", err)
 	}
 	if !hasAccess {
-		logger.WithContext(ctx).WithFields(map[string]any{
-			"parent_id": req.ParentID,
-			"child_id":  req.ChildID,
-		})
 		return resp, apierr.New(apierr.AccessDenied).WithError("requesting user does not have permission to user's records")
 	}
 
 	point, err := c.pointsDB.GetPointByID(ctx, req.ChildID, req.PointID)
 	if err != nil {
-		logger.WithContext(ctx).WithFields(map[string]any{
-			"user_id":  req.ChildID,
-			"point_id": req.PointID,
-		})
 		return resp, fmt.Errorf("failed to get point %v: %w", req.PointID, err)
 	}
 
@@ -102,6 +101,11 @@ func (c *PointsController) handleApprovePoints(ctx context.Context, req *approve
 		return resp, apierr.New(apierr.BadRequest).WithError(fmt.Sprintf("invalid point status %v", point.Status))
 	}
 
+	latestBalance, err := c.pointsDB.GetLatestBalance(ctx, req.ChildID)
+	if err != nil {
+		return resp, fmt.Errorf("failed to get latest balance: %w", err)
+	}
+
 	point.Request.Decision = models.PointRequestDecision(req.Decision)
 	point.Request.DecidedByUserID = req.ParentID
 	point.Request.DecidedOnStr = util.ToFormattedUTC(time.Now())
@@ -109,8 +113,17 @@ func (c *PointsController) handleApprovePoints(ctx context.Context, req *approve
 	point.Status = models.PointStatusSettled
 	point.UpdatedOnStr = util.ToFormattedUTC(time.Now())
 
+	// Update latest point balance for user
 	if point.Request.Decision == models.PointRequestDecisionApprove {
-		// TODO points approved, so calculate balance
+		var newBalance int32
+
+		if models.IsSubtractType(point.Request.Type) {
+			newBalance = latestBalance.Balance - point.Points
+		} else {
+			newBalance = latestBalance.Balance + point.Points
+		}
+
+		point.Balance = &newBalance
 	}
 
 	if err := c.pointsDB.SavePoint(ctx, point); err != nil {

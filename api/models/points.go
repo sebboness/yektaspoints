@@ -1,6 +1,7 @@
 package models
 
 import (
+	"slices"
 	"time"
 
 	"github.com/sebboness/yektaspoints/util"
@@ -11,6 +12,11 @@ type PointRequestType string
 const PointRequestTypeAdd PointRequestType = "ADD"
 const PointRequestTypeSubtract PointRequestType = "SUBTRACT"
 const PointRequestTypeCashout PointRequestType = "CASHOUT"
+
+var PointSubtractTypes = []PointRequestType{
+	PointRequestTypeSubtract,
+	PointRequestTypeCashout,
+}
 
 type PointRequestDecision string
 
@@ -31,8 +37,8 @@ type Point struct {
 	ID           string       `json:"id" dynamodbav:"id"`
 	UserID       string       `json:"user_id" dynamodbav:"user_id"`
 	Status       PointStatus  `json:"status" dynamodbav:"status"`
-	Points       int          `json:"points" dynamodbav:"points"`
-	Balance      *int         `json:"balance" dynamodbav:"balance,omitempty"`
+	Points       int32        `json:"points" dynamodbav:"points"`
+	Balance      *int32       `json:"balance" dynamodbav:"balance,omitempty"`
 	CreatedOnStr string       `json:"-" dynamodbav:"created_on"`
 	UpdatedOnStr string       `json:"-" dynamodbav:"updated_on"`
 	CreatedOn    time.Time    `json:"created_on" dynamodbav:"-"`
@@ -63,7 +69,7 @@ type PointSummary struct {
 	UserID          string               `json:"user_id"`
 	ParentNotes     string               `json:"parent_notes"`
 	Reason          string               `json:"reason"`
-	Points          int                  `json:"points"`
+	Points          int32                `json:"points"`
 	Type            PointRequestType     `json:"type"`
 	UpdatedOn       time.Time            `json:"updated_on"`
 	DecidedByUserID string               `json:"decided_by_user_id"`
@@ -71,12 +77,18 @@ type PointSummary struct {
 }
 
 type UserPoints struct {
-	Balance             int            `json:"balance"`
-	PointsLast7Days     int            `json:"points_last_7_days"`
-	PointsLostLast7Days int            `json:"points_lost_last_7_days"`
+	Balance             int32          `json:"balance"`
+	PointsLast7Days     int32          `json:"points_last_7_days"`
+	PointsLostLast7Days int32          `json:"points_lost_last_7_days"`
 	RecentCashouts      []PointSummary `json:"recent_cashouts"`
 	RecentRequests      []PointSummary `json:"recent_requests"`
 	RecentPoints        []PointSummary `json:"recent_points"`
+}
+
+type PointBalance struct {
+	ID      string `json:"id" dynamodbav:"id"`
+	UserID  string `json:"user_id" dynamodbav:"user_id"`
+	Balance int32  `json:"balance" dynamodbav:"balance"`
 }
 
 func (p *Point) ParseTimes() {
@@ -111,4 +123,9 @@ func ToPointSummaries(points []Point) []PointSummary {
 		summaries[idx] = p.ToPointSummary()
 	}
 	return summaries
+}
+
+// IsSubtractType returns true if the given point request type is a subtraction type (i.e. SUBTRACT or CASHOUT)
+func IsSubtractType(reqType PointRequestType) bool {
+	return slices.Contains(PointSubtractTypes, reqType)
 }

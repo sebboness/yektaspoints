@@ -19,6 +19,78 @@ import (
 
 var errFail = errors.New("fail")
 
+func Test_DynamoDbStorage_GetLatestBalance(t *testing.T) {
+	type state struct {
+		errQuery      error
+		failUnmarshal bool
+		noItems       bool
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{}, want{}},
+		{"happy path - no items", state{noItems: true}, want{}},
+		{"fail - query", state{errQuery: errFail}, want{"fail"}},
+		{"fail - unmarshal", state{failUnmarshal: true}, want{"failed to unmarshal item"}},
+	}
+
+	for _, c := range cases {
+
+		output := &dynamodb.QueryOutput{
+			Items: []map[string]types.AttributeValue{
+				{
+					"id":      &types.AttributeValueMemberS{Value: "point-1"},
+					"user_id": &types.AttributeValueMemberS{Value: "user-1"},
+					"balance": &types.AttributeValueMemberN{Value: "34"},
+				},
+			},
+		}
+
+		if c.state.noItems {
+			output.Items = []map[string]types.AttributeValue{}
+		}
+
+		if c.state.failUnmarshal {
+			output.Items = []map[string]types.AttributeValue{
+				{
+					"balance": &types.AttributeValueMemberS{Value: "xyz"},
+				},
+			}
+		}
+
+		mockDynamoClient := mocks.NewMockDynamoDbClient(t)
+		mockDynamoClient.EXPECT().Query(mock.Anything, mock.Anything, mock.Anything).Return(output, c.state.errQuery)
+
+		s := DynamoDbStorage{
+			client: mockDynamoClient,
+		}
+
+		res, err := s.GetLatestBalance(context.Background(), "user-1")
+		tests.AssertError(t, err, c.want.err)
+
+		if err == nil {
+			if c.state.noItems {
+				assert.Equal(t, res.Balance, int32(0))
+				assert.Equal(t, res.ID, "")
+				assert.Equal(t, res.UserID, "user-1")
+			} else {
+				assert.Equal(t, res.Balance, int32(34))
+				assert.Equal(t, res.ID, "point-1")
+				assert.Equal(t, res.UserID, "user-1")
+			}
+		}
+
+		mockDynamoClient.AssertExpectations(t)
+	}
+}
+
 func Test_DynamoDbStorage_GetPointByID(t *testing.T) {
 	type state struct {
 		errGetItem    error
@@ -78,7 +150,7 @@ func Test_DynamoDbStorage_GetPointByID(t *testing.T) {
 			assert.Empty(t, c.want.err)
 			assert.Equal(t, "123", res.ID)
 			assert.Equal(t, "456", res.UserID)
-			assert.Equal(t, 100, res.Points)
+			assert.Equal(t, int32(100), res.Points)
 		}
 
 		mockDynamoClient.AssertExpectations(t)
@@ -161,10 +233,10 @@ func Test_DynamoDbStorage_GetPointsByUserID(t *testing.T) {
 			assert.Len(t, res, 2)
 			assert.Equal(t, res[0].ID, "1")
 			assert.Equal(t, res[0].UserID, "a")
-			assert.Equal(t, res[0].Points, 7)
+			assert.Equal(t, res[0].Points, int32(7))
 			assert.Equal(t, res[1].ID, "2")
 			assert.Equal(t, res[1].UserID, "b")
-			assert.Equal(t, res[1].Points, 9)
+			assert.Equal(t, res[1].Points, int32(9))
 		}
 
 		mockDynamoClient.AssertExpectations(t)
@@ -238,6 +310,35 @@ func Test_DynamoDbStorage_SavePoint(t *testing.T) {
 
 // Unit tests against real dev environment
 // These tests should be skipped unless debugging with real services
+
+func TestReal_DynamoDbStorage_GetLatestBalance(t *testing.T) {
+	t.Skip("Skip real test")
+
+	type state struct {
+		userId string
+	}
+	type want struct {
+		err string
+	}
+	type test struct {
+		name string
+		state
+		want
+	}
+
+	cases := []test{
+		{"happy path", state{userId: "98a1c330-4051-701a-57c1-e8debd152f2b"}, want{}},
+	}
+
+	for _, c := range cases {
+		s, err := NewDynamoDbStorage(Config{Env: "dev"})
+		assert.Nil(t, err)
+
+		balance, err := s.GetLatestBalance(context.Background(), c.state.userId)
+		tests.AssertError(t, err, c.want.err)
+		assert.Greater(t, balance.Balance, 0)
+	}
+}
 
 func TestReal_DynamoDbStorage_GetPointByID(t *testing.T) {
 	t.Skip("Skip real test")
@@ -359,7 +460,7 @@ func TestReal_DynamoDbStorage_SavePoint(t *testing.T) {
 		s, err := NewDynamoDbStorage(Config{Env: "dev"})
 		assert.Nil(t, err)
 
-		points := int(8)
+		points := int32(8)
 
 		p := models.Point{
 			ID:           ksuid.New().String(),

@@ -22,6 +22,63 @@ func (_m *MockIPointsStorage) EXPECT() *MockIPointsStorage_Expecter {
 	return &MockIPointsStorage_Expecter{mock: &_m.Mock}
 }
 
+// GetLatestBalance provides a mock function with given fields: ctx, userId
+func (_m *MockIPointsStorage) GetLatestBalance(ctx context.Context, userId string) (models.PointBalance, error) {
+	ret := _m.Called(ctx, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestBalance")
+	}
+
+	var r0 models.PointBalance
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (models.PointBalance, error)); ok {
+		return rf(ctx, userId)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) models.PointBalance); ok {
+		r0 = rf(ctx, userId)
+	} else {
+		r0 = ret.Get(0).(models.PointBalance)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockIPointsStorage_GetLatestBalance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLatestBalance'
+type MockIPointsStorage_GetLatestBalance_Call struct {
+	*mock.Call
+}
+
+// GetLatestBalance is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userId string
+func (_e *MockIPointsStorage_Expecter) GetLatestBalance(ctx interface{}, userId interface{}) *MockIPointsStorage_GetLatestBalance_Call {
+	return &MockIPointsStorage_GetLatestBalance_Call{Call: _e.mock.On("GetLatestBalance", ctx, userId)}
+}
+
+func (_c *MockIPointsStorage_GetLatestBalance_Call) Run(run func(ctx context.Context, userId string)) *MockIPointsStorage_GetLatestBalance_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockIPointsStorage_GetLatestBalance_Call) Return(_a0 models.PointBalance, _a1 error) *MockIPointsStorage_GetLatestBalance_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockIPointsStorage_GetLatestBalance_Call) RunAndReturn(run func(context.Context, string) (models.PointBalance, error)) *MockIPointsStorage_GetLatestBalance_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetPointByID provides a mock function with given fields: ctx, userId, id
 func (_m *MockIPointsStorage) GetPointByID(ctx context.Context, userId string, id string) (models.Point, error) {
 	ret := _m.Called(ctx, userId, id)

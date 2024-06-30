@@ -14,9 +14,58 @@ import (
 )
 
 type IPointsStorage interface {
+	GetLatestBalance(ctx context.Context, userId string) (models.PointBalance, error)
 	GetPointByID(ctx context.Context, userId, id string) (models.Point, error)
 	GetPointsByUserID(ctx context.Context, userId string, filters models.QueryPointsFilter) ([]models.Point, error)
 	SavePoint(ctx context.Context, point models.Point) error
+}
+
+func (s *DynamoDbStorage) GetLatestBalance(ctx context.Context, userId string) (models.PointBalance, error) {
+	balance := models.PointBalance{}
+
+	keyEx := expression.Key("user_id").Equal(expression.Value(userId))
+	statusExpr := expression.Name("status").Equal(expression.Value(models.PointStatusSettled))
+	balanceExpr := expression.Name("balance").GreaterThan(expression.Value(aws.Int32(0)))
+
+	exprBuilder := expression.NewBuilder().WithKeyCondition(keyEx)
+	exprBuilder = exprBuilder.WithFilter(statusExpr)
+	exprBuilder = exprBuilder.WithFilter(balanceExpr)
+	exprBuilder = exprBuilder.WithProjection(selectAttributesExpression([]string{"user_id", "id", "balance"}))
+
+	expr, err := exprBuilder.Build()
+	if err != nil {
+		return balance, fmt.Errorf("failed to build expression for query: %w", err)
+	}
+
+	resp, err := s.client.Query(ctx, &dynamodb.QueryInput{
+		TableName:                 aws.String(s.tablePoints),
+		IndexName:                 aws.String("updated_on-index"),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		FilterExpression:          expr.Filter(),
+		Limit:                     aws.Int32(1), // Just need top 1 item
+		ProjectionExpression:      expr.Projection(),
+		ScanIndexForward:          aws.Bool(false), // Sort descending
+	})
+
+	if err != nil {
+		apiErr := apierr.GetAwsError(err)
+		return balance, apiErr
+	}
+
+	// if there are no items, return a 0-balance record, and include the user id
+	if len(resp.Items) == 0 {
+		balance.UserID = userId
+		return balance, nil
+	}
+
+	err = attributevalue.UnmarshalMap(resp.Items[0], &balance)
+	if err != nil {
+		return balance, fmt.Errorf("failed to unmarshal item: %w", err)
+	}
+
+	return balance, nil
 }
 
 func (s *DynamoDbStorage) GetPointByID(ctx context.Context, userId, pointId string) (models.Point, error) {
