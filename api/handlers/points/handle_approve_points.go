@@ -106,6 +106,8 @@ func (c *PointsController) handleApprovePoints(ctx context.Context, req *approve
 		return resp, fmt.Errorf("failed to get latest balance: %w", err)
 	}
 
+	logger.Infof("latestBalance is %v", latestBalance)
+
 	point.Request.Decision = models.PointRequestDecision(req.Decision)
 	point.Request.DecidedByUserID = req.ParentID
 	point.Request.DecidedOnStr = util.ToFormattedUTC(time.Now())
@@ -116,6 +118,9 @@ func (c *PointsController) handleApprovePoints(ctx context.Context, req *approve
 	// Update latest point balance for user
 	if point.Request.Decision == models.PointRequestDecisionApprove {
 		var newBalance int32
+
+		// TODO
+		// Don't allow cashouts if new balance goes below 0
 
 		if models.IsSubtractType(point.Request.Type) {
 			newBalance = latestBalance.Balance - point.Points

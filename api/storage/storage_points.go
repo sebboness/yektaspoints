@@ -44,9 +44,9 @@ func (s *DynamoDbStorage) GetLatestBalance(ctx context.Context, userId string) (
 		ExpressionAttributeValues: expr.Values(),
 		KeyConditionExpression:    expr.KeyCondition(),
 		FilterExpression:          expr.Filter(),
-		Limit:                     aws.Int32(1), // Just need top 1 item
-		ProjectionExpression:      expr.Projection(),
-		ScanIndexForward:          aws.Bool(false), // Sort descending
+		// Limit:                     aws.Int32(1), // Just need top 1 item, but this doesn't work well
+		ProjectionExpression: expr.Projection(),
+		ScanIndexForward:     aws.Bool(false), // Sort descending
 	})
 
 	if err != nil {
