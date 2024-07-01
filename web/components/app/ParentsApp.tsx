@@ -32,16 +32,16 @@ const ParentsApp = (props: Props) => {
 
     return (
         <section>
-            <div className="w-screen gap-8 grid grid-cols-1 p-12">
-                <div className="container mx-auto">
+            {/* <div className="w-screen gap-8 grid grid-cols-1 p-12"> */}
+                {/* <div className="container mx-auto"> */}
                     <Router>
                         <Routes>
                             <Route path="/app/parents" element={<FamiliesList />} />
                             <Route path="/app/parents/:family_id/points/:user_id" element={<ChildsPoints />} />
                         </Routes>
                     </Router>
-                </div>                    
-            </div>
+                {/* </div>                     */}
+            {/* </div> */}
         </section>
     );
 };

@@ -58,7 +58,7 @@ const ChildsPoints = () => {
     }, [dispatch]);
 
     return (
-        <>
+        <div className="w-screen gap-8 grid grid-cols-5 p-12">
             {/* Left */}
             <div className="container mx-auto col-span-3">
                 <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 border border-zinc-500 mb-8">
@@ -107,7 +107,7 @@ const ChildsPoints = () => {
             </div>
 
             <PointsApprovalDialog ref={approvalDialog} />
-        </>
+        </div>
     );
 };
 

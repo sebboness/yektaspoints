@@ -115,6 +115,8 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
             dialogRef.current.showModal();
         }
     };
+
+    const childName = child ? child.name : "";
     
     // Ensure component is mounted
     useEffect(() => setMounted(true), []);
@@ -130,14 +132,17 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
 
                 <div className="divide-y divide-blue-200">
                     <div>
-                        <h3 className="font-bold text-lg">{child ? child.name : ""} requested pointes</h3>
-                        <p className="py-4 text-center text-2xl">
-                            {point
-                                ? `${point.points} point${point.points == 1 ? "" : "s"}`
-                                : ""}
+                        <p className="py-4 text-2xl">
+                            {childName} is requesting&nbsp;
+                            <span className="font-bold">
+                                {point
+                                    ? `${point.points} point${point.points == 1 ? "" : "s"}`
+                                    : ""}
+                            </span>.
                         </p>
                         <p className="text-lg">
-                            <strong>Reason: </strong>
+                            <span className="font-bold">Reason:</span>
+                            <br />
                             {point
                                 ? (point.request.reason || "No reason given")
                                 : ""}
@@ -145,11 +150,14 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
                     </div>
 
                     <div>
+                        <p className="text-lg">
+                            <span className="font-bold">Respond with optional notes:</span>
+                        </p>
                         <form method="dialog" onSubmit={handleSubmit(onSubmit)}>
                             <input type="hidden" { ...register("point_id")} value={point ? point.id : ""}/>
                             <input type="hidden" { ...register("decision")} value={decision}/>
                             <div className="form-control">
-                                <textarea className="textarea textarea-bordered" placeholder="Optional: Notes for [NAME]" { ...register("parent_notes")}></textarea>
+                                <textarea className="textarea textarea-bordered" placeholder={`Optional: Notes for ${childName}`} { ...register("parent_notes")}></textarea>
                                 <label className={`label ${errors.parent_notes ? "visible" : "invisible"}`}>
                                     <a href="#" className="label-text-alt link link-hover text-red-600"></a>
                                 </label>
