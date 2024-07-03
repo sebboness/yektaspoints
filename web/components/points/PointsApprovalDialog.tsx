@@ -117,6 +117,12 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
     };
 
     const childName = child ? child.name : "";
+
+    useEffect(() => {
+        if (decision) {
+            // TODO submit
+        }
+    }, [decision])
     
     // Ensure component is mounted
     useEffect(() => setMounted(true), []);
