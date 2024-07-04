@@ -1,7 +1,7 @@
 import React from "react";
-import { ArrowDownRightIcon, ArrowUpRightIcon } from "@heroicons/react/24/solid";
+import { ArrowDownRightIcon, ArrowUpRightIcon, MinusIcon } from "@heroicons/react/24/solid";
 
-import { PointSummary } from "@/lib/models/Points";
+import { PointDecisionDeny, PointSummary } from "@/lib/models/Points";
 import { formatDay_DDD_MMM_DD_hmm } from "@/lib/MomentUtils";
 
 type Props = {
@@ -11,22 +11,43 @@ type Props = {
 const PointsList = (props: Props) => {
     const { points } = props;
 
+    const getIconColor = (p: PointSummary): string => {
+        if (p.decision === PointDecisionDeny)
+            return "bg-gray-400 text-gray-700";
+
+        return p.points > 0
+            ? "bg-green-400 text-green-700"
+            : "bg-red-400 text-red-700";
+    }
+
+    const getPointsColor = (p: PointSummary): string => {
+        if (p.decision === PointDecisionDeny)
+            return "bg-gray-500 text-gray-100";
+
+        return p.points > 0
+            ? "bg-green-500 text-green-100"
+            : "bg-red-500 text-red-100";
+    }
+
+    const getIcon = (p: PointSummary): React.JSX.Element => {
+        const iColor = getIconColor(p);
+
+        if (p.decision === PointDecisionDeny)
+            return <MinusIcon className={`${iColor} rounded-full p-2 h-12 w-12`} />;
+
+        return p.points < 1
+            ? <ArrowDownRightIcon className={`${iColor} rounded-full p-2 h-12 w-12`} />
+            : <ArrowUpRightIcon className={`${iColor} rounded-full p-2 h-12 w-12`} />
+    }
+
     return (
         <div className="list-container">
             {points.map((p, i) => {
-                const iColor = p.points > 0
-                    ? "bg-green-400 text-green-700"
-                    : "bg-red-400 text-red-700";
-
-                const pColor = p.points > 0
-                    ? "bg-green-500 text-green-100"
-                    : "bg-red-500 text-red-100";
+                const pColor = getPointsColor(p);
 
                 return <div key={i} className="list-items flex flex-row items-center justify-between mx-auto border-4 border-zinc-500 py-4 rounded-full my-4 px-4 bg-gradient-135 from-base-100 to-base-200">
                     <div className="flex flex-row items-center space-x-4">
-                        {p.points < 1
-                            ? <ArrowDownRightIcon className={`${iColor} rounded-full p-2 h-12 w-12`} />
-                            : <ArrowUpRightIcon className={`${iColor} rounded-full p-2 h-12 w-12`} />}
+                        {getIcon(p)}
                         <div>
                             <p className="tracking-tight font-bold text-sm">{formatDay_DDD_MMM_DD_hmm(p.updated_on)}</p>
                             <p className="text-lg">{p.reason}</p>

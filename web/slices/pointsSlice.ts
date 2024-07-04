@@ -1,5 +1,5 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { Point, PointSummary, UserPoints } from "@/lib/models/Points";
+import { Point, PointStatus, PointSummary, UserPoints } from "@/lib/models/Points";
 
 import { getTokenRetriever } from "@/store/store";
 import { ErrorAsResult } from "@/lib/api/Result";
@@ -65,6 +65,23 @@ export const PointsSlice = createSlice({
             state.userSummary.recent_requests.unshift(action.payload);
             console.log(`${ln()}addPointToRequesting payload`, action.payload);
             console.log(`${ln()}addPointToRequesting new recent point reqs`, state.userSummary.recent_requests);
+        },
+        onApproveRequesting: (state, action: PayloadAction<Point>) => {
+            const p = action.payload;
+            const reqIdx = state.userSummary.recent_requests.findIndex(x => x.id === p.id);
+            const pointIdx = state.userPoints.findIndex(x => x.id === p.id);
+            
+            console.log(pointIdx);
+            if (pointIdx > -1) {
+                state.userPoints = state.userPoints.filter(x => x.id !== p.id);
+                state.userPoints.splice(0, 0, p);
+                console.log(p);
+                console.log(state.userPoints);
+            }
+
+            if (reqIdx > -1) {
+                // TODO
+            }
         },
     },
     extraReducers: (builder) => {
