@@ -89,12 +89,12 @@ const PointsApprovalDialog = React.forwardRef((props, ref) => {
                 decision: formData.decision || "",
                 parent_notes: formData.parent_notes || null,
                 point_id: formData.point_id,
-                user_id: data?.point.user_id || "",
+                user_id: data.point.user_id || "",
             });
 
-        if (result.status === "SUCCESS") {
+        if (result.status === "SUCCESS" && result.data) {
             console.log(`${ln()}approve/deny point request`, result);
-            dispatch(PointsSlice.actions.onApproveRequesting(data.point));
+            dispatch(PointsSlice.actions.onApproveRequesting(result.data.point));
             close();
         } else {
             console.log(`${ln()}error approve/deny point request`, result);

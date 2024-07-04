@@ -57,7 +57,7 @@ const PointsList = (props: Props) => {
                         </div>
                     </div>
                     <div>
-                        <button className={`${pColor} rounded-full px-4 py-1 text-lg font-bold`}>{p.points}</button>
+                        <div className={`${pColor} rounded-full px-4 py-1 text-lg font-bold`}>{p.points}</div>
                     </div>
                 </div>;
             })}

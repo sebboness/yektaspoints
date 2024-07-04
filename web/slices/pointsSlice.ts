@@ -75,8 +75,6 @@ export const PointsSlice = createSlice({
             if (pointIdx > -1) {
                 state.userPoints = state.userPoints.filter(x => x.id !== p.id);
                 state.userPoints.splice(0, 0, p);
-                console.log(p);
-                console.log(state.userPoints);
             }
 
             if (reqIdx > -1) {

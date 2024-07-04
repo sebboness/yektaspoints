@@ -6,7 +6,7 @@ import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
-import { mapPointsToSummaries, mapSummaryToLitePoint, PointRequestType, PointStatus, PointSummary } from "@/lib/models/Points";
+import { mapPointsToSummaries, mapSummaryToLitePoint, PointDecisionApprove, PointRequestType, PointStatus, PointSummary } from "@/lib/models/Points";
 import { getUserPoints } from "@/slices/pointsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
@@ -40,6 +40,10 @@ const ChildsPoints = () => {
     const settledPoints = points.filter(x => x.status === PointStatus.SETTLED && x.request.type !== PointRequestType.CASHOUT);
     const requestedPoints = points.filter(x => x.status === PointStatus.WAITING);
     const cashouts = points.filter(x => x.status === PointStatus.SETTLED && x.request.type === PointRequestType.CASHOUT);
+    const approvedPoints = points.filter(x => x.status === PointStatus.SETTLED
+        && x.request.type !== PointRequestType.CASHOUT
+        && x.request.decision === PointDecisionApprove);
+    const balance = approvedPoints.length > 0 ? (approvedPoints[0].balance || 0) : 0;
 
     const handleOnRequestClick = (p: PointSummary) => {
         const point = mapSummaryToLitePoint(p);
@@ -65,6 +69,7 @@ const ChildsPoints = () => {
                     <div className="card-body">
                         <SectionTitle>
                             {child.name}&apos;s points&nbsp;
+                            <span className={`bg-green-500 text-green-100 rounded-full px-4 py-1 text-lg font-bold`}>{balance}</span>&nbsp;
                             {loading
                                 ? <FontAwesomeIcon icon={faSpinner} spin />
                                 : <></>}

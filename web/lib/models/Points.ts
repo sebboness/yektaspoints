@@ -68,6 +68,11 @@ export type RequestPointsRequest = {
     reason: string;
 };
 
+export type ApprovePointsResponse = {
+    point: Point;
+    point_summary: PointSummary;
+};
+
 export type RequestPointsResponse = {
     point: Point;
     point_summary: PointSummary;
