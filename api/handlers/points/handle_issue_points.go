@@ -19,7 +19,7 @@ type issuePointsHandlerRequest struct {
 	Points        int32                   `json:"points"`
 	Reason        string                  `json:"reason"`
 	ParentNotes   string                  `json:"parent_notes,omitempty"`
-	ToChildUserID string                  `json:"to_child_user_id"`
+	ToChildUserID string                  `json:"to_user_id"`
 	Type          models.PointRequestType `json:"type"`
 
 	// set in code
@@ -130,7 +130,7 @@ func validateIssuePoints(req *issuePointsHandlerRequest) error {
 	apierr := apierr.New(fmt.Errorf("%w: failed to validate request", apierr.InvalidInput))
 
 	if req.ToChildUserID == "" {
-		apierr.AppendError("missing to_child_user_id")
+		apierr.AppendError("missing to_user_id")
 	}
 	if req.FromParentUserID == "" {
 		apierr.AppendError("missing from_parent_user_id")

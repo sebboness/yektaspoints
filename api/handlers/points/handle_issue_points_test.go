@@ -226,7 +226,7 @@ func Test_validateIssuePoints(t *testing.T) {
 	cases := []test{
 		{"happy path", state{}, want{}},
 		{"fail - invalid from parent user id", state{invalidFromParentUserId: true}, want{"missing from_parent_user_id"}},
-		{"fail - invalid to child user id", state{invalidToChildUserId: true}, want{"missing to_child_user_id"}},
+		{"fail - invalid to child user id", state{invalidToChildUserId: true}, want{"missing to_user_id"}},
 		{"fail - invalid type", state{invalidType: true}, want{"invalid point request type blah"}},
 		{"fail - invalid points - negative", state{pointsAreNegative: true}, want{"failed to validate request: points must be a positive integer"}},
 		{"fail - invalid points - zero", state{pointsAreZero: true}, want{"failed to validate request: points must be a positive integer"}},
