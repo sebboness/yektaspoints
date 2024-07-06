@@ -116,7 +116,7 @@ func (c *PointsController) handleIssuePoints(ctx context.Context, req *issuePoin
 
 	err = c.pointsDB.SavePoint(ctx, point)
 	if err != nil {
-		return resp, fmt.Errorf("failed to save points: %w", err)
+		return resp, fmt.Errorf("failed to issue points: %w", err)
 	}
 
 	point.ParseTimes()

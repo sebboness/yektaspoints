@@ -31,8 +31,8 @@ const PointRequestDecisionDeny PointRequestDecision = "DENY"
 
 type PointStatus string
 
-const PointStatusWaiting = "WAITING"
-const PointStatusSettled = "SETTLED"
+const PointStatusWaiting PointStatus = "WAITING"
+const PointStatusSettled PointStatus = "SETTLED"
 
 var ValidPointRequestDecisions = []PointRequestDecision{
 	PointRequestDecisionApprove,

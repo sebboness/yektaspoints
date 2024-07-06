@@ -37,6 +37,7 @@ func RegisterRoutes(r *gin.Engine) *gin.Engine {
 	// Points
 	// authedRoutes.GET("/v1/points/:point_id", mw.WithRolesAny(groupsChildParent), pointsCtrl.GetPointsHandler)
 	authedRoutes.POST("/points", mw.WithRolesAny(groupsChild), pointsCtrl.RequestPointsHandler)
+	authedRoutes.POST("/points/issue", mw.WithRolesAny(groupsParent), pointsCtrl.IssuePointsHandler)
 	authedRoutes.PUT("/points/:point_id/approve", mw.WithRolesAny(groupsParent), pointsCtrl.ApprovePointsHandler)
 
 	// Points (User)
