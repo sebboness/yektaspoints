@@ -15,9 +15,16 @@ import (
 )
 
 type IUserStorage interface {
+	// GetUserByID gets user by ID
 	GetUserByID(ctx context.Context, userId string) (models.User, error)
+
+	// ParentHasAccessToChild checks if user for given parent ID has access to points of given user with child ID
 	ParentHasAccessToChild(ctx context.Context, parentId string, childId string) (bool, error)
+
+	// SaveUser saves the given user to storage
 	SaveUser(ctx context.Context, user models.User) error
+
+	// UpdateUserStatus updates the given user by ID with the given status
 	UpdateUserStatus(ctx context.Context, userId string, status models.UserStatus) error
 }
 

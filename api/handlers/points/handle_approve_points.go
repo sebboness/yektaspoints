@@ -55,13 +55,12 @@ func (c *PointsController) ApprovePointsHandler(cgin *gin.Context) {
 
 	resp, err := c.handleApprovePoints(cgin.Request.Context(), &req)
 	if err != nil {
-		logger.Errorf("failed to handle approving points: %v", err.Error())
-
 		if apierr := apierr.IsApiError(err); apierr != nil {
 			cgin.JSON(apierr.StatusCode(), handlers.ErrorResult(apierr))
 			return
 		}
 
+		logger.Errorf("failed to handle approving points: %v", err.Error())
 		cgin.JSON(http.StatusInternalServerError, handlers.ErrorResult(err))
 		return
 	}
@@ -105,8 +104,6 @@ func (c *PointsController) handleApprovePoints(ctx context.Context, req *approve
 	if err != nil {
 		return resp, fmt.Errorf("failed to get latest balance: %w", err)
 	}
-
-	logger.Infof("latestBalance is %v", latestBalance)
 
 	point.Request.Decision = models.PointRequestDecision(req.Decision)
 	point.Request.DecidedByUserID = req.ParentID

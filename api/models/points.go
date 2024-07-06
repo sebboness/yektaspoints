@@ -18,6 +18,12 @@ var PointSubtractTypes = []PointRequestType{
 	PointRequestTypeCashout,
 }
 
+var ValidPointRequestTypes = []PointRequestType{
+	PointRequestTypeAdd,
+	PointRequestTypeSubtract,
+	PointRequestTypeCashout,
+}
+
 type PointRequestDecision string
 
 const PointRequestDecisionApprove PointRequestDecision = "APPROVE"
