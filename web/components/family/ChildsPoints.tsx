@@ -15,6 +15,7 @@ import CashoutList from "../points/CashoutList";
 import PointRequestList from "../points/PointRequestList";
 import PointsList from "../points/PointsList";
 import SectionTitle from "../common/SectionTitle";
+import PointActions from "./PointActions";
 
 const ln = () => `[${moment().toISOString()}] ChildsPoints: `;
 
@@ -82,6 +83,8 @@ const ChildsPoints = () => {
 
             {/* Right */}
             <div className="container mx-auto col-span-2">
+                <PointActions childId={userId} />
+
                 <div className="card soft-concave-shadow bg-gradient-135 from-pink-200 to-lime-100 mb-16 border border-zinc-500">
                     <div className="card-body">
                         <SectionTitle>
