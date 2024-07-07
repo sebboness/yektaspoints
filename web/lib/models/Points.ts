@@ -6,10 +6,10 @@ export enum PointStatus {
     WAITING = "WAITING",
 };
 
-export enum PointRequestType {
-    ADD = "ADD",
-    SUBTRACT = "SUBTRACT",
-    CASHOUT = "CASHOUT",
+export const PointRequestType = {
+    ADD: "ADD",
+    SUBTRACT: "SUBTRACT",
+    CASHOUT: "CASHOUT",
 };
 
 export type Point = {
@@ -57,25 +57,28 @@ export type UserPoints = {
 };
 
 export type ApprovePointsRequest = {
-    point_id: string
-    decision: string
-    parent_notes: string | null
-    user_id: string
+    point_id: string;
+    decision: string;
+    parent_notes: string | null;
+    user_id: string;
+};
+
+export type IssuePointsRequest = {
+    parent_notes: string | null;
+    points: number;
+    reason: string;
+    to_user_id: string;
+    type: string;
+};
+
+export type PointsResponse = {
+    point: Point;
+    point_summary: PointSummary;
 };
 
 export type RequestPointsRequest = {
     points: number;
     reason: string;
-};
-
-export type ApprovePointsResponse = {
-    point: Point;
-    point_summary: PointSummary;
-};
-
-export type RequestPointsResponse = {
-    point: Point;
-    point_summary: PointSummary;
 };
 
 export const mapPointToSummary = (p: Point): PointSummary => ({

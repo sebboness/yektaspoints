@@ -1,7 +1,15 @@
 import { Api, TokenGetter } from "./Api";
 import { ResultT } from "./Result";
 import { TokenData, UserData } from "../auth/Auth";
-import { ApprovePointsRequest, ApprovePointsResponse, PointsList, RequestPointsRequest, RequestPointsResponse, UserPoints } from "../models/Points";
+import {
+    ApprovePointsRequest,
+    IssuePointsRequest,
+    PointsList,
+    PointsResponse,
+    RequestPointsRequest,
+    UserPoints,
+
+} from "../models/Points";
 import { FamilyResponse } from "../models/Family";
 
 // Define base URIs for different environments
@@ -87,13 +95,19 @@ export class MyPointsApi extends Api {
     // Points
     ////
 
-    public postRequestPoints(payload: RequestPointsRequest): Promise<ResultT<RequestPointsResponse>> {
-        return this.post("v1/points ", {
+    public postRequestPoints(payload: RequestPointsRequest): Promise<ResultT<PointsResponse>> {
+        return this.post("v1/points", {
             payload,
         });
     }
 
-    public approveRequestPoints(payload: ApprovePointsRequest): Promise<ResultT<ApprovePointsResponse>> {
+    public issuePoints(payload: IssuePointsRequest): Promise<ResultT<PointsResponse>> {
+        return this.post("v1/points/issue", {
+            payload,
+        });
+    }
+
+    public approveRequestPoints(payload: ApprovePointsRequest): Promise<ResultT<PointsResponse>> {
         return this.put(`v1/points/${payload.point_id}/approve`, {
             payload,
         });

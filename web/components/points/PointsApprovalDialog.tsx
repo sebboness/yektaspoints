@@ -19,8 +19,8 @@ const ln = () => `[${moment().toISOString()}] PointsApprovalDialog: `;
 
 const formSchema = yup.object({
     decision: yup.string().nullable().oneOf([PointDecisionApprove, PointDecisionDeny]),
-    point_id: yup.string().required().min(0).max(1000),
-    parent_notes: yup.string().max(256),
+    point_id: yup.string().required().min(0).max(36),
+    parent_notes: yup.string().max(500),
 });
 
 export const approvePointsRequestDialogID = "approve_points_request_dialog";
